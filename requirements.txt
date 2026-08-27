@@ -1,0 +1,15 @@
+# OS-SCL dependencies
+# PyTorch must come from the CUDA 12.8 index for Blackwell (sm_120) GPUs:
+#   pip install --index-url https://download.pytorch.org/whl/cu128 torch==2.8.0 torchaudio==2.8.0
+# torchaudio is pinned to 2.8.x on purpose: from 2.9 onward torchaudio.load()
+# is routed through TorchCodec (requires FFmpeg), which breaks dataloader.py.
+torch==2.8.0
+torchaudio==2.8.0
+
+numpy
+pandas
+scikit-learn        # eval.py: metrics.roc_auc_score
+pyyaml              # train.py / eval.py: config.yaml
+tqdm
+torchlibrosa        # model/waveq.py: SpecAugmentation
+soundfile           # torchaudio.load backend for the DCASE .wav files

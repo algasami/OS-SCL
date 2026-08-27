@@ -1,0 +1,21 @@
+# create with:  conda env create -f environment.yml
+# (torch/torchaudio come from the CUDA 12.8 wheel index so that Blackwell,
+#  sm_120, GPUs are supported; torchaudio is held at 2.8.x because 2.9+
+#  routes torchaudio.load() through TorchCodec/FFmpeg.)
+name: os-scl
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - torch==2.8.0
+      - torchaudio==2.8.0
+      - numpy
+      - pandas
+      - scikit-learn
+      - pyyaml
+      - tqdm
+      - torchlibrosa
+      - soundfile
