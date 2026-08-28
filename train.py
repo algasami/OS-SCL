@@ -55,7 +55,7 @@ def main():
 
     name_list = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 
-    root_path = '../data/dataset'
+    root_path = 'data/dataset'
 
     device = torch.device(f'cuda:{cfg["gpu_num"]}')
 
