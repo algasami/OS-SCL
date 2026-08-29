@@ -104,10 +104,10 @@ def main():
     name_list = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 
     if args.d:
-        root_path = '../data/dataset'
+        root_path = 'data/dataset'
         print("Using development dataset for evaluation.")
     elif args.e:
-        root_path = '../data/eval_dataset'
+        root_path = 'data/eval_dataset'
         print("Using evaluation dataset for evaluation.")
     else:
         print("Error: You must provide either --d for development or --e for evaluation.")

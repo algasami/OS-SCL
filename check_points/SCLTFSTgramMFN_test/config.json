@@ -1,0 +1,10 @@
+{
+    "m": 0.4,
+    "gpu_num": 0,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "test",
+    "model_name": "SCLTFSTgramMFN_test"
+}

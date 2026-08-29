@@ -66,13 +66,13 @@ python train.py --m 0.4 --gpu_num <GPU_ID> --fussion 1 --ht basic --desc main
 After training, prune the model to remove non-essential training modules:
 
 ```bash
-python prune_model.py --input <MODEL_PATH>
+python model_prune.py --input <MODEL_PATH>
 ```
 
 To overwrite the original model with the pruned one:
 
 ```bash
-python prune_model.py --input <MODEL_PATH> --overwrite
+python model_prune.py --input <MODEL_PATH> --overwrite
 ```
 
 - This keeps only the inference-related weights by removing components such as `pre_block4`, `spec_augmenter`, and others.
