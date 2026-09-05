@@ -1,3 +1,5 @@
+import csv
+import os
 import sys
 import torch
 from torch.utils.data import DataLoader
@@ -36,7 +38,31 @@ def parse_arguments():
     parser.add_argument('--model_path', type=str, help='Action function')
     parser.add_argument('--d', action='store_true', help='Use development dataset for evaluation.')
     parser.add_argument('--e', action='store_true', help='Use evaluation dataset for evaluation.')
+    parser.add_argument('--csv', type=str, nargs='?', const='auto',
+                        help='Export the evaluation matrix as a .csv file. Give a path, or pass the '
+                             'flag alone to write eval_<dev|eval>.csv next to the checkpoint.')
+    parser.add_argument('--strict', dest='strict', action='store_true', default=None,
+                        help='Load the checkpoint with strict=True (default). Use --no-strict for pruned models.')
+    parser.add_argument('--no-strict', dest='strict', action='store_false',
+                        help='Tolerate missing/unexpected keys, e.g. for pruned_model.pth.')
     return parser.parse_args()
+
+
+CSV_HEADER = ['model', 'dataset', 'machine', 'id', 'scope', 'AUC', 'pAUC', 'mAUC']
+
+
+def default_csv_path(model_path, dataset):
+    return os.path.join(os.path.dirname(model_path) or '.', f'eval_{dataset}.csv')
+
+
+def write_csv(csv_path, rows):
+    os.makedirs(os.path.dirname(csv_path) or '.', exist_ok=True)
+    with open(csv_path, 'w', encoding='UTF-8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(CSV_HEADER)
+        for row in rows:
+            writer.writerow([v if isinstance(v, str) else f'{v:.5f}' for v in row])
+    print(f'Evaluation matrix written to {csv_path}')
 
 
 def evaluator(net, test_loader, criterion, device, machine, cfg):
@@ -78,7 +104,7 @@ def evaluator(net, test_loader, criterion, device, machine, cfg):
     auc = metrics.roc_auc_score(y_truet, y_predt)
     pauc = metrics.roc_auc_score(y_truet, y_predt, max_fpr=0.1)
     print(f"{machine} | AUC: {auc:.4f} | pAUC: {pauc:.4f} | Min AUC: {min_auc:.4f}")
-    return auc, pauc, min_auc
+    return auc, pauc, min_auc, id_results
 
 
 def main():
@@ -95,7 +121,8 @@ def main():
     device = torch.device(f'cuda:{device_num}')
 
     net = SCLTFSTgramMFN(m=cfg['m'], cfg=cfg).to(device)
-    net.load_state_dict(torch.load(cfg["model_path"], map_location=device))
+    strict = cfg.get('strict', True)
+    net.load_state_dict(torch.load(cfg["model_path"], map_location=device), strict=strict)
     net.eval()
 
     criterion = ASDLoss(reduction=False).to(device)
@@ -105,13 +132,18 @@ def main():
 
     if args.d:
         root_path = 'data/dataset'
+        dataset_name = 'dev'
         print("Using development dataset for evaluation.")
     elif args.e:
         root_path = 'data/eval_dataset'
+        dataset_name = 'eval'
         print("Using evaluation dataset for evaluation.")
     else:
         print("Error: You must provide either --d for development or --e for evaluation.")
         sys.exit(1)
+
+    model_name = cfg.get('model_name', os.path.basename(os.path.dirname(cfg['model_path'])))
+    csv_rows = []
 
     avg_AUC = 0.
     avg_pAUC = 0.
@@ -122,7 +154,11 @@ def main():
         data_loaders[machine_type] = test_dataloader
 
     for machine_type, test_dataloader in data_loaders.items():
-        AUC, PAUC, mauc = evaluator(net, test_dataloader, criterion, device, machine_type, cfg)
+        AUC, PAUC, mauc, id_results = evaluator(net, test_dataloader, criterion, device, machine_type, cfg)
+        for id_label in sorted(id_results):
+            id_auc, id_pauc = id_results[id_label]
+            csv_rows.append([model_name, dataset_name, machine_type, id_label, 'id', id_auc, id_pauc, ''])
+        csv_rows.append([model_name, dataset_name, machine_type, 'ALL', 'machine', AUC, PAUC, mauc])
         avg_AUC += AUC
         avg_pAUC += PAUC
         mini_auc += mauc
@@ -130,7 +166,14 @@ def main():
     avg_AUC /= len(name_list)
     avg_pAUC /= len(name_list)
     mini_auc /= len(name_list)
+    csv_rows.append([model_name, dataset_name, 'ALL', 'ALL', 'overall', avg_AUC, avg_pAUC, mini_auc])
     print(f"Average AUC: {avg_AUC:.5f},  Average pAUC: {avg_pAUC:.5f} ,Average mAUC: {mini_auc:.5f}")
+
+    if cfg.get('csv'):
+        csv_path = cfg['csv']
+        if csv_path == 'auto':
+            csv_path = default_csv_path(cfg['model_path'], dataset_name)
+        write_csv(csv_path, csv_rows)
 
 
 if __name__ == '__main__':

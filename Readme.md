@@ -96,6 +96,18 @@ python eval.py --m 0.4 --gpu_num <GPU_ID> --fussion 1 --ht basic --model_path <M
 
 - Replace `<GPU_ID>` with your GPU index.
 - Replace `<MODEL_PATH>` with the path to the trained (and optionally pruned) model checkpoint.
+- Add `--no-strict` when evaluating a pruned checkpoint (`pruned_model.pth`).
+
+### 📄 Export the evaluation matrix to CSV:
+
+```bash
+python eval.py ... --d --csv                    # writes <ckpt_dir>/eval_dev.csv
+python eval.py ... --e --csv results/run.csv    # writes the given path
+```
+
+The CSV columns are `model,dataset,machine,id,scope,AUC,pAUC,mAUC`, with one `scope=id`
+row per machine ID, one `scope=machine` row per machine type (pooled AUC/pAUC plus the
+minimum per-ID AUC), and a final `scope=overall` row holding the averages.
 
 ------
 
