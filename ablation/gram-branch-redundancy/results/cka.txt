@@ -1,0 +1,21 @@
+Representational redundancy between the three input branches.
+Probe: ablation/gram-branch-redundancy/cka_probe.py, checkpoint check_points/SCLTFSTgramMFN_test/model.pth
+(fussion=1, the trained TFSTgram model). 656 training clips, 16 per machine ID.
+
+=== linear CKA, clip level (N x 128*313) ===
+  CKA(Tgram  , TFgram ) = 0.0593
+  CKA(Log-Mel, Tgram  ) = 0.0554
+  CKA(Log-Mel, TFgram ) = 0.8878
+=== linear CKA, frame level (N*313 x 128) ===
+  CKA(Tgram  , TFgram ) = 0.0035
+  CKA(Log-Mel, Tgram  ) = 0.0028
+  CKA(Log-Mel, TFgram ) = 0.8118
+=== frame-level linear predictability (R^2) ===
+  Tgram   -> TFgram  : R^2 = 0.0153
+  TFgram  -> Tgram   : R^2 = 0.0223
+  Log-Mel -> TFgram  : R^2 = 0.6337
+  Log-Mel -> Tgram   : R^2 = 0.0301
+
+Reading: TFgram is largely redundant with Log-Mel (CKA 0.89, 63% linearly
+predictable). Tgram is near-orthogonal to BOTH. So the branch diversity in
+TFSTgram comes from Tgram, not from TFgram.

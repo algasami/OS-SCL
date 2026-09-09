@@ -101,6 +101,16 @@ Mobilefacenet_bottleneck_setting = [
 
 ]
 
+# Input branches per fussion mode, in concat order. 1 and 2 are the paper's
+# settings; 3 and 4 isolate a single learned gram against the Log-Mel baseline.
+FUSSION_BRANCHES = {
+    1: ('mel', 'tgram', 'tfgram'),   # TFSTgram (paper)
+    2: ('mel',),                     # Log-Mel only (paper)
+    3: ('mel', 'tfgram'),            # Log-Mel + TFgram
+    4: ('mel', 'tgram'),             # Log-Mel + Tgram (STgram)
+}
+FUSSION_CHANNELS = {k: len(v) for k, v in FUSSION_BRANCHES.items()}
+
 
 class MobileFaceNet(nn.Module):
     def __init__(self,
@@ -109,10 +119,7 @@ class MobileFaceNet(nn.Module):
                  cfg=None):
         super(MobileFaceNet, self).__init__()
 
-        if cfg["fussion"] == 2:
-            self.conv1 = ConvBlock(1, 64, 3, 2, 1)
-        else:
-            self.conv1 = ConvBlock(3, 64, 3, 2, 1)
+        self.conv1 = ConvBlock(FUSSION_CHANNELS[cfg["fussion"]], 64, 3, 2, 1)
 
         self.dw_conv1 = ConvBlock(64, 64, 3, 1, 1, dw=True)
 
@@ -209,16 +216,19 @@ class SCLTFSTgramMFN(nn.Module):
 
     def forward(self, x_wav, x_mel, label, train=True):
 
-        x_t = self.tgramnet(x_wav).unsqueeze(1)
+        branches = FUSSION_BRANCHES[self.cfg['fussion']]
 
-        x_tf = self.TFgramNet(x_wav, train).unsqueeze(1)
+        # only run the branches this fussion mode actually consumes
+        feats = []
+        for name in branches:
+            if name == 'mel':
+                feats.append(x_mel)
+            elif name == 'tgram':
+                feats.append(self.tgramnet(x_wav).unsqueeze(1))
+            elif name == 'tfgram':
+                feats.append(self.TFgramNet(x_wav, train).unsqueeze(1))
 
-        x = None
-        if self.cfg['fussion'] == 1:
-            x = torch.cat((x_mel, x_t, x_tf), dim=1)
-
-        elif self.cfg['fussion'] == 2:
-            x = x_mel
+        x = feats[0] if len(feats) == 1 else torch.cat(feats, dim=1)
 
         out, feature = self.mobilefacenet(x)
 
