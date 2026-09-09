@@ -1,0 +1,11 @@
+{
+    "m": 0.4,
+    "gpu_num": 2,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 4,
+    "ht": "basic",
+    "desc": "f4_mel_tgram",
+    "num_workers": 8,
+    "model_name": "SCLTFSTgramMFN_f4_mel_tgram"
+}
