@@ -37,6 +37,8 @@ def parse_arguments():
     parser.add_argument('--batch_size', type=int, help='Batch size')
     parser.add_argument('--fussion', type=int, help='Fussion')
     parser.add_argument('--ht', type=str, help=' basic or leaky_relu')
+    parser.add_argument('--seed', type=int, help='Random seed')
+    parser.add_argument('--num_workers', type=int, help='DataLoader workers (0 = original behaviour)')
 
     return parser.parse_args()
 
@@ -51,7 +53,7 @@ def main():
     print('Updated Configuration...')
     print(cfg)
 
-    random_seed(seed=2024)
+    random_seed(seed=cfg.get('seed', 2024))
 
     name_list = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 
@@ -64,8 +66,11 @@ def main():
 
     train_ds, valid_ds = dataset_split(dataset)
 
-    train_dataloader = DataLoader(train_ds, batch_size=cfg['batch_size'], shuffle=True, num_workers=0)
-    valid_dataloader = DataLoader(valid_ds, batch_size=cfg['batch_size'], num_workers=0)
+    nw = cfg.get('num_workers', 0)
+    train_dataloader = DataLoader(train_ds, batch_size=cfg['batch_size'], shuffle=True, num_workers=nw,
+                                  persistent_workers=nw > 0)
+    valid_dataloader = DataLoader(valid_ds, batch_size=cfg['batch_size'], num_workers=nw,
+                                  persistent_workers=nw > 0)
 
     model = SCLTFSTgramMFN(num_classes=41, m=cfg['m'], cfg=cfg).to(device)
 
