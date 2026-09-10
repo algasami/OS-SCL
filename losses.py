@@ -139,20 +139,27 @@ class SupConLoss(nn.Module):
 
 
 class WeightEMA(object):
-    def __init__(self, model, ema_model, alpha=0.9999):
+    def __init__(self, model, ema_model, alpha=0.9999, skip_keys=()):
 
         self.model = model
         self.ema_model = ema_model
         self.alpha = alpha
-        self.params = list(model.state_dict().values())
-        self.ema_params = list(ema_model.state_dict().values())
+        state, ema_state = model.state_dict(), ema_model.state_dict()
+        self.params = list(state.values())
+        self.ema_params = list(ema_state.values())
         self.wd = 0.02 * 1e-4
         for param, ema_param in zip(self.params, self.ema_params):
             param.data.copy_(ema_param.data)
+        # Frozen entries are synced by the copy above and then left alone: no EMA
+        # blend, and no per-step weight decay (which would shrink a "frozen"
+        # branch to 0.72x over 300 epochs). Empty skip_keys => original behaviour.
+        skip_keys = set(skip_keys)
+        self.updates = [(p, e) for k, p, e in zip(state.keys(), self.params, self.ema_params)
+                        if k not in skip_keys]
 
     def step(self):
         one_minus_alpha = 1.0 - self.alpha
-        for param, ema_param in zip(self.params, self.ema_params):
+        for param, ema_param in self.updates:
             if ema_param.dtype == torch.float32:
                 ema_param.mul_(self.alpha)
                 ema_param.add_(param * one_minus_alpha)

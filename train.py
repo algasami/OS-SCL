@@ -7,7 +7,7 @@ from utils import dataset_split
 from trainer import Trainer
 import yaml
 import os
-from model.net import SCLTFSTgramMFN
+from model.net import SCLTFSTgramMFN, freeze_tfgram
 import argparse
 
 
@@ -39,6 +39,9 @@ def parse_arguments():
     parser.add_argument('--ht', type=str, help=' basic or leaky_relu')
     parser.add_argument('--seed', type=int, help='Random seed')
     parser.add_argument('--num_workers', type=int, help='DataLoader workers (0 = original behaviour)')
+    parser.add_argument('--freeze_tfgram', type=str, choices=['none', 'strict', 'bn_adapt'],
+                        help="Freeze the TFgram branch at its random init: 'strict' also pins its "
+                             "BatchNorm to eval(), 'bn_adapt' lets the running stats track the data")
 
     return parser.parse_args()
 
@@ -79,7 +82,16 @@ def main():
     for param in model_ema.parameters():
         param.detach_()
 
-    trainer = Trainer(device=device, net=model, ema_net=model_ema, epochs=cfg['epoch'], cfg=cfg)
+    # frozen branches must be excluded from WeightEMA, whose per-step
+    # `param.mul_(1 - wd)` would otherwise shrink them despite requires_grad=False
+    freeze_mode = cfg.get('freeze_tfgram', 'none')
+    skip_keys = freeze_tfgram(model, freeze_mode) | freeze_tfgram(model_ema, freeze_mode)
+    n_all = sum(p.numel() for p in model.parameters())
+    n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f'freeze_tfgram={freeze_mode} | params {n_all} | trainable {n_train} | frozen tensors {len(skip_keys)}')
+
+    trainer = Trainer(device=device, net=model, ema_net=model_ema, epochs=cfg['epoch'], cfg=cfg,
+                      ema_skip_keys=skip_keys)
 
     trainer.train(train_dataloader, valid_dataloader)
 

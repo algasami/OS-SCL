@@ -235,3 +235,42 @@ class SCLTFSTgramMFN(nn.Module):
         feature = F.normalize(self.head(feature), dim=1)
         out = self.arcface(feature, label)
         return out, feature
+
+
+def freeze_tfgram(net, mode):
+    """Freeze the TFgram branch at its random init (ablation/frozen-tfgram).
+
+    'strict'   - no gradients, and the branch is pinned to eval() so its
+                 BatchNorm running stats stay at the init values (mean 0, var 1,
+                 weight 1, bias 0), which makes BN an identity. A pure fixed
+                 random projection.
+    'bn_adapt' - no gradients on the weights, but BatchNorm keeps tracking the
+                 data, so the random features stay sanely scaled.
+
+    Returns the state_dict keys WeightEMA must leave alone. Its per-step
+    `param.mul_(1 - wd)` runs over the whole state_dict, so without this the
+    branch is decayed to 0.72x over a 300-epoch run despite requires_grad=False
+    -- and that silently applies to BatchNorm buffers, not just the weights.
+
+    'strict' skips the branch's buffers as well, so nothing under TFgramNet ever
+    changes. 'bn_adapt' skips only the parameters, leaving the running stats to
+    be tracked and EMA'd exactly as they are for every other branch.
+    """
+    if mode in (None, 'none'):
+        return set()
+    if mode not in ('strict', 'bn_adapt'):
+        raise ValueError(f'unknown freeze_tfgram mode: {mode!r}')
+
+    tf = net.TFgramNet
+    for p in tf.parameters():
+        p.requires_grad_(False)
+
+    if mode == 'strict':
+        tf.eval()
+        # trainer.py calls net.train() once per iteration, which would put the
+        # branch back in train mode. nn.Module.train() recurses through
+        # children, so stubbing this one out stops the recursion here.
+        tf.train = lambda mode=True: tf
+        return {f'TFgramNet.{k}' for k in tf.state_dict()}
+
+    return {f'TFgramNet.{n}' for n, _ in tf.named_parameters()}

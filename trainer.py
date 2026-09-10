@@ -9,7 +9,7 @@ from losses import ASDLoss, SupConLoss, WeightEMA
 
 
 class Trainer:
-    def __init__(self, device, net, ema_net, epochs=300, lr=0.0001, cfg=None):
+    def __init__(self, device, net, ema_net, epochs=300, lr=0.0001, cfg=None, ema_skip_keys=()):
         self.device = device
         self.epochs = epochs
         self.net = net
@@ -32,9 +32,10 @@ class Trainer:
                 encoding='utf-8') as json_file:
             json.dump(cfg, json_file, ensure_ascii=False, indent=4)
 
-        self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=lr)
+        self.optimizer = torch.optim.AdamW(
+            [p for p in self.net.parameters() if p.requires_grad], lr=lr)
 
-        self.ema_optimizer = WeightEMA(self.net, self.ema_net)
+        self.ema_optimizer = WeightEMA(self.net, self.ema_net, skip_keys=ema_skip_keys)
 
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=epochs,
                                                                     eta_min=0.1 * float(lr))
