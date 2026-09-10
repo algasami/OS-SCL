@@ -50,3 +50,7 @@ Loss (`utils.os_scl`): mixup-interpolated ArcFace CE + `SupConLoss` on the embed
 - `Preparation/split.py` renames in place, must run inside `data/eval_dataset`, once per download.
 - `eval.py` `mAUC` = mean over machine types of the *minimum per-ID AUC*.
 - `--csv` writes rows `model,dataset,machine,id,scope,AUC,pAUC,mAUC`; `scope` is `id` | `machine` | `overall`.
+
+## Working style
+
+- Long-running work (training, eval sweeps, downloads) should be launched in the background and monitored — don't stop to ask whether to wait. Run it with `run_in_background`, or set up a monitor/watcher, and notify me when it finishes or when something needs a decision. Only interrupt me for choices I actually have to make.
