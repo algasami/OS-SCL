@@ -1,0 +1,13 @@
+{
+    "m": 0.4,
+    "gpu_num": 0,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "ft_strict",
+    "seed": 2024,
+    "num_workers": 8,
+    "freeze_tfgram": "strict",
+    "model_name": "SCLTFSTgramMFN_ft_strict"
+}
