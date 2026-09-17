@@ -1,5 +1,15 @@
 # Frozen TFgram — is the branch *learned*, or a fixed random projection?
 
+> **Confirmed and refined by [`../seed-sweep`](../seed-sweep) (n=4).** The
+> conclusion below — *training TFgram buys nothing* — stands, and this file's
+> own warning ("the defensible claim is **freezing TFgram costs nothing**, not
+> *freezing helps*") was exactly right. Two refinements: the `f1` baseline used
+> here was accidentally off-stream (`num_workers=0` while every arm ran 8, which
+> desynchronises the torch RNG from epoch 1), so the apparent eval gains below
+> are inflated; and the ToyConveyor caveat this file raised is confirmed —
+> excluding it, every arm is within 0.09 AUC of `f1` at n=4. Corrections are
+> marked **[n=4]**.
+
 Follow-up to [`../gram-branch-redundancy`](../gram-branch-redundancy), which
 found TFgram largely redundant with Log-Mel (CKA 0.89, R² 0.63) and showed that
 dropping it entirely (f4) matches the full model. That leaves one thing
@@ -85,6 +95,7 @@ Baseline `f1` and the `f3`/`f4` rows are carried over from
 | arm | TFgram | trainable | wall clock | best epoch | dev AUC/pAUC/mAUC | eval AUC/pAUC/mAUC |
 |-----|--------|-----------|-----------|-----------|-------------------|--------------------|
 | f1 | trained | 1,377,535 | — | — | 94.95 / 89.67 / 89.22 | 94.84 / 90.51 / 90.48 |
+| f1 **[n=4]** | *on-stream rerun, mean of 4 seeds* | 1,377,535 | — | — | *94.90 +/- 0.14 / 89.76 / 88.66* | *95.53 +/- 0.23 / 91.11 / 91.51* |
 | f3 | trained, no Tgram | 1,096,553 | 5:24 | — | 94.30 / 88.77 / 87.39 | 95.99 / 91.11 / 92.00 |
 | f4 | removed | 1,178,239 | 3:10 | — | 95.01 / 89.57 / 89.17 | 95.64 / 91.49 / 91.63 |
 | `ft_bnadapt` | frozen, BN adapts | 1,178,815 | 4:05 | 280 | 94.92 / 89.53 / 89.17 | 95.59 / 90.94 / 92.08 |
@@ -117,6 +128,14 @@ Both frozen arms land on `f4`, not between `f4` and `f1` (dev: `ft_bnadapt` is
 0.09 below `f4`, `ft_strict` 0.35 above; eval: 0.05 below and 0.34 above). So
 freezing costs about what deleting costs — i.e. nothing.
 
+**[n=4]** This survives the sweep, with the magnitudes shrunk. Against a
+correctly-streamed `f1` over four seeds: `ft_strict` **+0.18 dev (p=0.44)** /
+**+0.48 eval (p=0.045, not significant after correcting for six tests)**, and
+`ft_bnadapt` **-0.05 dev (p=0.66)** / **+0.16 eval (p=0.37)**. Excluding
+ToyConveyor both are within 0.09 AUC of `f1` on both sets. The bolded dev 95.36
+for `ft_strict` above was its best of four draws; its four-seed mean is
+95.08 +/- 0.27, and the +1.39 dev mAUC is +0.92 +/- 1.18 (sd of the paired delta).
+
 ### The gains are ToyConveyor, and should not be claimed
 
 Every arm here "beats" f1 on the evaluation set, and it is all one machine.
@@ -147,6 +166,14 @@ unstable machine, and a +4.4 to +6.9 point spread on one machine across five run
 is what that instability looks like. So the defensible claim is
 **"freezing TFgram costs nothing"**, not "freezing TFgram helps".
 
+**[n=4] Confirmed.** `f1` scores 81.66 +/- 0.92 on eval ToyConveyor over four
+seeds, so 78.28 was indeed a bad draw. ToyConveyor's seed-to-seed spread reaches
+4.15 points — larger than any effect measured anywhere in these ablations — and
+with it excluded every arm collapses to within 0.09 AUC of `f1`. One loose end
+the sweep opened rather than closed: `f1` ranks *last* of the four arms on eval
+ToyConveyor in all four seeds, which points the opposite way from the paper.
+That is flagged as an open question in `../seed-sweep`, not a result.
+
 ## Figures
 
 Regenerate with `/home/f74134118/anaconda3/bin/python ablation/frozen-tfgram/make_plots.py`
@@ -175,5 +202,7 @@ per-machine outside ToyConveyor, and the CKA probe independently predicted it
 (TFgram at 0.89 CKA with Log-Mel; a branch that mostly re-derives its neighbour
 has little left to learn).
 
-Still missing, in priority order: a 3-5 seed sweep (`--seed`) over f1/f4/frozen,
-and a local `--fussion 2` Log-Mel-only run to anchor the low end.
+**[n=4]** The sweep is done — [`../seed-sweep`](../seed-sweep), 4 seeds x 4 arms
+— and it vindicated the reasoning in this paragraph: the agreement across dev,
+eval, per-machine and CKA held, while the magnitudes did not. Only the
+`--fussion 2` Log-Mel-only run is still missing.

@@ -1,5 +1,14 @@
 # Gram branch redundancy — which learned gram carries the fusion gain?
 
+> **Superseded in part by [`../seed-sweep`](../seed-sweep) (n=4).** The
+> conclusion below — *TFgram is redundant, Tgram is load-bearing* — stands. The
+> **magnitudes do not**: every number in this file is a single seed measured
+> against an `f1` baseline that was accidentally off-stream (it ran
+> `num_workers=0` while these arms ran 8, which desynchronises the torch RNG
+> from epoch 1). Rerun on-stream, `f1` scores 95.85 eval AUC instead of 94.84.
+> At n=4 no arm here separates from `f1`, and excluding ToyConveyor every
+> difference is within 0.09 AUC. Corrections are marked **[n=4]** below.
+
 The paper (arXiv:2509.13853) reports Log-Mel-only and the full 3-channel
 TFSTgram, plus STgram, but never reports Log-Mel + TFgram **without Tgram**.
 Table III has STgram(ArcFace), TFSTgram(ArcFace), STgram(OS-SCL),
@@ -65,6 +74,7 @@ TFSTgram; note it lands 0.77 AUC below the paper's reported 95.71 on dev).
 | arm | branches | params | train time | dev AUC/pAUC/mAUC | eval AUC/pAUC/mAUC |
 |-----|----------|--------|-----------|-------------------|--------------------|
 | f1 | mel+Tgram+TFgram | 1.3775M | — | 94.95 / 89.67 / 89.22 | 94.84 / 90.51 / 90.48 |
+| f1 **[n=4]** | *on-stream rerun, mean of 4 seeds* | 1.3775M | — | *94.90 +/- 0.14 / 89.76 / 88.66* | *95.53 +/- 0.23 / 91.11 / 91.51* |
 | f3 | mel+TFgram | 1.0966M | 5:24 | 94.30 / 88.77 / 87.39 | 95.99 / 91.11 / 92.00 |
 | f4 | mel+Tgram | 1.1782M | 3:10 | **95.01 / 89.57 / 89.17** | 95.64 / 91.49 / 91.63 |
 
@@ -79,13 +89,19 @@ f4   +0.06  -0.10  -0.05     +0.80  +0.98  +1.15
 ## Conclusion
 
 **TFgram is redundant.** Dropping it (f4) matches the full 3-channel model on
-dev (+0.06 AUC) and beats it on eval (+0.80 AUC), at 14% fewer parameters and
-41% less training time than f3 (3:10 vs 5:24; f1 was not timed, but it runs
-every branch f3 does plus Tgram, so it is strictly costlier). Dropping Tgram instead (f3) costs 0.64 AUC and 1.83
+dev and on eval, at 14% fewer parameters and 41% less training time than f3
+(3:10 vs 5:24; f1 was not timed, but it runs every branch f3 does plus Tgram,
+so it is strictly costlier). Dropping Tgram instead (f3) costs 0.64 AUC and 1.83
 mAUC on dev. This matches the CKA probe exactly: TFgram sits at 0.89 CKA with
 Log-Mel, Tgram at 0.06 against both.
 
-Across both test sets, f4 >= f1 everywhere. That is the robust result.
+**[n=4]** The original wording here was "matches on dev (+0.06 AUC) and *beats*
+it on eval (+0.80 AUC) ... f4 >= f1 everywhere". That eval advantage was an
+artifact of the off-stream baseline. Against a correctly-streamed `f1` over four
+seeds, f4 is **+0.20 dev (p=0.19)** and **+0.38 eval (p=0.22)**, and **-0.07 on
+eval excluding ToyConveyor**. The correct claim is *matches*, not *beats*:
+`f4` is indistinguishable from `f1`, which is still enough to call TFgram
+redundant, since it costs 199k parameters and a channel to achieve nothing.
 
 ## Figures
 
@@ -114,3 +130,9 @@ dev, eval, and the CKA probe. The *magnitudes* are not trustworthy at n=1.
 A seed sweep (`--seed`, now supported) over 3-5 seeds per arm is required
 before this becomes a claim. A local Log-Mel-only run (`--fussion 2`) is also
 missing and would anchor the low end.
+
+**[n=4]** That sweep has since been run — [`../seed-sweep`](../seed-sweep) —
+and this section called it correctly. ToyConveyor was indeed the whole story:
+f1's 78.28 was an unlucky draw (it scores 81.66 +/- 0.92 over four seeds), and
+with ToyConveyor excluded every arm lands within 0.09 AUC of f1 on both sets.
+The `--fussion 2` anchor is still missing.
