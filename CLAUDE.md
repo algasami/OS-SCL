@@ -126,6 +126,19 @@ taking a fourth slot. Aqua is below 3:1 on the light surface, so aqua marks need
 a direct label. Always render and actually look at the output before shipping,
 and check each title states something the data supports.
 
+## Commits
+
+Keep the whole commit message to **120 characters or fewer** — one subject line,
+no body. Say what changed and why in a single clause; detail belongs in the
+ablation README, not the log.
+
+```
+restructure tfgram-gradient into scores/ layout; nothing tracked left under results/
+frozen tfgram ablation: frozen-at-init branch matches trained (n=1)
+```
+
+No attribution or session trailers.
+
 ## Working style
 
 - Long-running work (training, eval sweeps, downloads) should be launched in the background and monitored — don't stop to ask whether to wait. Run it with `run_in_background`, or set up a monitor/watcher, and notify me when it finishes or when something needs a decision. Only interrupt me for choices I actually have to make.
