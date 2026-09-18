@@ -193,7 +193,7 @@ def main():
     ap.add_argument('--steps', type=int, default=200)
     ap.add_argument('--seed', type=int, default=2024)
     ap.add_argument('--ckpt', default='check_points/SCLTFSTgramMFN_sweep_f1_s2024/model.pth')
-    ap.add_argument('--out', default='ablation/tfgram-gradient/results/probe.json')
+    ap.add_argument('--out', default='ablation/tfgram-gradient/scores/probe.json')
     a = ap.parse_args()
 
     cfg = yaml.safe_load(open('config.yaml'))

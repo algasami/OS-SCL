@@ -34,7 +34,7 @@ isolates TFgram. This directory fills that gap.
 ## Step 1 — representational redundancy
 
 `cka_probe.py` measures linear CKA and linear predictability between the three
-branches of the *trained* `fussion=1` model. Full output in `results/cka.txt`:
+branches of the *trained* `fussion=1` model. Full output in `scores/cka.txt`:
 
 ```
 CKA(Log-Mel, TFgram) = 0.89     TFgram ~ Log-Mel
@@ -46,7 +46,7 @@ TFgram is largely a re-derivation of the Log-Mel spectrogram (63% linearly
 predictable from it, frame-wise). Tgram is the branch that is actually
 decorrelated from everything else.
 
-Run it with: `python ablation/gram-branch-redundancy/cka_probe.py <gpu>`
+Run it with: `python ablation/gram-branch-redundancy/cka_probe.py <gpu> > ablation/gram-branch-redundancy/scores/cka.txt`
 
 ## Step 2 — the training runs
 

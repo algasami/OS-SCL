@@ -37,6 +37,8 @@ def run(ablation):
         print(f'{ablation}: no scores/ -- skipped')
         return
     for model in sorted(os.listdir(scores)):
+        if not os.path.isdir(os.path.join(scores, model)):
+            continue          # ablation-level artifacts (cka.txt, probe.json, ...)
         # the log name is not derivable from the model name, so match on the
         # descriptor: model_name is 'SCLTFSTgramMFN_<desc>'
         desc = model.replace('SCLTFSTgramMFN', '').lstrip('_')

@@ -1,7 +1,7 @@
 """Collect the sweep's eval CSVs into per-arm mean/std tables.
 
 Reads ablation/seed-sweep/scores/SCLTFSTgramMFN_sweep_<arm>_s<seed>/eval_{dev,eval}.csv
-and writes results/summary.csv (one row per arm x dataset x metric) plus a
+and writes scores/summary.csv (one row per arm x dataset x metric) plus a
 per-machine table. Nothing is hardcoded: arms and seeds come from jobs.txt.
 """
 import csv, os, sys, statistics as st
@@ -44,8 +44,8 @@ def agg(vs):
             round(st.stdev(vs), 3) if len(vs) > 1 else 0.0,
             len(vs))
 
-os.makedirs(os.path.join(SWEEP, 'results'), exist_ok=True)
-with open(os.path.join(SWEEP, 'results', 'summary.csv'), 'w', newline='') as f:
+os.makedirs(os.path.join(SWEEP, 'scores'), exist_ok=True)
+with open(os.path.join(SWEEP, 'scores', 'summary.csv'), 'w', newline='') as f:
     w = csv.writer(f)
     w.writerow(['arm', 'dataset', 'metric', 'mean', 'std', 'n'])
     for (arm, ds), d in sorted(overall.items()):
@@ -53,7 +53,7 @@ with open(os.path.join(SWEEP, 'results', 'summary.csv'), 'w', newline='') as f:
             mean, sd, n = agg(d[m])
             w.writerow([arm, ds, m, mean, sd, n])
 
-with open(os.path.join(SWEEP, 'results', 'per_machine.csv'), 'w', newline='') as f:
+with open(os.path.join(SWEEP, 'scores', 'per_machine.csv'), 'w', newline='') as f:
     w = csv.writer(f)
     w.writerow(['arm', 'dataset', 'machine', 'metric', 'mean', 'std', 'n'])
     for (arm, ds, mc), d in sorted(machine.items()):

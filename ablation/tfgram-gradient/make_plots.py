@@ -4,7 +4,7 @@
 Run from the repo root:
     /home/f74134118/anaconda3/bin/python ablation/tfgram-gradient/make_plots.py
 
-Reads results/probe.json only; nothing is hardcoded. Writes PNGs to plots/.
+Reads scores/probe.json only; nothing is hardcoded. Writes PNGs to plots/.
 
 The argument these figures carry is TFgram vs Tgram, so exactly two categorical
 hues are in play and every other branch is context in neutral. The dead-weight
@@ -21,7 +21,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 PLOTS = os.path.join(HERE, 'plots')
 os.makedirs(PLOTS, exist_ok=True)
-R = json.load(open(os.path.join(HERE, 'results', 'probe.json')))
+R = json.load(open(os.path.join(HERE, 'scores', 'probe.json')))
 
 # ---------------------------------------------------------------- palette ---
 # Categorical slots 1-2 of the reference palette, shared with

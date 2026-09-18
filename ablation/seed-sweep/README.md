@@ -209,7 +209,7 @@ light surface, so the relief rule applies and every aqua mark is direct-labelled
 ```bash
 bash ablation/seed-sweep/run.sh                  # 2 slots, GPUs 0 and 1
 SWEEP_SLOTS=3 SWEEP_GPUS="0 1 2" bash ablation/seed-sweep/run.sh
-python ablation/seed-sweep/collect.py            # -> results/summary.csv, per_machine.csv
+python ablation/seed-sweep/collect.py            # -> scores/summary.csv, per_machine.csv
 ```
 
 Resumable: a cell whose two eval CSVs exist is skipped, so the runner can be

@@ -68,13 +68,22 @@ ablation/<name>/
   run.sh                 reproduces the runs end to end; resumable
   make_plots.py          figures; reads scores/, never check_points/
   plots/*.png            committed -- the only copy that survives a log cleanup
-  scores/<model_name>/   THE COMMITTED RECORD, a few KB per run:
-      eval_dev.csv         from `eval.py --csv <path>`
-      eval_eval.csv
-      config.json          copied from the checkpoint dir
-      curve.csv            distilled training curve (ablation/distill_curves.py)
-  results/                 raw train/eval logs -- gitignored scratch, NOT durable
+  scores/                THE COMMITTED RECORD -- a few KB per run
+      <model_name>/        one subdirectory per trained run:
+          eval_dev.csv       from `eval.py --csv <path>`
+          eval_eval.csv
+          config.json        copied from the checkpoint dir
+          curve.csv          distilled training curve (ablation/distill_curves.py)
+      *.json | *.txt | *.csv   ablation-level artifacts: probe output, derived
+                               summaries (cka.txt, probe.json, summary.csv)
+  results/               raw logs -- gitignored scratch, NOT durable
 ```
+
+**Nothing under `results/` may be tracked.** If an artifact is worth committing
+it goes in `scores/`. Only `*.log` is gitignored by pattern, so a `.json` or
+`.txt` dropped in `results/` *looks* safe and is not -- it sits in a directory
+everyone treats as disposable. An ablation that trains nothing (a probe) still
+has a `scores/`; it just holds flat files instead of per-run subdirectories.
 
 `check_points/` is **gitignored scratch holding only `model.pth`**. Nothing in it
 is durable: don't read it from a plot script and don't put results there.

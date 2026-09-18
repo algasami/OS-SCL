@@ -12,7 +12,10 @@ showed frozen TFgram ≈ trained TFgram ≈ no TFgram. Two hypotheses survived:
 They imply opposite fixes, so they have to be separated before spending a
 300-epoch run. This probe is cheap (~20 min, no training) and decides it.
 
-Run: `python ablation/tfgram-gradient/probe.py --gpu 2 --steps 400 --seed 2024`
+Run: `bash ablation/tfgram-gradient/run.sh 2`  (probe + figures, ~20 min)
+
+The durable record is `scores/probe.json`; `results/` holds only the run log
+and is gitignored scratch.
 
 ## Measurement 1 — drift of the trained checkpoint from its own init
 
@@ -116,7 +119,7 @@ evidence is `|dW|/|W|` and the drift cosine against the dead-weight control.
 
 Regenerate with `/home/f74134118/anaconda3/bin/python ablation/tfgram-gradient/make_plots.py`
 (matplotlib lives in the `base` conda env, not `os-scl`). All four read
-`results/probe.json`; nothing is hardcoded.
+`scores/probe.json`; nothing is hardcoded.
 
 | figure | shows |
 |--------|-------|

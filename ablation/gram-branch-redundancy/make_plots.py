@@ -22,6 +22,7 @@ from matplotlib.colors import LinearSegmentedColormap
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS = os.path.join(HERE, 'results')
+SCORES = os.path.join(HERE, 'scores')
 PLOTS = os.path.join(HERE, 'plots')
 os.makedirs(PLOTS, exist_ok=True)
 
@@ -71,7 +72,7 @@ def load_scores():
 
 
 def load_cka():
-    txt = open(os.path.join(RESULTS, 'cka.txt')).read()
+    txt = open(os.path.join(SCORES, 'cka.txt')).read()
     cka, r2, section = {'clip': {}, 'frame': {}}, {}, None
     for line in txt.splitlines():
         if 'clip level' in line:
