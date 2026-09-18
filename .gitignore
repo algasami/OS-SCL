@@ -2,3 +2,4 @@
 *.pth
 *.log
 data
+check_points/

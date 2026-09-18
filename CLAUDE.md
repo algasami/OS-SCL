@@ -60,26 +60,62 @@ Loss (`utils.os_scl`): mixup-interpolated ArcFace CE + `SupConLoss` on the embed
 
 ## Ablations
 
-Each ablation lives in `ablation/<name>/` and is expected to carry **all** of:
+Each ablation is a self-contained directory, `ablation/<name>/`:
 
-- `README.md` — question, setup, results, and an honest account of what does *not*
-  replicate. Supersede earlier findings by annotating them in place (a note at the
-  top plus inline `**[n=4]**`-style corrections), never by rewriting the original
-  numbers away.
-- `run.sh` — reproduces the runs end to end; make it resumable where a run costs hours.
-- `results/` — raw train/eval logs, committed.
-- **`make_plots.py` plus `plots/*.png` — every ablation ships figures.** Run it with
-  `/home/f74134118/anaconda3/bin/python` (matplotlib is in the `base` env, not
-  `os-scl`), read from the eval CSVs and logs so nothing is hardcoded, and add a
-  Figures table to the README listing what each one shows.
+```
+ablation/<name>/
+  README.md              question, setup, results, and what does NOT replicate
+  run.sh                 reproduces the runs end to end; resumable
+  make_plots.py          figures; reads scores/, never check_points/
+  plots/*.png            committed -- the only copy that survives a log cleanup
+  scores/<model_name>/   THE COMMITTED RECORD, a few KB per run:
+      eval_dev.csv         from `eval.py --csv <path>`
+      eval_eval.csv
+      config.json          copied from the checkpoint dir
+      curve.csv            distilled training curve (ablation/distill_curves.py)
+  results/                 raw train/eval logs -- gitignored scratch, NOT durable
+```
 
-Figures follow the shared palette established in the existing `make_plots.py`
-files: categorical slots `#2a78d6` / `#eb6834` / `#1baf7a` on surface `#fcfcfb`,
-an arm keeping its colour across figure sets. Only **three** categorical slots
-validate under `--pairs all`; a baseline series is drawn achromatic rather than
+`check_points/` is **gitignored scratch holding only `model.pth`**. Nothing in it
+is durable: don't read it from a plot script and don't put results there.
+Resolve a run's scores with `ablation/scores_path.py`:
+
+```python
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from scores_path import scores_csv, scores_dir
+```
+
+It globs `ablation/*/scores/<model_name>`, so cross-ablation reads (every set
+plots the shared `SCLTFSTgramMFN_test` baseline, which lives in
+`ablation/baselines/scores/`) need no relative paths. Scores belong to the
+ablation that *produced* the run.
+
+Rules that are not optional:
+
+- **Write eval CSVs straight to `scores/`** via `eval.py --csv <path>`. The bare
+  `--csv` flag writes next to the weights, which are gitignored.
+- **Distil the training curve** with `python ablation/distill_curves.py <name>`
+  after a run. `trainer.py` only prints an EPOCH line when validation loss
+  *improves*, so the curve is a best-so-far trace with fewer rows than epochs —
+  that is expected, not data loss. A 300-epoch log is ~10 MB of tqdm spam around
+  ~200 useful lines, and `*.log` is gitignored: two ablations already lost their
+  curves this way and their fig4 can never be regenerated.
+- **Every ablation ships figures.** Run `make_plots.py` with
+  `/home/f74134118/anaconda3/bin/python` (matplotlib is in `base`, not `os-scl`),
+  read only from `scores/` so a clone can regenerate them, and add a Figures
+  table to the README. Degrade gracefully — skip a figure whose inputs are
+  missing rather than crashing the whole script.
+- **Supersede by annotation.** When a later ablation corrects an earlier one, add
+  a note at the top and inline `**[n=4]**`-style corrections. Never rewrite the
+  original numbers away.
+
+Figures follow the shared palette in the existing `make_plots.py` files:
+categorical slots `#2a78d6` / `#eb6834` / `#1baf7a` on surface `#fcfcfb`, and an
+arm keeps its colour across figure sets. Only **three** categorical slots
+validate under `--pairs all`; draw a baseline series achromatic rather than
 taking a fourth slot. Aqua is below 3:1 on the light surface, so aqua marks need
-a direct label. Always render and actually look at the output before shipping —
-and check that each title states something the data supports.
+a direct label. Always render and actually look at the output before shipping,
+and check each title states something the data supports.
 
 ## Working style
 

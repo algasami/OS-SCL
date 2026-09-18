@@ -19,6 +19,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from scores_path import scores_csv, scores_dir  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +77,7 @@ DATASETS = ['dev', 'eval']
 
 
 def load(arm, ds, scope):
-    p = f'check_points/{CKPT[arm]}/eval_{ds}.csv'
+    p = scores_csv(CKPT[arm], ds)
     key = (lambda r: r['machine']) if scope == 'machine' else (lambda r: 'ALL')
     return {key(r): {k: float(r[k]) * 100 for k in ('AUC', 'pAUC', 'mAUC')}
             for r in csv.DictReader(open(p)) if r['scope'] == scope}
@@ -94,12 +97,42 @@ def mean_excl_tc(arm, ds, metric='AUC'):
             - sum(M[('f1', ds)][m][metric] for m in ms)) / len(ms)
 
 
-def load_curve(arm, path):
+def _curve_from_scores(model_name):
+    """Prefer the committed scores/<model>/curve.csv over the raw log.
+
+    Logs are gitignored, so they do not survive a clone -- or a cleanup. See
+    ablation/distill_curves.py. Returns None when neither source exists, so the
+    caller can skip the figure instead of crashing.
+    """
+    import csv as _csv
+    try:
+        p = os.path.join(scores_dir(model_name), 'curve.csv')
+    except FileNotFoundError:
+        return None
+    if not os.path.exists(p):
+        return None
+    rows = list(_csv.DictReader(open(p)))
+    if not rows:
+        return None
+    a = np.array([[float(r['epoch']), float(r['valid_loss']), float(r['valid_acc'])]
+                  for r in rows])
+    return a[:, 0], a[:, 1], a[:, 2] * 100
+
+
+def _curve_from_log(path):
+    if not os.path.exists(path):
+        return None
     txt = open(path, errors='ignore').read().replace('\r', '\n')
     rows = re.findall(r'EPOCH:\s*(\d+)\s*\|\s*Train_loss:\s*([\d.]+)\s*\|\s*Train_accuracy:\s*([\d.]+)'
                       r'\s*\|\s*Valid_loss:\s*([\d.]+)\s*\|\s*Valid_accuracy:\s*([\d.]+)', txt)
+    if not rows:
+        return None
     a = np.array([[float(x) for x in r] for r in rows])
     return a[:, 0], a[:, 3], a[:, 4] * 100
+
+
+def load_curve(arm, path):
+    return _curve_from_scores(CKPT[arm]) or _curve_from_log(path)
 
 
 # ------------------------------------------ fig 1: the ToyConveyor collapse ---
@@ -249,7 +282,15 @@ plt.close(fig)
 CURVES = {'ft_strict': os.path.join(RESULTS, 'train_ft_strict.log'),
           'ft_bnadapt': os.path.join(RESULTS, 'train_ft_bnadapt.log'),
           'f4': os.path.join(HERE, '..', 'gram-branch-redundancy', 'results', 'train_f4.log')}
-curves = {a: load_curve(a, p) for a, p in CURVES.items()}
+curves = {a: c for a, p in CURVES.items() if (c := load_curve(a, p)) is not None}
+
+if len(curves) < len(ARMS3):
+    missing = [a for a in ARMS3 if a not in curves]
+    print(f'skipping fig4_training_curves.png: no curve data for {missing}. '
+          'Training logs are gitignored and these predate '
+          'ablation/distill_curves.py, so the committed PNG is the only copy.')
+    raise SystemExit(0)
+
 fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.3))
 fig.subplots_adjust(left=0.078, right=0.985, top=0.735, bottom=0.145, wspace=0.205)
 ZOOM = 180

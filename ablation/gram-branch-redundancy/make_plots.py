@@ -15,6 +15,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from scores_path import scores_csv, scores_dir  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -59,7 +62,7 @@ def load_scores():
     out = {}
     for ds in ('dev', 'eval'):
         for arm, d, _ in ARMS:
-            p = f'check_points/{d}/eval_{ds}.csv'
+            p = scores_csv(d, ds)
             for r in csv.DictReader(open(p)):
                 if r['scope'] in ('machine', 'overall'):
                     key = 'ALL' if r['scope'] == 'overall' else r['machine']
@@ -94,12 +97,43 @@ def cka_matrix(pairs):
     return M
 
 
-def load_curve(arm):
-    txt = open(os.path.join(RESULTS, f'train_{arm}.log'), errors='ignore').read().replace('\r', '\n')
+def _curve_from_scores(model_name):
+    """Prefer the committed scores/<model>/curve.csv over the raw log.
+
+    Logs are gitignored, so they do not survive a clone -- or a cleanup. See
+    ablation/distill_curves.py. Returns None when neither source exists, so the
+    caller can skip the figure instead of crashing.
+    """
+    import csv as _csv
+    try:
+        p = os.path.join(scores_dir(model_name), 'curve.csv')
+    except FileNotFoundError:
+        return None
+    if not os.path.exists(p):
+        return None
+    rows = list(_csv.DictReader(open(p)))
+    if not rows:
+        return None
+    a = np.array([[float(r['epoch']), float(r['valid_loss']), float(r['valid_acc'])]
+                  for r in rows])
+    return a[:, 0], a[:, 1], a[:, 2] * 100
+
+
+def _curve_from_log(path):
+    if not os.path.exists(path):
+        return None
+    txt = open(path, errors='ignore').read().replace('\r', '\n')
     rows = re.findall(r'EPOCH:\s*(\d+)\s*\|\s*Train_loss:\s*([\d.]+)\s*\|\s*Train_accuracy:\s*([\d.]+)'
                       r'\s*\|\s*Valid_loss:\s*([\d.]+)\s*\|\s*Valid_accuracy:\s*([\d.]+)', txt)
+    if not rows:
+        return None
     a = np.array([[float(x) for x in r] for r in rows])
     return a[:, 0], a[:, 3], a[:, 4] * 100
+
+
+def load_curve(arm):
+    return (_curve_from_scores(dict((a, d) for a, d, _ in ARMS)[arm])
+            or _curve_from_log(os.path.join(RESULTS, f'train_{arm}.log')))
 
 
 S = load_scores()
@@ -239,7 +273,15 @@ plt.close(fig)
 # accuracy plateau. Final values ride in the legend, which cannot collide.
 fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.2))
 fig.subplots_adjust(left=0.075, right=0.985, top=0.745, bottom=0.145, wspace=0.20)
-curves = {a: load_curve(a) for a in ('f3', 'f4')}
+curves = {a: c for a in ('f3', 'f4') if (c := load_curve(a)) is not None}
+
+if len(curves) < len(('f3', 'f4')):
+    missing = [a for a in ('f3', 'f4') if a not in curves]
+    print(f'skipping fig4_training_curves.png: no curve data for {missing}. '
+          'Training logs are gitignored and these predate '
+          'ablation/distill_curves.py, so the committed PNG is the only copy.')
+    raise SystemExit(0)
+
 ZOOM = 180
 
 ax = axes[0]
