@@ -142,3 +142,4 @@ No attribution or session trailers.
 ## Working style
 
 - Long-running work (training, eval sweeps, downloads) should be launched in the background and monitored — don't stop to ask whether to wait. Run it with `run_in_background`, or set up a monitor/watcher, and notify me when it finishes or when something needs a decision. Only interrupt me for choices I actually have to make.
+- Subagents are at your disposal: spawn them at will whenever you judge it fits, without asking first. Pick the model to match the task — Opus or higher for work needing equal ability, Sonnet for lighter, mechanical work.
