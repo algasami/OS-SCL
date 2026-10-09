@@ -54,11 +54,18 @@ def cka(X, Y):
 
 
 def lin_r2(X, Y):
-    """share of Y's frame-wise variance that is a linear function of X"""
+    """share of Y's frame-wise variance that is a linear function of X
+
+    In-sample OLS with intercept, computed as the projection of centred Y onto
+    the column space of centred X, with a rank-truncated SVD. A ReLU branch can
+    have a dead (near-constant) channel; plain lstsq then fits its ~1e-17 noise
+    and returns garbage, e.g. R^2 -0.12 where the answer is 0.006 (seen in a
+    rerun of ../tfgram-redesign/tgram_probe.py).
+    """
     X = X - X.mean(0, keepdim=True); Y = Y - Y.mean(0, keepdim=True)
-    X1 = torch.cat([X, torch.ones(X.shape[0], 1, dtype=X.dtype)], 1)
-    W = torch.linalg.lstsq(X1, Y).solution
-    return (1 - ((Y - X1 @ W) ** 2).sum() / (Y ** 2).sum()).item()
+    U, S, _ = torch.linalg.svd(X, full_matrices=False)
+    U = U[:, S > 1e-10 * S[0]]
+    return (((U.T @ Y) ** 2).sum() / (Y ** 2).sum()).item()
 
 
 def frames(net, wavs, mel):
