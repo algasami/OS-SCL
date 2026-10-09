@@ -42,8 +42,9 @@ def parse_arguments():
     parser.add_argument('--csv', type=str, nargs='?', const='auto',
                         help='Export the evaluation matrix as a .csv file. Give a path, or pass the '
                              'flag alone to write eval_<dev|eval>.csv next to the checkpoint.')
-    parser.add_argument('--tf_act', type=str, choices=['relu', 'leaky'],
-                        help="TFgram nonlinearity: 'relu' (paper) or 'leaky' (LeakyReLU 0.2, as in Tgram)")
+    parser.add_argument('--tf_act', type=str, choices=['relu', 'leaky', 'linear'],
+                        help="TFgram nonlinearity: 'relu' (paper), 'leaky' (LeakyReLU 0.2, as in Tgram) "
+                             "or 'linear' (identity)")
     parser.add_argument('--tf_pool', type=str, choices=['max', 'avg'],
                         help="TFgram downsampling: 'max' (paper) or 'avg' (linear, sign-preserving)")
     parser.add_argument('--strict', dest='strict', action='store_true', default=None,

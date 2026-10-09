@@ -74,12 +74,16 @@ class ConvBlock(nn.Module):
 # TFgram redesign switches (ablation/tfgram-redesign). The defaults, 'relu' and
 # 'max', are the paper's branch exactly; neither alternative adds parameters, so
 # all four combinations draw identical inits at a given seed.
-TF_ACTS = ('relu', 'leaky')
+TF_ACTS = ('relu', 'leaky', 'linear')
 TF_POOLS = ('max', 'avg')
 
 
 def tf_act(x, act):
-    # LeakyReLU(0.2) matches TgramNet, the branch that stays decorrelated
+    # LeakyReLU(0.2) matches TgramNet, the branch that stays decorrelated;
+    # 'linear' is the identity (ablation/tfgram-linear): with avg pooling the
+    # whole branch is then affine in the waveform, so it can't be an envelope
+    if act == 'linear':
+        return x
     return F.relu_(x) if act == 'relu' else F.leaky_relu_(x, 0.2)
 
 
