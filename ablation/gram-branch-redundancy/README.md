@@ -9,6 +9,15 @@
 > At n=4 no arm here separates from `f1`, and excluding ToyConveyor every
 > difference is within 0.09 AUC. Corrections are marked **[n=4]** below.
 
+> **CKA metric correction from [`../tfgram-redesign`](../tfgram-redesign).**
+> Clip-level linear CKA (656 clips × 40,064 dims) is biased toward 1 when
+> N ≪ D: both Gram matrices approach a scaled identity, and two independent
+> random signals of this shape score clip CKA 0.98. The headline **clip CKA
+> 0.89** below is inflated by that bias. Read the frame-level numbers instead
+> (205k frames × 128 dims, no such bias): **frame CKA 0.81 and R² 0.63** for
+> Log-Mel ~ TFgram, against frame CKA 0.003 for Tgram ~ TFgram. They support the
+> same conclusion. Corrections are marked **[clip-CKA bias]** below.
+
 The paper (arXiv:2509.13853) reports Log-Mel-only and the full 3-channel
 TFSTgram, plus STgram, but never reports Log-Mel + TFgram **without Tgram**.
 Table III has STgram(ArcFace), TFSTgram(ArcFace), STgram(OS-SCL),
@@ -41,6 +50,10 @@ CKA(Log-Mel, TFgram) = 0.89     TFgram ~ Log-Mel
 CKA(Tgram,   TFgram) = 0.06     Tgram is orthogonal to TFgram
 CKA(Log-Mel, Tgram)  = 0.06     Tgram is orthogonal to Log-Mel
 ```
+
+**[clip-CKA bias]** These are clip-level and upward-biased (see the note at the
+top). The frame-level values from the same `scores/cka.txt` are 0.81, 0.003 and
+0.003.
 
 TFgram is largely a re-derivation of the Log-Mel spectrogram (63% linearly
 predictable from it, frame-wise). Tgram is the branch that is actually
@@ -93,7 +106,7 @@ dev and on eval, at 14% fewer parameters and 41% less training time than f3
 (3:10 vs 5:24; f1 was not timed, but it runs every branch f3 does plus Tgram,
 so it is strictly costlier). Dropping Tgram instead (f3) costs 0.64 AUC and 1.83
 mAUC on dev. This matches the CKA probe exactly: TFgram sits at 0.89 CKA with
-Log-Mel, Tgram at 0.06 against both.
+Log-Mel, Tgram at 0.06 against both. **[clip-CKA bias]** Frame-level: 0.81 and 0.003.
 
 **[n=4]** The original wording here was "matches on dev (+0.06 AUC) and *beats*
 it on eval (+0.80 AUC) ... f4 >= f1 everywhere". That eval advantage was an

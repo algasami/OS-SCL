@@ -1,3 +1,4 @@
+import json
 import csv
 import os
 import sys
@@ -41,6 +42,10 @@ def parse_arguments():
     parser.add_argument('--csv', type=str, nargs='?', const='auto',
                         help='Export the evaluation matrix as a .csv file. Give a path, or pass the '
                              'flag alone to write eval_<dev|eval>.csv next to the checkpoint.')
+    parser.add_argument('--tf_act', type=str, choices=['relu', 'leaky'],
+                        help="TFgram nonlinearity: 'relu' (paper) or 'leaky' (LeakyReLU 0.2, as in Tgram)")
+    parser.add_argument('--tf_pool', type=str, choices=['max', 'avg'],
+                        help="TFgram downsampling: 'max' (paper) or 'avg' (linear, sign-preserving)")
     parser.add_argument('--strict', dest='strict', action='store_true', default=None,
                         help='Load the checkpoint with strict=True (default). Use --no-strict for pruned models.')
     parser.add_argument('--no-strict', dest='strict', action='store_false',
@@ -119,6 +124,19 @@ def main():
 
     device_num = cfg['gpu_num']
     device = torch.device(f'cuda:{device_num}')
+
+    # tf_act/tf_pool add no parameters, so a checkpoint trained with them loads
+    # cleanly into the wrong architecture and scores silently wrong. Trust the
+    # config trainer.py saved next to the weights over the command line.
+    ckpt_cfg_path = os.path.join(os.path.dirname(cfg['model_path']), 'config.json')
+    if os.path.exists(ckpt_cfg_path):
+        with open(ckpt_cfg_path, encoding='UTF-8') as f:
+            ckpt_cfg = json.load(f)
+        for key, default in (('tf_act', 'relu'), ('tf_pool', 'max')):
+            trained, asked = ckpt_cfg.get(key, default), cfg.get(key, default)
+            if trained != asked:
+                raise SystemExit(f'{key} mismatch: checkpoint trained with {trained!r}, '
+                                 f'eval asked for {asked!r} ({ckpt_cfg_path})')
 
     net = SCLTFSTgramMFN(m=cfg['m'], cfg=cfg).to(device)
     strict = cfg.get('strict', True)

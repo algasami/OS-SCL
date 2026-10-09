@@ -1,0 +1,257 @@
+{
+  "note": "TFgram at random init (eval mode, BN at init stats = identity); no training. CKA vs Log-Mel on 656 clips, 16 per machine ID.",
+  "results": [
+    {
+      "slope": 0.0,
+      "pool": "max",
+      "seed": 2024,
+      "cka_clip": 0.8143536850118798,
+      "cka_frame": 0.7459511699786882
+    },
+    {
+      "slope": 0.0,
+      "pool": "max",
+      "seed": 2025,
+      "cka_clip": 0.8175381207087485,
+      "cka_frame": 0.7514629907185176
+    },
+    {
+      "slope": 0.0,
+      "pool": "max",
+      "seed": 2026,
+      "cka_clip": 0.8170692650589728,
+      "cka_frame": 0.7516225600355679
+    },
+    {
+      "slope": 0.0,
+      "pool": "avg",
+      "seed": 2024,
+      "cka_clip": 0.8087195648397107,
+      "cka_frame": 0.730950323066271
+    },
+    {
+      "slope": 0.0,
+      "pool": "avg",
+      "seed": 2025,
+      "cka_clip": 0.8139781226874174,
+      "cka_frame": 0.7402421653325099
+    },
+    {
+      "slope": 0.0,
+      "pool": "avg",
+      "seed": 2026,
+      "cka_clip": 0.8153325373110308,
+      "cka_frame": 0.7455000968483038
+    },
+    {
+      "slope": 0.2,
+      "pool": "max",
+      "seed": 2024,
+      "cka_clip": 0.816733671386821,
+      "cka_frame": 0.74868283182871
+    },
+    {
+      "slope": 0.2,
+      "pool": "max",
+      "seed": 2025,
+      "cka_clip": 0.819403830132958,
+      "cka_frame": 0.755023308017222
+    },
+    {
+      "slope": 0.2,
+      "pool": "max",
+      "seed": 2026,
+      "cka_clip": 0.8171947642016743,
+      "cka_frame": 0.7511758530256664
+    },
+    {
+      "slope": 0.2,
+      "pool": "avg",
+      "seed": 2024,
+      "cka_clip": 0.8094149067063308,
+      "cka_frame": 0.7313891389145204
+    },
+    {
+      "slope": 0.2,
+      "pool": "avg",
+      "seed": 2025,
+      "cka_clip": 0.8119796002532739,
+      "cka_frame": 0.7364025543848302
+    },
+    {
+      "slope": 0.2,
+      "pool": "avg",
+      "seed": 2026,
+      "cka_clip": 0.8111947672052774,
+      "cka_frame": 0.7367548472337758
+    },
+    {
+      "slope": 0.5,
+      "pool": "max",
+      "seed": 2024,
+      "cka_clip": 0.817054139868168,
+      "cka_frame": 0.7492881966539913
+    },
+    {
+      "slope": 0.5,
+      "pool": "max",
+      "seed": 2025,
+      "cka_clip": 0.8190045194901001,
+      "cka_frame": 0.7559929710749156
+    },
+    {
+      "slope": 0.5,
+      "pool": "max",
+      "seed": 2026,
+      "cka_clip": 0.817697137676221,
+      "cka_frame": 0.7499803514168798
+    },
+    {
+      "slope": 0.5,
+      "pool": "avg",
+      "seed": 2024,
+      "cka_clip": 0.8081764052301122,
+      "cka_frame": 0.729664035799393
+    },
+    {
+      "slope": 0.5,
+      "pool": "avg",
+      "seed": 2025,
+      "cka_clip": 0.8123900718022912,
+      "cka_frame": 0.7364877011336453
+    },
+    {
+      "slope": 0.5,
+      "pool": "avg",
+      "seed": 2026,
+      "cka_clip": 0.8071592137981208,
+      "cka_frame": 0.7262695355769218
+    },
+    {
+      "slope": 0.8,
+      "pool": "max",
+      "seed": 2024,
+      "cka_clip": 0.8154006833614307,
+      "cka_frame": 0.7468735966420774
+    },
+    {
+      "slope": 0.8,
+      "pool": "max",
+      "seed": 2025,
+      "cka_clip": 0.8176861405452245,
+      "cka_frame": 0.7534053105411981
+    },
+    {
+      "slope": 0.8,
+      "pool": "max",
+      "seed": 2026,
+      "cka_clip": 0.8154890598125522,
+      "cka_frame": 0.7447653211454529
+    },
+    {
+      "slope": 0.8,
+      "pool": "avg",
+      "seed": 2024,
+      "cka_clip": 0.8035461906822382,
+      "cka_frame": 0.7210466575093727
+    },
+    {
+      "slope": 0.8,
+      "pool": "avg",
+      "seed": 2025,
+      "cka_clip": 0.8125730053281669,
+      "cka_frame": 0.7352994355642276
+    },
+    {
+      "slope": 0.8,
+      "pool": "avg",
+      "seed": 2026,
+      "cka_clip": 0.8047585038673192,
+      "cka_frame": 0.7212022771976395
+    },
+    {
+      "slope": 0.95,
+      "pool": "max",
+      "seed": 2024,
+      "cka_clip": 0.8142355615817807,
+      "cka_frame": 0.7448840409308575
+    },
+    {
+      "slope": 0.95,
+      "pool": "max",
+      "seed": 2025,
+      "cka_clip": 0.8166614774714954,
+      "cka_frame": 0.7507416187930447
+    },
+    {
+      "slope": 0.95,
+      "pool": "max",
+      "seed": 2026,
+      "cka_clip": 0.8141396627716,
+      "cka_frame": 0.7419786579372847
+    },
+    {
+      "slope": 0.95,
+      "pool": "avg",
+      "seed": 2024,
+      "cka_clip": 0.7655248563517661,
+      "cka_frame": 0.5514293746781598
+    },
+    {
+      "slope": 0.95,
+      "pool": "avg",
+      "seed": 2025,
+      "cka_clip": 0.7813560130530997,
+      "cka_frame": 0.5936704885318093
+    },
+    {
+      "slope": 0.95,
+      "pool": "avg",
+      "seed": 2026,
+      "cka_clip": 0.7652605523781854,
+      "cka_frame": 0.5653015696647169
+    },
+    {
+      "slope": 1.0,
+      "pool": "max",
+      "seed": 2024,
+      "cka_clip": 0.8138307293475939,
+      "cka_frame": 0.7441641345468978
+    },
+    {
+      "slope": 1.0,
+      "pool": "max",
+      "seed": 2025,
+      "cka_clip": 0.8162586628890718,
+      "cka_frame": 0.7496992844411551
+    },
+    {
+      "slope": 1.0,
+      "pool": "max",
+      "seed": 2026,
+      "cka_clip": 0.813688812621435,
+      "cka_frame": 0.7410466423423323
+    },
+    {
+      "slope": 1.0,
+      "pool": "avg",
+      "seed": 2024,
+      "cka_clip": 0.07832206660872179,
+      "cka_frame": 0.00038484134840482726
+    },
+    {
+      "slope": 1.0,
+      "pool": "avg",
+      "seed": 2025,
+      "cka_clip": 0.07961801722428724,
+      "cka_frame": 0.0002442547208660641
+    },
+    {
+      "slope": 1.0,
+      "pool": "avg",
+      "seed": 2026,
+      "cka_clip": 0.0794987299686971,
+      "cka_frame": 0.00016805152540189794
+    }
+  ]
+}

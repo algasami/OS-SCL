@@ -1,0 +1,122 @@
+{
+  "SCLTFSTgramMFN_pilot_relu_max_s2024": {
+    "tf_act": "relu",
+    "tf_pool": "max",
+    "seed": 2024,
+    "epoch": 30,
+    "init": {
+      "cka_clip/Log-Mel~TFgram": 0.8104216049767067,
+      "cka_frame/Log-Mel~TFgram": 0.7359583973132585,
+      "cka_clip/Tgram~TFgram": 0.04381159961542855,
+      "cka_frame/Tgram~TFgram": 0.0022973903851302687,
+      "cka_clip/Log-Mel~Tgram": 0.07330700143449947,
+      "cka_frame/Log-Mel~Tgram": 0.0045804462375577245,
+      "r2/Log-Mel->TFgram": 0.8241834049816665,
+      "r2/Tgram->TFgram": 0.016009219969281063,
+      "tfgram_std": 0.001474542922074821,
+      "tfgram_frac_neg": 0.0
+    },
+    "trained": {
+      "cka_clip/Log-Mel~TFgram": 0.7771281311613937,
+      "cka_frame/Log-Mel~TFgram": 0.012562568044028517,
+      "cka_clip/Tgram~TFgram": 0.04768514893404205,
+      "cka_frame/Tgram~TFgram": 0.004755535880544962,
+      "cka_clip/Log-Mel~Tgram": 0.0730227019483291,
+      "cka_frame/Log-Mel~Tgram": 0.004874916315509657,
+      "r2/Log-Mel->TFgram": 0.01822149580732113,
+      "r2/Tgram->TFgram": 0.04907961843210018,
+      "tfgram_std": 0.13429997344949765,
+      "tfgram_frac_neg": 0.0
+    }
+  },
+  "SCLTFSTgramMFN_pilot_relu_avg_s2024": {
+    "tf_act": "relu",
+    "tf_pool": "avg",
+    "seed": 2024,
+    "epoch": 30,
+    "init": {
+      "cka_clip/Log-Mel~TFgram": 0.806317004668436,
+      "cka_frame/Log-Mel~TFgram": 0.7268082312503101,
+      "cka_clip/Tgram~TFgram": 0.04309070100410946,
+      "cka_frame/Tgram~TFgram": 0.002164091056958613,
+      "cka_clip/Log-Mel~Tgram": 0.07330700143449947,
+      "cka_frame/Log-Mel~Tgram": 0.0045804462375577245,
+      "r2/Log-Mel->TFgram": 0.8338003278570842,
+      "r2/Tgram->TFgram": 0.015693452643684713,
+      "tfgram_std": 0.0004266969407529706,
+      "tfgram_frac_neg": 0.0
+    },
+    "trained": {
+      "cka_clip/Log-Mel~TFgram": 0.7580687494472073,
+      "cka_frame/Log-Mel~TFgram": 0.024512762213637677,
+      "cka_clip/Tgram~TFgram": 0.04887582136669102,
+      "cka_frame/Tgram~TFgram": 0.00506325446268812,
+      "cka_clip/Log-Mel~Tgram": 0.07177547200512306,
+      "cka_frame/Log-Mel~Tgram": 0.00419196425353713,
+      "r2/Log-Mel->TFgram": 0.029007600759082708,
+      "r2/Tgram->TFgram": 0.051593897551887924,
+      "tfgram_std": 0.08678755411422305,
+      "tfgram_frac_neg": 0.0
+    }
+  },
+  "SCLTFSTgramMFN_pilot_leaky_max_s2024": {
+    "tf_act": "leaky",
+    "tf_pool": "max",
+    "seed": 2024,
+    "epoch": 30,
+    "init": {
+      "cka_clip/Log-Mel~TFgram": 0.8116267753755281,
+      "cka_frame/Log-Mel~TFgram": 0.7376322642397971,
+      "cka_clip/Tgram~TFgram": 0.04382375702328487,
+      "cka_frame/Tgram~TFgram": 0.002282075459149937,
+      "cka_clip/Log-Mel~Tgram": 0.07330700143449947,
+      "cka_frame/Log-Mel~Tgram": 0.0045804462375577245,
+      "r2/Log-Mel->TFgram": 0.8240373183564074,
+      "r2/Tgram->TFgram": 0.015906606952146962,
+      "tfgram_std": 0.001778283327250206,
+      "tfgram_frac_neg": 0.45378084850824046
+    },
+    "trained": {
+      "cka_clip/Log-Mel~TFgram": 0.7998656449022076,
+      "cka_frame/Log-Mel~TFgram": 0.007874114835988736,
+      "cka_clip/Tgram~TFgram": 0.047879750977931956,
+      "cka_frame/Tgram~TFgram": 0.004152194203269304,
+      "cka_clip/Log-Mel~Tgram": 0.07140834676526668,
+      "cka_frame/Log-Mel~Tgram": 0.0037939028585125766,
+      "r2/Log-Mel->TFgram": 0.013715879433597755,
+      "r2/Tgram->TFgram": 0.04593359149378595,
+      "tfgram_std": 0.16002913130643676,
+      "tfgram_frac_neg": 0.43744897645474556
+    }
+  },
+  "SCLTFSTgramMFN_pilot_leaky_avg_s2024": {
+    "tf_act": "leaky",
+    "tf_pool": "avg",
+    "seed": 2024,
+    "epoch": 30,
+    "init": {
+      "cka_clip/Log-Mel~TFgram": 0.8053195789024082,
+      "cka_frame/Log-Mel~TFgram": 0.7248884028990522,
+      "cka_clip/Tgram~TFgram": 0.042828405028118015,
+      "cka_frame/Tgram~TFgram": 0.0020735160437983756,
+      "cka_clip/Log-Mel~Tgram": 0.07330700143449947,
+      "cka_frame/Log-Mel~Tgram": 0.0045804462375577245,
+      "r2/Log-Mel->TFgram": 0.8381372293278908,
+      "r2/Tgram->TFgram": 0.014959272015630298,
+      "tfgram_std": 0.00048083458528656793,
+      "tfgram_frac_neg": 0.4944632414356542
+    },
+    "trained": {
+      "cka_clip/Log-Mel~TFgram": 0.7957173880359851,
+      "cka_frame/Log-Mel~TFgram": 0.09544942213812906,
+      "cka_clip/Tgram~TFgram": 0.042513480910315656,
+      "cka_frame/Tgram~TFgram": 0.005018543938360333,
+      "cka_clip/Log-Mel~Tgram": 0.07140701944217324,
+      "cka_frame/Log-Mel~Tgram": 0.004347851274338194,
+      "r2/Log-Mel->TFgram": 0.08124374481694552,
+      "r2/Tgram->TFgram": 0.047829953036047645,
+      "tfgram_std": 0.09467698970023362,
+      "tfgram_frac_neg": 0.4596708909038222
+    }
+  }
+}

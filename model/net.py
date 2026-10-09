@@ -207,7 +207,8 @@ class SCLTFSTgramMFN(nn.Module):
                                            bottleneck_setting=bottleneck_setting,
                                            cfg=cfg)
 
-        self.TFgramNet = TFgram(classes_num=41)
+        self.TFgramNet = TFgram(classes_num=41, act=cfg.get('tf_act', 'relu'),
+                                pool=cfg.get('tf_pool', 'max'))
         head_type = cfg["ht"]
         if head_type == 'basic':
             self.head = BasicHead()
