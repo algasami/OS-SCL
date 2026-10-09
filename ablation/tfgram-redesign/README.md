@@ -369,7 +369,7 @@ The three redesigned cells take the three categorical slots that validate under
 
 | figure | shows |
 |--------|-------|
-| `plots/fig1_init_cka.png` | clip and frame CKA with Log-Mel at random init for all four cells: they're within about 0.01 of each other and close to trained f1 |
+| `plots/fig1_init_cka.png` | clip and frame CKA with Log-Mel at random init for all four cells: they're within about 0.01 of each other and close to trained f1; hollow markers are the void pilot EMA checkpoints |
 | `plots/fig2_ema_init_share.png` | share of the EMA weights still at init vs epoch: why the 30-epoch gate measured mostly init |
 | `plots/fig3_slope_sweep.png` | init CKA vs activation slope under max and avg pooling: only slope 1 with avg pooling decorrelates |
 | `plots/fig4_not_tgram.png` | frame R² of each TFgram variant from Log-Mel / Tgram / Tgram's front end, against the two-random-front-ends control; and which input band drives the output |

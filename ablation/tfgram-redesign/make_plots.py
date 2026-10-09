@@ -100,7 +100,13 @@ def fig1():
             v = r[f'cka_{level}/Log-Mel~TFgram']
             ax.plot([0, v], [i, i], color=GRID, lw=2, solid_capstyle='round', zorder=1)
             ax.scatter([v], [i], s=70, color=col, edgecolor=SURFACE, lw=2, zorder=3)
-            ax.text(v + 0.03, i, f'{v:.2f}', va='center', color=INK_2, fontsize=8.5)
+            t = runs[key][1].get('trained')
+            if t:  # EMA ckpt, ~55% init: drawn hollow so it isn't read as a trained result
+                tv = t[f'cka_{level}/Log-Mel~TFgram']
+                ax.scatter([tv], [i], s=70, facecolor='none', edgecolor=col, lw=1.6, zorder=4)
+                ax.text(max(v, tv) + 0.03, i, f'{v:.2f} (ckpt {tv:.2f})', va='center', color=INK_2, fontsize=8)
+            else:
+                ax.text(v + 0.03, i, f'{v:.2f}', va='center', color=INK_2, fontsize=8.5)
         # context: what a decorrelated branch looks like, and trained f1 elsewhere
         tg = np.mean([runs[k][1]['init'][f'cka_{level}/Log-Mel~Tgram'] for k in runs])
         ax.axvline(tg, color=MUTED, lw=1, ls=(0, (2, 2)), zorder=0)
@@ -113,6 +119,10 @@ def fig1():
         ax.set_xlim(0, 1.0)
         ax.set_title(f'CKA(Log-Mel, TFgram), {title}', loc='left', fontsize=9, color=INK_2)
         ax.grid(axis='x'); ax.set_axisbelow(True)
+    axes[1].scatter([], [], s=50, facecolor='none', edgecolor=MUTED, lw=1.6,
+                    label='hollow: pilot EMA checkpoint, ~55% init weights at save (void gate)')
+    fig.legend(*axes[1].get_legend_handles_labels(), loc='lower left', bbox_to_anchor=(0.01, -0.09),
+               fontsize=7.5, frameon=False, labelcolor=INK_2)
     axes[0].set_yticks(range(len(CELLS)))
     axes[0].set_yticklabels([c[1] for c in CELLS])
     axes[0].set_ylim(-1.05, len(CELLS) - 0.15)
