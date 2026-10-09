@@ -12,14 +12,24 @@ that *does* carry new information (CKA 0.06), has a sign-preserving
 That explanation is a claim about two specific operations, so this ablation
 switches them off one at a time.
 
-> **Status: pilot done, sweep NOT run.** The 30-epoch gate turned out not to
-> test anything (the saved EMA checkpoints were ~55% random init; see
-> *Results*). An init-only probe run afterwards answers the gate's question
-> at init: **none of the four 2×2 cells stops TFgram computing an energy
-> envelope at random init**; only a fully linear stack with linear pooling
-> does. That is a statement about init, not training (see *What an init probe
-> can and can't show*). The design, predictions and gate below were written before any data
-> and are left unedited; outcomes are recorded under *Results*.
+> **Status: closed.** Continued in [`../tfgram-linear`](../tfgram-linear),
+> which trains the one variant this ablation found that escapes the envelope.
+>
+> What actually ran, in order (the plan below had a pilot and a sweep):
+>
+> 1. **Stage 1, 30-epoch pilot: void.** The gate didn't test anything: the
+>    saved EMA checkpoints were ~55% random init (see *Results*).
+> 2. **Init probes: the result.** `init_probe.py`, `tgram_probe.py` and
+>    `band_probe.py`, with no training. **None of the four 2×2 cells stops
+>    TFgram computing an energy envelope at random init**; only a fully linear
+>    stack with linear pooling does, and that variant is not a second Tgram.
+>    This is a statement about init, not training (see *What an init probe can
+>    and can't show*).
+> 3. **Stage 2, 300-epoch sweep: cancelled, never run.** At init the four cells
+>    are the same spectrogram detector (see *What this means for the sweep*).
+>
+> The design, predictions and gate below were written before any data and are
+> left unedited; outcomes are recorded under *Results*.
 
 ## Design — 2×2 factorial
 
@@ -76,7 +86,7 @@ between TFgram–Log-Mel (0.89) and Tgram–Log-Mel (0.06), large enough that a
 30-epoch, n=1 difference is unlikely to be noise in a deterministic CKA over
 656 fixed clips.
 
-## Stage 2 — sweep
+## Stage 2 — sweep (cancelled, not run)
 
 4 cells × seeds 2024–2027 × 300 epochs = 16 runs on GPUs 1 and 2, then the CKA
 probe on all 16.
@@ -121,10 +131,13 @@ doesn't help detection, which goes further than "TFgram is redundant".
 
 ```bash
 conda env create -f environment-cu124.yml          # smartlab1; environment.yml elsewhere
-bash ablation/tfgram-redesign/run.sh pilot         # ~4 cells x 30 ep, then CKA
-bash ablation/tfgram-redesign/run.sh sweep         # only if the gate passes
+bash ablation/tfgram-redesign/run.sh pilot         # 4 cells x 30 ep, then CKA (void gate, see Results)
+bash ablation/tfgram-redesign/run.sh probes        # init/Tgram/band probes -> scores/*.json (no training)
 /home/f74134118/anaconda3/bin/python ablation/tfgram-redesign/make_plots.py
 ```
+
+The `sweep` stage was removed from `run.sh` when it was cancelled. The probes
+need no checkpoints and take minutes.
 
 `TFR_GPUS` overrides the card list (default `"1 2"`; GPU 0 is usually taken).
 Each cell writes `scores/<model_name>/{eval_dev,eval_eval,config}.*`, and
@@ -340,6 +353,10 @@ the 2×2 didn't include:
 
 Either one needs a gate that actually measures training: probe the student
 (save `net` alongside `ema_net`) or train ≥ 90 epochs.
+
+**Taken up in [`../tfgram-linear`](../tfgram-linear)**, which trains
+`linear_avg` (identity activations, avg pooling) against a retrained
+`relu_max` at 300 epochs and saves student snapshots.
 
 ## Figures
 
