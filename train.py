@@ -39,6 +39,10 @@ def parse_arguments():
     parser.add_argument('--ht', type=str, help=' basic or leaky_relu')
     parser.add_argument('--seed', type=int, help='Random seed')
     parser.add_argument('--num_workers', type=int, help='DataLoader workers (0 = original behaviour)')
+    parser.add_argument('--tf_act', type=str, choices=['relu', 'leaky'],
+                        help="TFgram nonlinearity: 'relu' (paper) or 'leaky' (LeakyReLU 0.2, as in Tgram)")
+    parser.add_argument('--tf_pool', type=str, choices=['max', 'avg'],
+                        help="TFgram downsampling: 'max' (paper) or 'avg' (linear, sign-preserving)")
     parser.add_argument('--freeze_tfgram', type=str, choices=['none', 'strict', 'bn_adapt'],
                         help="Freeze the TFgram branch at its random init: 'strict' also pins its "
                              "BatchNorm to eval(), 'bn_adapt' lets the running stats track the data")

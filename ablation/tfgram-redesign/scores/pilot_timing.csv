@@ -1,0 +1,5 @@
+cell,gpu_model,epochs,train_start,train_done,cell_done,train_hours,hours_per_epoch
+pilot_relu_max_s2024,RTX A4000,30,00:53:59,03:13:29,03:16:45,2.33,0.077
+pilot_relu_avg_s2024,RTX A4000,30,00:53:59,03:01:45,03:04:14,2.13,0.071
+pilot_leaky_max_s2024,RTX A4000,30,03:04:14,05:11:27,05:14:35,2.12,0.071
+pilot_leaky_avg_s2024,RTX A4000,30,03:16:45,05:37:35,05:41:07,2.35,0.078

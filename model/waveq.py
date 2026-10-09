@@ -71,9 +71,30 @@ class ConvBlock(nn.Module):
         return x
 
 
+# TFgram redesign switches (ablation/tfgram-redesign). The defaults, 'relu' and
+# 'max', are the paper's branch exactly; neither alternative adds parameters, so
+# all four combinations draw identical inits at a given seed.
+TF_ACTS = ('relu', 'leaky')
+TF_POOLS = ('max', 'avg')
+
+
+def tf_act(x, act):
+    # LeakyReLU(0.2) matches TgramNet, the branch that stays decorrelated
+    return F.relu_(x) if act == 'relu' else F.leaky_relu_(x, 0.2)
+
+
+def tf_pool(x, pool, kernel_size=None, output_size=None):
+    if output_size is not None:
+        f = F.adaptive_max_pool1d if pool == 'max' else F.adaptive_avg_pool1d
+        return f(x, output_size)
+    f = F.max_pool1d if pool == 'max' else F.avg_pool1d
+    return f(x, kernel_size=kernel_size)
+
+
 class ConvPreWavBlock(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, act='relu', pool='max'):
         super(ConvPreWavBlock, self).__init__()
+        self.act, self.pool = act, pool
 
         self.conv1 = nn.Conv1d(in_channels=in_channels,
                                out_channels=out_channels,
@@ -98,17 +119,18 @@ class ConvPreWavBlock(nn.Module):
 
     def forward(self, input, pool_size=(1, 1)):
         x = input
-        x = F.relu_(self.bn1(self.conv1(x)))
-        x = F.relu_(self.bn2(self.conv2(x)))
+        x = tf_act(self.bn1(self.conv1(x)), self.act)
+        x = tf_act(self.bn2(self.conv2(x)), self.act)
 
-        x = F.max_pool1d(x, kernel_size=pool_size)
+        x = tf_pool(x, self.pool, kernel_size=pool_size)
 
         return x
 
 
 class ConvPreWavBlockqo(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, act='relu', pool='max'):
         super(ConvPreWavBlockqo, self).__init__()
+        self.act, self.pool = act, pool
 
         self.conv1 = nn.Conv1d(in_channels=in_channels,
                                out_channels=out_channels,
@@ -133,15 +155,16 @@ class ConvPreWavBlockqo(nn.Module):
 
     def forward(self, input, pool_size):
         x = input
-        x = F.relu_(self.bn1(self.conv1(x)))
-        x = F.relu_(self.bn2(self.conv2(x)))
-        x = F.adaptive_max_pool1d(x, 626)
+        x = tf_act(self.bn1(self.conv1(x)), self.act)
+        x = tf_act(self.bn2(self.conv2(x)), self.act)
+        x = tf_pool(x, self.pool, output_size=626)
         return x
 
 
 class ConvPreWavBlockqt(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, act='relu', pool='max'):
         super(ConvPreWavBlockqt, self).__init__()
+        self.act, self.pool = act, pool
 
         self.conv1 = nn.Conv1d(in_channels=in_channels,
                                out_channels=out_channels,
@@ -166,15 +189,18 @@ class ConvPreWavBlockqt(nn.Module):
 
     def forward(self, input, pool_size):
         x = input
-        x = F.relu_(self.bn1(self.conv1(x)))
-        x = F.relu_(self.bn2(self.conv2(x)))
-        x = F.adaptive_max_pool1d(x, 313)
+        x = tf_act(self.bn1(self.conv1(x)), self.act)
+        x = tf_act(self.bn2(self.conv2(x)), self.act)
+        x = tf_pool(x, self.pool, output_size=313)
         return x
 
 
 class TFgram(nn.Module):
-    def __init__(self, classes_num):
+    def __init__(self, classes_num, act='relu', pool='max'):
         super(TFgram, self).__init__()
+        if act not in TF_ACTS or pool not in TF_POOLS:
+            raise ValueError(f'unknown TFgram act/pool: {act!r}/{pool!r}')
+        self.act = act
 
         window = 'hann'
         center = True
@@ -185,9 +211,9 @@ class TFgram(nn.Module):
 
         self.pre_conv0 = nn.Conv1d(in_channels=1, out_channels=64, kernel_size=11, stride=5, padding=5, bias=False)
         self.pre_bn0 = nn.BatchNorm1d(64)
-        self.pre_block1 = ConvPreWavBlock(64, 64)
-        self.pre_block2 = ConvPreWavBlockqo(64, 128)
-        self.pre_block3 = ConvPreWavBlockqt(128, 128)
+        self.pre_block1 = ConvPreWavBlock(64, 64, act, pool)
+        self.pre_block2 = ConvPreWavBlockqo(64, 128, act, pool)
+        self.pre_block3 = ConvPreWavBlockqt(128, 128, act, pool)
 
         self.pre_block4 = ConvBlock(in_channels=4, out_channels=64)
 
@@ -224,7 +250,7 @@ class TFgram(nn.Module):
             input = input.squeeze()
         else:
             input = input.squeeze().unsqueeze(0)
-        a1 = F.relu_(self.pre_bn0(self.pre_conv0(input[:, None, :])))
+        a1 = tf_act(self.pre_bn0(self.pre_conv0(input[:, None, :])), self.act)
         a1 = self.pre_block1(a1, pool_size=4)
         a1 = self.pre_block2(a1, pool_size=4)
         a1 = self.pre_block3(a1, pool_size=4)

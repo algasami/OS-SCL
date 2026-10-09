@@ -1,0 +1,24 @@
+# create with:  conda env create -f environment-cu124.yml
+# For hosts that cannot run environment.yml: torch 2.7+ wheels need glibc 2.28
+# and cu128 needs a 570+ driver. Built for smartlab1 (CentOS 7, glibc 2.17,
+# driver 550, RTX A4000). Runs here are not bit-comparable with runs made
+# under environment.yml on other hardware. --only-binary stops pip falling back
+# to source builds (newest numpy etc. need glibc 2.28; host GCC is too old).
+name: os-scl-cu124
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu124
+      - "--only-binary=:all:"
+      - torch==2.6.0
+      - torchaudio==2.6.0
+      - numpy
+      - pandas
+      - scikit-learn
+      - pyyaml
+      - tqdm
+      - torchlibrosa
+      - soundfile

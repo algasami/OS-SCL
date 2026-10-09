@@ -1,0 +1,14 @@
+{
+    "m": 0.4,
+    "gpu_num": 1,
+    "epoch": 30,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "pilot_relu_max_s2024",
+    "seed": 2024,
+    "num_workers": 8,
+    "tf_act": "relu",
+    "tf_pool": "max",
+    "model_name": "SCLTFSTgramMFN_pilot_relu_max_s2024"
+}
