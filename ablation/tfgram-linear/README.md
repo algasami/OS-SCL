@@ -13,9 +13,9 @@ variance survives a 31 Hz high-pass).
 Everything in `../tfgram-redesign` was measured at random init. This ablation
 trains `linear_avg` and asks what that ablation couldn't.
 
-> **Status: stage 1 running** (launched 2026-10-09). Predictions and gate below
-> were written before any training and are not to be edited; outcomes go under
-> *Results*.
+> **Status: stage 1 done, gate passed; stage 2 running** (launched
+> 2026-10-10, ~3 days). Predictions and gate below were written before any
+> training and are left unedited; outcomes are under *Results*.
 
 ## Questions
 
@@ -181,8 +181,82 @@ with them.
 
 ## Results
 
-Pending.
+### Stage 1 (seed 2024, n=1)
+
+Both arms trained 300 epochs on smartlab1 (`relu_max` 21.3 h, `linear_avg`
+22.2 h). `scores/branch_probe_stage1.json`, frame level:
+
+```
+                       init   e10    e30    e90    e300   EMA
+CKA(Log-Mel, TFgram)
+  relu_max             0.736  0.667  0.646  0.731  0.796  0.792
+  linear_avg           0.000  0.000  0.000  0.001  0.008  0.007
+R²(Tgram front -> TFgram)                         control (2 random fronts): 0.86
+  relu_max             0.007  0.007  0.007  0.007  0.006  0.005
+  linear_avg           0.013  0.012  0.014  0.028  0.028  0.029
+```
+
+Every other cross-branch number for `linear_avg` stays ≤ 0.011: R²(TFgram →
+Tgram front), CKA with Tgram, and R²(Log-Mel → TFgram) at the EMA.
+
+```
+EMA checkpoint, AUC (%)     dev     eval    eval mAUC
+relu_max                   94.97   95.20   90.51
+linear_avg                 95.12   95.45   91.87
+Δ (linear_avg − relu_max)  +0.15   +0.24   +1.36
+```
+
+Cross-host check: the seed-sweep's f1 at seed 2024 (other host, torch 2.8)
+scored 94.70 dev / 95.85 eval, so `relu_max` here is 0.65 lower on eval.
+That is within run-to-run noise but not paired.
+
+### Against the predictions
+
+- **P1: holds for `linear_avg`, misses slightly for `relu_max`.**
+  `linear_avg` stays ≤ 0.008 against Log-Mel at every state. That confirms the
+  odd-vs-even argument on real data: the input distribution is sign-symmetric
+  enough. `relu_max` dips *below* the predicted 0.70 floor early in training
+  (0.65 at e30) before rising to 0.80. Early training moves the paper's branch
+  slightly away from the spectrogram, and later training moves it back past its
+  init value. The old host's trained f1 (0.81) is the same endpoint.
+- **P2: holds.** `linear_avg` gains a little Tgram-front predictability
+  between e30 and e90 (0.014 → 0.028) and then stops. 0.029 is a thirtieth of
+  the control and well under the 0.20 prediction. Training does not turn it
+  into a second Tgram.
+- **P3: holds at n=1.** Both overall deltas are under 1 AUC. Per machine
+  (fig2), every dev and eval delta is inside ±1 except ToyConveyor eval
+  (+1.7), whose run-to-run noise is > 4 points.
+- **P4: holds.** The validation curves overlap (fig3). `linear_avg`'s
+  best validation loss is slightly lower between epochs 150 and 200, and both
+  end at 98.2% validation accuracy.
+
+A side observation in fig3: both EMA nets sit at 0% validation accuracy until
+epochs 106–108. This is the alpha-0.9999 horizon that voided
+`../tfgram-redesign`'s 30-epoch pilot, now seen directly.
+
+### Gate
+
+- **G1 (not a Tgram copy): pass.** R²(Tgram front → TFgram) = 0.029 < 0.50.
+- **G2 (not broken): pass.** `linear_avg` is ahead on both dev (+0.15) and
+  eval (+0.24).
+
+Stage 2 (seeds 2025–2027, both arms) was launched on 2026-10-10.
+
+**What stage 1 already shows, independent of stage 2:** a waveform branch can
+be built that carries information *neither* Log-Mel nor Tgram carries
+(frame R² ≤ 0.03 from either), and it stays that way through 300 epochs of
+training. Whether that information helps detection is what stage 2's n=4
+paired comparison is for.
 
 ## Figures
 
-Pending (`make_plots.py` is written once stage 1 has data).
+Regenerate with `/home/f74134118/anaconda3/bin/python ablation/tfgram-linear/make_plots.py`
+(matplotlib lives in `base`). Reads `scores/` only and picks up every seed
+present, so the same script redraws them once stage 2 lands. `relu_max` is the
+paper's branch and the baseline, so it is drawn achromatic.
+
+| figure | shows |
+|--------|-------|
+| `plots/fig1_branch_trajectory.png` | frame CKA with Log-Mel and frame R² from Tgram's front end, at init, each student snapshot and the EMA: `linear_avg` stays near 0 on both, far below the G1 line and the two-random-fronts control |
+| `plots/fig2_paired_auc.png` | per-machine AUC difference `linear_avg − relu_max`, dev and eval, against the ±1-point noise band |
+| `plots/fig3_valid_curves.png` | EMA validation loss and accuracy (best-so-far rows): the two arms train alike |
