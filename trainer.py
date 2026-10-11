@@ -39,6 +39,11 @@ class Trainer:
 
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=epochs,
                                                                     eta_min=0.1 * float(lr))
+        # the EMA (alpha 0.9999) is still mostly init for the first ~90 epochs,
+        # so probing training needs the student's own weights
+        snaps = cfg.get('student_snapshots') or ''
+        self.student_snapshots = {int(e) for e in str(snaps).split(',') if e.strip()}
+
         self.criterion = ASDLoss().to(self.device)
         self.test_criterion = ASDLoss(reduction=False).to(self.device)
 
@@ -82,6 +87,9 @@ class Trainer:
                 print(
                     f'lr: {lr:.7f} | EPOCH: {epoch} | Train_loss: {avg_loss:.5f} | Train_accuracy: {avg_accuracy:.5f} | Valid_loss: {valid_loss:.5f} | Valid_accuracy: {valid_accuracy:.5f}')
                 torch.save(self.ema_net.state_dict(), self.model_path)
+            if epoch + 1 in self.student_snapshots:
+                torch.save(self.net.state_dict(),
+                           os.path.join(os.path.dirname(self.model_path), f'student_e{epoch + 1}.pth'))
 
     @torch.no_grad()
     def valid(self, valid_loader):

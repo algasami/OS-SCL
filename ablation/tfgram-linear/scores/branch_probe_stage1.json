@@ -1,0 +1,150 @@
+{
+  "SCLTFSTgramMFN_tfl_relu_max_s2024": {
+    "tf_act": "relu",
+    "tf_pool": "max",
+    "seed": 2024,
+    "epoch": 300,
+    "states": {
+      "init": {
+        "cka/Log-Mel~TFgram": 0.7359583973132585,
+        "cka/Tgram~TFgram": 0.0022973903851302687,
+        "cka/Tgram-front~TFgram": 0.00046005111979558107,
+        "r2/Log-Mel->TFgram": 0.8241834049816663,
+        "r2/Tgram->TFgram": 0.01600921996928103,
+        "r2/Tgram-front->TFgram": 0.00675144421244593,
+        "r2/TFgram->Tgram-front": 0.005445168907543953,
+        "tfgram_std": 0.0014745429220747693,
+        "tfgram_frac_neg": 0.0
+      },
+      "student_e10": {
+        "cka/Log-Mel~TFgram": 0.6668502228283324,
+        "cka/Tgram~TFgram": 0.003333489863403796,
+        "cka/Tgram-front~TFgram": 0.00045270733804334473,
+        "r2/Log-Mel->TFgram": 0.704913638190183,
+        "r2/Tgram->TFgram": 0.017117185371977626,
+        "r2/Tgram-front->TFgram": 0.006935672320047048,
+        "r2/TFgram->Tgram-front": 0.004627946432194742,
+        "tfgram_std": 0.8551009186065441,
+        "tfgram_frac_neg": 0.0
+      },
+      "student_e30": {
+        "cka/Log-Mel~TFgram": 0.645755487634172,
+        "cka/Tgram~TFgram": 0.002413937297960316,
+        "cka/Tgram-front~TFgram": 0.0005097350732405663,
+        "r2/Log-Mel->TFgram": 0.7611462977045973,
+        "r2/Tgram->TFgram": 0.014272806188133142,
+        "r2/Tgram-front->TFgram": 0.007249956898297537,
+        "r2/TFgram->Tgram-front": 0.00585194982325753,
+        "tfgram_std": 0.8743563131992607,
+        "tfgram_frac_neg": 0.0
+      },
+      "student_e90": {
+        "cka/Log-Mel~TFgram": 0.7313449351725708,
+        "cka/Tgram~TFgram": 0.0017750871797374355,
+        "cka/Tgram-front~TFgram": 0.00035467670950180773,
+        "r2/Log-Mel->TFgram": 0.7952309808005168,
+        "r2/Tgram->TFgram": 0.014395530185248234,
+        "r2/Tgram-front->TFgram": 0.006654166573126357,
+        "r2/TFgram->Tgram-front": 0.003940161758769283,
+        "tfgram_std": 0.7279803854950004,
+        "tfgram_frac_neg": 0.0
+      },
+      "student_e300": {
+        "cka/Log-Mel~TFgram": 0.7958502882102602,
+        "cka/Tgram~TFgram": 0.002453161349024556,
+        "cka/Tgram-front~TFgram": 0.0006902657396700072,
+        "r2/Log-Mel->TFgram": 0.7160622350552053,
+        "r2/Tgram->TFgram": 0.012776377340763635,
+        "r2/Tgram-front->TFgram": 0.005537119526839981,
+        "r2/TFgram->Tgram-front": 0.003185677657745769,
+        "tfgram_std": 0.5302759081199262,
+        "tfgram_frac_neg": 0.0
+      },
+      "ema_best": {
+        "cka/Log-Mel~TFgram": 0.7923841720365375,
+        "cka/Tgram~TFgram": 0.0023939480089975036,
+        "cka/Tgram-front~TFgram": 0.0006791410065897512,
+        "r2/Log-Mel->TFgram": 0.7232284920028649,
+        "r2/Tgram->TFgram": 0.012683323293153807,
+        "r2/Tgram-front->TFgram": 0.005475363565279104,
+        "r2/TFgram->Tgram-front": 0.0033019442157603655,
+        "tfgram_std": 0.5189431049217403,
+        "tfgram_frac_neg": 0.0
+      }
+    }
+  },
+  "SCLTFSTgramMFN_tfl_linear_avg_s2024": {
+    "tf_act": "linear",
+    "tf_pool": "avg",
+    "seed": 2024,
+    "epoch": 300,
+    "states": {
+      "init": {
+        "cka/Log-Mel~TFgram": 0.00020262027446196296,
+        "cka/Tgram~TFgram": 0.002028289714747539,
+        "cka/Tgram-front~TFgram": 0.003421711190299253,
+        "r2/Log-Mel->TFgram": 0.0006690779781195025,
+        "r2/Tgram->TFgram": 0.007303457036190086,
+        "r2/Tgram-front->TFgram": 0.012910914648313992,
+        "r2/TFgram->Tgram-front": 0.010168728363667091,
+        "tfgram_std": 0.0003429779796148791,
+        "tfgram_frac_neg": 0.5003892780697226
+      },
+      "student_e10": {
+        "cka/Log-Mel~TFgram": 0.0001237998630739252,
+        "cka/Tgram~TFgram": 0.0013244261244225268,
+        "cka/Tgram-front~TFgram": 0.002491755814702806,
+        "r2/Log-Mel->TFgram": 0.0006497166085284849,
+        "r2/Tgram->TFgram": 0.006972200057042766,
+        "r2/Tgram-front->TFgram": 0.012400340754834423,
+        "r2/TFgram->Tgram-front": 0.010116455477175214,
+        "tfgram_std": 0.6708207290560281,
+        "tfgram_frac_neg": 0.4995420056568028
+      },
+      "student_e30": {
+        "cka/Log-Mel~TFgram": 6.063416348170574e-05,
+        "cka/Tgram~TFgram": 0.0010712712886922395,
+        "cka/Tgram-front~TFgram": 0.00277638050832847,
+        "r2/Log-Mel->TFgram": 0.0005334134872173785,
+        "r2/Tgram->TFgram": 0.006147651188061933,
+        "r2/Tgram-front->TFgram": 0.014186684605688771,
+        "r2/TFgram->Tgram-front": 0.011370398811725272,
+        "tfgram_std": 0.6592924425898278,
+        "tfgram_frac_neg": 0.49982143661604844
+      },
+      "student_e90": {
+        "cka/Log-Mel~TFgram": 0.0010266294500747486,
+        "cka/Tgram~TFgram": 0.0004675109037149362,
+        "cka/Tgram-front~TFgram": 0.0031681921268261175,
+        "r2/Log-Mel->TFgram": 0.0016963779591328233,
+        "r2/Tgram->TFgram": 0.010566724481148987,
+        "r2/Tgram-front->TFgram": 0.02806902117372765,
+        "r2/TFgram->Tgram-front": 0.011349991830736093,
+        "tfgram_std": 0.5681533813394335,
+        "tfgram_frac_neg": 0.49506795225200656
+      },
+      "student_e300": {
+        "cka/Log-Mel~TFgram": 0.008107982941107116,
+        "cka/Tgram~TFgram": 0.0007392286987163064,
+        "cka/Tgram-front~TFgram": 0.002302734078902059,
+        "r2/Log-Mel->TFgram": 0.009629024982435484,
+        "r2/Tgram->TFgram": 0.015899978898807583,
+        "r2/Tgram-front->TFgram": 0.028046452552051057,
+        "r2/TFgram->Tgram-front": 0.010790031332380632,
+        "tfgram_std": 0.4851932144987243,
+        "tfgram_frac_neg": 0.4997931282508961
+      },
+      "ema_best": {
+        "cka/Log-Mel~TFgram": 0.007281953412257791,
+        "cka/Tgram~TFgram": 0.0008242951336906402,
+        "cka/Tgram-front~TFgram": 0.002532182890686739,
+        "r2/Log-Mel->TFgram": 0.00861340341908436,
+        "r2/Tgram->TFgram": 0.01645040752516901,
+        "r2/Tgram-front->TFgram": 0.028916613647243537,
+        "r2/TFgram->Tgram-front": 0.011041455113839131,
+        "tfgram_std": 0.4855363268329713,
+        "tfgram_frac_neg": 0.4986193203678992
+      }
+    }
+  }
+}

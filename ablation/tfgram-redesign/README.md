@@ -285,6 +285,17 @@ linear_first (linear_avg, then LeakyReLU)            0.10     0.01     0.01
 control: Tgram front from another Tgram front                          0.86
 ```
 
+> **Reproducibility note (2026-10-09).** Rerunning `tgram_probe.py` via
+> `run.sh probes` reproduces every value in `scores/tgram_probe.json` to 1e-6
+> except three `r2_b_to_a` entries for seed 2026 `relu_max`, the direction
+> where TFgram is the *predictor*: Tgram 0.006 → −0.123, Tgram front −0.002 →
+> −0.020, Log-Mel 0.455 → 0.455. The cause is a dead (near-constant) channel
+> in that init (smallest/largest singular value ≈ 2e-18). `lstsq` then fits
+> last-bit noise, and a negative in-sample R² is the symptom. Recomputed
+> stably (rank-truncated SVD), the committed 0.006 is correct. No figure or
+> conclusion above uses that direction, and the table reports the opposite one.
+> `../tfgram-linear/branch_probe.py` uses the stable computation.
+
 **Not a second Tgram, at init.** Two random Tgram front ends predict each
 other at R² 0.86, while linear_avg and Tgram's front end predict each other at
 0.01 both ways. The same holds for Tgram's full output.
