@@ -22,8 +22,14 @@ is its zero-training version: the machine type is known at test time in DCASE
 use. Conditioning the network on machine type *during training* is a separate,
 costlier question that this probe can motivate but not answer.
 
-> **Status: pre-registered.** Design, predictions and decision rule written
-> before any cosine was dumped; outcomes go under *Results*.
+> **Status: done at n=1 per arm (seed 2024); stage-2 seeds pending.** Answer:
+> **keep eval.py's rule.** No alternative beats R0 consistently. Dropping the
+> margin (R1) or dropping the margin *and* the other machine types (R3) loses
+> to it in every cell. Restricting to the own machine type (R2) and own-centre
+> cosine (R4) change sign between dev and eval. The design, predictions and
+> decision rule below were written before any cosine was dumped and are left
+> unedited; outcomes are under *Results*. Rerun `run.sh` after
+> `../tfgram-linear` stage 2 lands to get n=4 per arm.
 
 ## Rules
 
@@ -127,4 +133,118 @@ another worktree, set `PROBE_REPO` to the checkout holding `data/` and
 
 ## Results
 
-*Pending.*
+Two checkpoints, `tfl_relu_max_s2024` and `tfl_linear_avg_s2024`, × dev and
+eval = 4 paired cells. Wall clock 7 min on one A4000 (GPU 0), most of it Log-Mel
+on CPU.
+
+### Reproduction (P0): holds
+
+R0 in float64 matches every committed per-ID AUC to within **6×10⁻⁵**
+(`reproduction.json`). No float32 score is exactly 0 and >99.9% are distinct.
+The tie mechanism I flagged didn't occur: with the margin on, the own-class
+probability of a normal clip has a median of only ~0.79, nowhere near
+saturation.
+
+### Overall, rule − R0 (AUC points; `scores/rule_metrics.csv`)
+
+```
+                     pooled AUC (eval.py)          mean per-ID AUC
+cell                 R1     R2     R3     R4       R1     R2     R3     R4
+dev  relu_max      -0.14  -0.19  -0.64  -0.13    -0.26  -0.09  -0.58  -0.02
+dev  linear_avg    -0.16  -0.23  -0.70  -0.14    -0.23  -0.19  -0.72  -0.06
+eval relu_max      -0.60  +0.09  -0.46  +0.34    -0.61  +0.05  -0.53  +0.36
+eval linear_avg    -0.51  -0.21  -1.03  +0.27    -0.45  -0.08  -0.74  +0.25
+mean               -0.35  -0.14  -0.71  +0.09
+```
+
+R0 itself: dev 94.97 / 95.12, eval 95.20 / 95.45 pooled AUC (relu_max /
+linear_avg).
+
+**Decision rule** (same sign in all 4 cells and |mean| ≥ 0.3):
+
+| rule | verdict |
+|------|---------|
+| R1 | **loses to R0**: negative in all 4 cells, mean −0.35. Keeping the training margin at test time helps. |
+| R2 | no effect: sign flips (eval relu_max +0.09), mean −0.14 |
+| R3 | **loses to R0**: negative in all 4 cells, mean −0.71; the worst rule, on every metric |
+| R4 | no effect: −0.13 on dev, +0.3 on eval. Loses on dev, so not adopted under the dev-only selection rule, however good eval looks |
+
+pAUC and mAUC point the same way (`fig1`; mAUC for R3 drops 1.0–2.1 points).
+Per machine (`fig2`), most of the movement is in the toy sets: R1 costs
+ToyConveyor 1.9–2.7 on eval, R3 costs ToyCar 1.4–2.6, and R4's eval gain is
+mostly ToyConveyor (+1.0/+1.8). Per `../seed-sweep`, ToyConveyor is the noisiest
+machine (>4 points seed to seed). fan, slider and valve barely move under any
+rule.
+
+### Cross-type diagnostic: P1's reasoning was wrong
+
+I predicted foreign machine types would hold < 10⁻³ of R0's softmax mass.
+They hold **~15–19% for normal clips on every machine** and **50–80% for
+anomalous fan, pump, slider and valve** (`fig3`, `cross_type.csv`). The
+"scale 30 makes rivals vanish" argument assumed tight clusters. In fact the
+margin pulls the own logit down to `30·cos(θ+0.4)`, and 34 foreign centres at
+modest cosine add up. The nearest rival is a foreign type for 33–65% of
+normal fan/slider/valve clips, but almost never for ToyCar (0–4%), whose IDs
+crowd each other.
+
+So other machine types are a large part of eval.py's score, yet removing them
+(R2) barely changes the ranking. The outcome half of P1 nearly held
+(|Δ| ≤ 0.23, though two cells exceed the 0.2 I wrote).
+
+### Prediction scorecard
+
+| | prediction | outcome |
+|---|---|---|
+| P0 | R0 reproduces committed CSVs within 0.001 | **holds** (6×10⁻⁵) |
+| P1 | R2 ≈ R0 (|Δ| ≤ 0.2); cross-type mass < 10⁻³ | **outcome nearly, mechanism wrong**: |Δ| ≤ 0.23, mass ~15–80% |
+| P2 | R1: |Δ| < 0.5, sign unknown | **fails on size**: −0.60 / −0.51 on eval; sign is consistently negative |
+| P3 | R4 ≈ R0 on idAUC (< 0.5); pooled moves more; swings in valve/slider | idAUC **holds** (≤ 0.36); pooled does **not** move more; swings are in ToyConveyor/ToyCar, not valve/slider |
+| P4 | arm ordering survives every rule | **fails on eval for R2/R3**: `linear_avg − relu_max` is +0.25 under R0, −0.05 under R2, −0.32 under R3. That gap is below the n=1 noise floor either way, which is the point: a scoring choice is enough to flip it |
+
+### Post-hoc mechanism (not pre-registered)
+
+The loss ordering R3 < R1 < R2 < R0 is also the order of how close each rule
+pushes a normal clip's own-class probability to 1:
+
+```
+            median p_own (normal clips)   share > 0.99    mean Δ AUC vs R0
+R0                 0.79                     0%               —
+R2                 0.95                     0%             −0.14
+R1                 0.992                   83%             −0.35
+R3                 0.998                   98%             −0.71
+R4             (no softmax)                 —              +0.09
+```
+
+Identical across all 4 cells to ±0.01. One reading: once `p_own → 1`,
+`CE ≈ Σ_j e^{z_j − z_y}`, which is dominated by the **single nearest rival**,
+so the score turns into a max-type statistic of one gap and gets noisier.
+The margin plus the 40-class denominator keep R0 out of that regime, so it
+behaves like a smooth own-distance (R4, which has no softmax at all, ranks
+about as well). This was found after looking at the results, from 2
+checkpoints, and is a hypothesis. A direct test would be R0 with the
+temperature varied at scoring time.
+
+### What this means
+
+- **Keep eval.py's rule.** All past ablation numbers stand. The margin at
+  test time is doing real work, which nobody had checked before.
+- **On "machine-ID label hinting":** the current rule already uses the true
+  ID, and the stronger hint (restricting the comparison to the clip's own
+  machine type) buys nothing. **This probe gives no reason to try
+  machine-type conditioning at training time.** It can't rule it out either:
+  conditioning changes the embedding, and this probe only re-reads a fixed one.
+- **For `../tfgram-linear`:** the arm difference (+0.25 eval under R0) is
+  smaller than the effect of some scoring choices. That's another reason to
+  read it only at n=4.
+
+## Figures
+
+Regenerate with `/home/f74134118/anaconda3/bin/python ablation/scoring-probe/make_plots.py`
+(matplotlib lives in `base`). Reads `scores/` only and picks up every run
+present. Arm colours follow `../tfgram-linear` (`relu_max` achromatic).
+
+| figure | shows |
+|--------|-------|
+| `plots/fig1_overall_delta.png` | overall pooled AUC and mean per-ID AUC, each rule minus R0 per checkpoint, dev and eval, against the ±0.3 decision band: R1 and R3 below it in every cell |
+| `plots/fig2_machine_delta.png` | the same deltas per machine: movement concentrates in ToyCar/ToyConveyor; fan, slider and valve are flat |
+| `plots/fig3_cross_type.png` | R0's median softmax mass on other machine types (~15% for normals, 50–80% for anomalous fan/pump/slider/valve), and how often the nearest rival centre is another type |
