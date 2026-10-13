@@ -99,6 +99,13 @@ score.** Implementation choices the text above left open:
 - **Runtime:** the primary arms (A1–A4) take about 11 GPU-h and run first. The
   sensitivity arms (single-layer banks, the 10% coreset) take about 6 GPU-h and
   run later on whichever GPU is free.
+- **Two out-of-memory crashes, neither changing a score.** The first was in
+  imagenet_mel, from allocator fragmentation; `run.sh` now sets
+  `expandable_segments` (d904ccc). The second, at id28 (ToyConveyor id_01, the
+  largest test set), came from centring every test patch at once (2.2 GB on top
+  of 11.9 GB). Test clips are now searched in chunks of about 200. Each
+  patch's nearest-neighbour search is row-independent, so this is the same
+  computation. The run resumes at id28. IDs 0–27 are unchanged.
 
 ## Design
 

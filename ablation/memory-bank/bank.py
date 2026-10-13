@@ -246,7 +246,10 @@ def search(feats, bank_ix, stat_ix, test_ix, cs_frac=None, check_loo=False):
         res['loo_vs_deleted_mean_rel_err'] = float(torch.cat(errs).mean())
         res['stats_min'] = float(res['stats'].min())
     if test_ix is not None and len(test_ix):
-        res['test'] = nn_dist(centred(feats[test_ix].reshape(-1, D), mu), b).view(len(test_ix), P)
+        # test clips in chunks: centring all of ToyConveyor's at once overflows 15 GB (id28)
+        step = max(1, Q_CHUNK * 32 // P)
+        res['test'] = torch.cat([nn_dist(centred(feats[test_ix[j:j + step]].reshape(-1, D), mu), b)
+                                 for j in range(0, len(test_ix), step)]).view(len(test_ix), P)
     return res
 
 
