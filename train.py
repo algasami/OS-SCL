@@ -7,6 +7,7 @@ from utils import dataset_split
 from trainer import Trainer
 import yaml
 import os
+import json
 from model.net import SCLTFSTgramMFN, freeze_tfgram
 import argparse
 
@@ -50,6 +51,12 @@ def parse_arguments():
     parser.add_argument('--student_snapshots', type=str,
                         help="Comma-separated epoch counts, e.g. '10,30,90,300': also save the student "
                              "net (not the EMA) as student_e<N>.pth after that many epochs")
+    parser.add_argument('--kd_teachers', type=str,
+                        help="Comma-separated model names to distil from (ablation/distill); each is "
+                             "loaded from <kd_teacher_dir>/<name>/{model.pth,config.json}")
+    parser.add_argument('--kd_teacher_dir', type=str, help="Directory holding the teachers (default check_points)")
+    parser.add_argument('--kd_beta', type=float, help="Weight of the KD term (default 1.0)")
+    parser.add_argument('--kd_tau', type=float, help="KD temperature on 30*cos (default 2.0)")
 
     return parser.parse_args()
 
@@ -98,10 +105,35 @@ def main():
     n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f'freeze_tfgram={freeze_mode} | params {n_all} | trainable {n_train} | frozen tensors {len(skip_keys)}')
 
+    teachers = load_teachers(cfg, device)
+
     trainer = Trainer(device=device, net=model, ema_net=model_ema, epochs=cfg['epoch'], cfg=cfg,
-                      ema_skip_keys=skip_keys)
+                      ema_skip_keys=skip_keys, teachers=teachers)
 
     trainer.train(train_dataloader, valid_dataloader)
+
+
+def load_teachers(cfg, device):
+    """Frozen eval-mode teachers for --kd_teachers, or [] when distillation is off.
+
+    Building a net draws its random init from the torch RNG, which would shift every
+    later draw (batch order, mixup) and break the pairing with the same-seed baseline,
+    so the teachers are built inside fork_rng: the stream is restored afterwards.
+    """
+    names = [n for n in (cfg.get('kd_teachers') or '').split(',') if n.strip()]
+    teachers = []
+    with torch.random.fork_rng(devices=[device]):
+        for name in names:
+            path = os.path.join(cfg.get('kd_teacher_dir') or 'check_points', name.strip())
+            with open(os.path.join(path, 'config.json'), encoding='UTF-8') as f:
+                tcfg = json.load(f)
+            net = SCLTFSTgramMFN(num_classes=41, m=tcfg['m'], cfg=tcfg).to(device)
+            net.load_state_dict(torch.load(os.path.join(path, 'model.pth'), map_location=device), strict=True)
+            for p in net.parameters():
+                p.requires_grad_(False)
+            teachers.append(net.eval())
+    print(f'kd teachers: {len(teachers)}')
+    return teachers
 
 
 def random_seed(seed):
