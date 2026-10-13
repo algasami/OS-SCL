@@ -73,6 +73,25 @@ main arm here.
 - **Environment change:** `torchvision 0.21.0+cu124` and `pillow` were added to
   `os-scl-cu124` with `--no-deps` for WideResNet-50. torch stays 2.6.0.
 
+**Addendum, 2026-10-13, after writing the code and before any test-clip patch
+score.** Implementation choices the text above left open:
+
+- **imagenet_mel's bank uses all of each ID's training clips.** It has no
+  checkpoint, so there is no held-out split to replay. That is about 5% more
+  bank than the model arms get, a slight edge in P4's A3-vs-A4 comparison.
+- **The nearest-neighbour search runs in fp16** on features centred on the bank
+  mean. Centring leaves L2 distances unchanged. Rounding is about 0.1–1%
+  relative per patch.
+- **Leave-one-out was verified against physically deleting the clip from the
+  bank** (fp32): the max relative difference is ≤ 1.4%, which is fp16 rounding.
+- **P0 is checked per ID inside `bank.py`**: its R0 must match the cached
+  ensemble-backend R0. S1′ recomputed from the cache matches the committed
+  `rule_metrics.csv` to 4.5e-6.
+- **P4's "F_A4 does not beat S1′"** is scored as mean dev Δ ≤ 0.
+- **Runtime:** the primary arms (A1–A4) take about 11 GPU-h and run first. The
+  sensitivity arms (single-layer banks, the 10% coreset) take about 6 GPU-h and
+  run later on whichever GPU is free.
+
 ## Design
 
 ### Checkpoints
