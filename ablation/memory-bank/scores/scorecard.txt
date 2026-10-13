@@ -1,0 +1,27 @@
+P0  S1' overall AUC vs ../ensemble-backend: max |diff| 4.5e-06 (<=1e-3: True); bank.py R0 vs cached, max rel err 3.0e-04
+P1  dev P_mfn - zK' per ckpt -14.58 -14.64 -14.88 -14.27 -15.42 -15.10 -14.49 -14.63 | positive 0/8 (>=6: False)
+P2  dev  F_mfn - S1' -0.61 -0.71 -0.73 -0.71 -0.68 -0.86 -0.73 -0.74 | mean -0.72 (>=+0.2: False)
+P2  eval F_mfn - S1' -0.20 -0.16 -0.15 -0.07 -0.16 -0.38 -0.31 -0.33 | positive 0/8 (>=6: False) | mean -0.22  => P2 False
+P3  dev pump F_mfn - S1' +0.00 -0.53 -0.02 -0.25 -0.41 -0.28 +0.04 -0.19 | mean -0.20 (>=+0.5: False)
+    dev per machine, mean F_mfn - S1': fan -0.34 pump -0.20 slider -0.03 ToyCar -0.79 ToyConveyor -2.97 valve -0.01
+    eval per machine, mean F_mfn - S1': fan -0.09 pump -0.36 slider -0.02 ToyCar -0.59 ToyConveyor -0.24 valve -0.03
+P4a dev P_imagenet_mel 69.99 vs mean R0 94.91: diff -24.92 (<=-2: True)
+P4b dev F_imagenet_mel - S1' -0.78 -1.12 -1.07 -1.05 -0.90 -0.91 -0.97 -1.00 | mean -0.97 (does not beat, mean<=0: True)
+P4c dev mean P_imagenet 66.69 vs P_imagenet_mel 69.99: |diff| 3.30 (<0.5: False)
+P5  dev P_tfgram - P_mfn -14.76 -13.21 -12.59 -12.71 -28.75 -27.76 -30.16 -29.10 | negative 8/8 (>=6: True)
+P6  dev E_mfn - E_S1' [relu4] -0.70 (in [-0.1,+0.2]: False)
+P6  eval E_mfn - E_S1' [relu4] -0.07 (in [-0.1,+0.2]: True)
+D1  adopt F_mfn as the fusion rule for the next new checkpoints: False
+D2  other arms with mean dev F - S1' >= +0.2 (candidates, not adopted): none
+D3  sensitivity (never replaces the primary), mean F - S1' AUC dev / eval:
+    mfn                    -0.72 / -0.22   standalone P dev 79.90
+    mfn_top10              -0.64 / -0.15   standalone P dev 80.85
+    tfgram                 -0.64 / -0.90   standalone P dev 58.77
+    tfgram_top10           -0.57 / -0.90   standalone P dev 59.79
+    imagenet               -0.75 / -0.80   standalone P dev 66.69
+    imagenet_top10         -0.72 / -0.79   standalone P dev 67.50
+    imagenet_mel           -0.97 / -0.59   standalone P dev 69.99
+    imagenet_mel_top10     -0.95 / -0.55   standalone P dev 70.78
+    reference: mean R0 dev 94.91 / eval 95.61; mean S1' dev 95.33 / eval 96.25
+BOOT dev: {"F_mfn_minus_S1p_AUC": [-0.72, -0.83, -0.62], "F_tfgram_minus_S1p_AUC": [-0.64, -0.76, -0.5], "F_imagenet_minus_S1p_AUC": [-0.75, -0.87, -0.62], "F_imagenet_mel_minus_S1p_AUC": [-0.97, -1.11, -0.84], "E_mfn_minus_E_S1p_AUC": [-0.7, -0.82, -0.59]}
+BOOT eval: {"F_mfn_minus_S1p_AUC": [-0.22, -0.34, -0.11], "F_tfgram_minus_S1p_AUC": [-0.9, -1.08, -0.73], "F_imagenet_minus_S1p_AUC": [-0.8, -0.94, -0.67], "F_imagenet_mel_minus_S1p_AUC": [-0.59, -0.77, -0.42], "E_mfn_minus_E_S1p_AUC": [-0.07, -0.2, 0.06]}

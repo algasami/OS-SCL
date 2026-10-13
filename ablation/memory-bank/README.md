@@ -1,17 +1,14 @@
 # Memory bank — does patch-level nearest-neighbour scoring beat clip-level?
 
-> **Status: running (2026-10-13).** Pre-registered at 332ac22 and the code
-> committed at 4e59b4d before any test-clip patch score. The primary arms (A1–A4)
-> have been running on GPU 0 since 17:39, about 11 h.
+> **Status: done, null (2026-10-14).** It was pre-registered at 332ac22, and the
+> code was committed at 4e59b4d, before any test-clip patch score. Every patch
+> arm is 13–40 dev AUC below clip scoring on its own. Fused with R0 it is below
+> S1′ on dev (A1: −0.72) and on eval (−0.22; 0/8 positive). D1 is not adopted.
+> See **Results**.
 >
-> **Resume:**
-> - Progress: `ablation/memory-bank/results/run_bank_primary.log`. Per-ID outputs are
->   in `results/full/<arm>/<run>/`; the run is resumable, so a rerun skips finished
->   IDs.
-> - When it finishes:
->   1. `bash ablation/memory-bank/run.sh score` writes `scores/`.
->   2. Run the sensitivity arms with `MB_ARMS="mfn_l2 mfn_l3 mfn_cs10" MB_REPO=/home/f74134118/OS-SCL bash ablation/memory-bank/run.sh bank`, then score again.
->   3. Write `make_plots.py` and the Results section against the predictions below. Do not edit them.
+> **Resume:** nothing is pending. The sensitivity arms are optional: run
+> `MB_ARMS="mfn_l2 mfn_l3 mfn_cs10" MB_REPO=/home/f74134118/OS-SCL bash ablation/memory-bank/run.sh bank`,
+> then `run.sh score`. Per-ID outputs are in `results/full/` (gitignored).
 
 ## Why this exists
 
@@ -229,6 +226,75 @@ eval score.
   - a top-10-patch mean in place of the max;
   - single-layer banks.
 - Single-model mAUC deltas under ~2 points are not read (`CLAUDE.md`).
+
+## Results (2026-10-14)
+
+**The patch bank fails.** D1 does not hold, and no arm qualifies under D2. S1′
+stays the best known single-model rule. Full output is in
+`scores/scorecard.txt`. AUCs below are overall AUC, as means over the 8
+checkpoints unless a count of checkpoints is given. Bootstrap 95% CIs over
+clips come from `scores/bootstrap.json`.
+
+| prediction | outcome | held? |
+|---|---|---|
+| P0 pipeline | S1′ reproduces to 4.5e-6, and bank.py's R0 matches the cache to 3e-4 relative | **yes** |
+| P1 patch > clip standalone (40%) | P_A1 − zK′ = −14.3 to −15.4 on dev, 0/8 checkpoints positive | **no** |
+| P2 fusion, decision-bearing (30%) | F_A1 − S1′: dev **−0.72** [−0.83, −0.62]; eval **−0.22** [−0.34, −0.11], 0/8 positive | **no** |
+| P3 pump ≥ +0.5 (30%) | −0.20 dev | **no** |
+| P4a generic < R0 by ≥ 2 (80%) | P_A4 70.0 vs R0 94.9 dev | **yes** |
+| P4b F_A4 does not beat S1′ (75%) | −0.97 dev | **yes** |
+| P4c \|A3 − A4\| < 0.5 (60%) | 66.7 vs 70.0 dev: the Tgram/TFgram channels *hurt* ImageNet features | **no** |
+| P5 TFgram < MFN (75%) | 8/8 checkpoints, by 13–30 dev AUC | **yes** |
+| P6 E_A1 − E_S1′ in [−0.1, +0.2] | dev −0.70; eval −0.07 | dev **no**, eval yes |
+
+Standalone means over the 4 `relu_max` checkpoints:
+
+```
+                    dev AUC  fan  pump slider ToyCar ToyConv valve | eval AUC
+R0 (paper)            94.8  98.3  94.7  99.6   95.9   80.5   99.9 |   95.5
+K' clip kNN           94.8  97.8  94.3  99.8   97.3   79.9   99.8 |   95.8
+S1' = zR0' + zK'      95.3  98.3  94.9  99.7   96.5   82.7   99.9 |   96.2
+patch: MFN (A1)       80.2  78.4  79.2  89.7   78.7   66.6   88.6 |   82.7
+patch: TFgram (A2)    66.9  56.1  60.4  91.0   61.1   52.7   79.9 |   61.6
+patch: ImageNet (A3)  67.8  59.8  67.1  90.0   60.1   51.4   78.3 |   64.9
+patch: Img-mel (A4)   70.0  60.0  72.0  87.0   65.5   56.8   78.6 |   74.4
+```
+
+- **Every fused arm is below S1′, on dev and on eval, and every bootstrap CI
+  excludes zero.** Taking the max over patches, or the top-10 mean
+  (sensitivity, D3: −0.64 dev and −0.15 eval for A1), never turns into a gain.
+- **The hypothesis behind it is not supported here.** It was that faults are
+  local, so pooling dilutes them. Patch scores are below pooled scores on
+  every machine. The gap ranges from −10 (slider) and −11 (valve) to −20
+  (fan). Pump, the machine the idea was aimed at, is at −15. ToyConveyor,
+  where the ensemble gains most, drops further when fused (−2.97 dev). The ID-supervised network puts its normal-vs-anomalous
+  information into the pooled embedding, and its mid-level grid is not a
+  better place to look for it.
+- **The generic ImageNet features land near what the literature reports for
+  MIMII** (about 70 dev AUC on mel). They gain nothing from the learned
+  Tgram/TFgram channels.
+- **TFgram patches are bimodal by checkpoint family.** They score about 50
+  (chance) on the 4 `linear_avg` checkpoints and about 66 on `relu_max`. The
+  8-checkpoint mean is therefore 58.8, and the relu_max table above shows 66.9.
+- **Oddity, not interpreted:** P_A2 (TFgram) scores 34 on eval valve, below
+  chance. Normal eval valve clips sit *further* from the training bank than the
+  anomalous ones in the TFgram feature space.
+
+**Not run.** The coreset (10%) and single-layer sensitivity arms
+(`mfn_l2 mfn_l3 mfn_cs10`, about 6 GPU-h) are deferred. Under D3 they cannot
+replace the primary arm. Here the primary is 15 points below clip scoring
+standalone and below S1′ in all 16 fused cells, so neither outcome changes a
+decision. The GPU goes to `../distill` and `../confirm-seeds` first.
+
+## Figures
+
+`/home/f74134118/anaconda3/bin/python ablation/memory-bank/make_plots.py` reads `scores/` only.
+
+| figure | shows |
+|---|---|
+| `plots/fig1_standalone.png` | standalone overall AUC per rule, one dot per checkpoint: patch arms 13–40 points below R0 and K′ |
+| `plots/fig2_fusion_delta.png` | F_arm − S1′ per checkpoint with bootstrap 95% CI and the P2 bar: 0 of 64 checkpoint-level deltas above zero |
+| `plots/fig3_per_machine.png` | F_A1 − S1′ per machine with the P3 pump bar; ToyConveyor −2.97 on dev |
 
 ## What this cannot answer
 
