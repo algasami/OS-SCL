@@ -1,9 +1,17 @@
 # Distill — can one OS-SCL network learn what the 4-seed ensemble knows?
 
-> **Status: pre-registered 2026-10-13. Nothing trained, nothing scored.**
-> Everything below was written before any student existed. The only
-> measurements so far are on training clips, recorded under *What has already
-> been seen*.
+> **Status: pre-registered 2026-10-13 (a521f92). Nothing trained, nothing scored.**
+> The only measurements so far are on training clips, recorded under *What has
+> already been seen*.
+>
+> **Resume:**
+> 1. Implement `--kd_teachers/--kd_beta/--kd_tau` in `train.py`/`trainer.py`. They are
+>    off by default, so the main behaviour is unchanged.
+> 2. Run gate G1 (10 epochs, β = 0, teachers on, seed 2024; it must bit-match
+>    `tfl_relu_max_s2024/student_e10.pth`) and G2 (timing) on the first free GPU.
+>    GPU 0 frees up after the memory-bank run; GPUs 1–2 after confirm-seeds.
+> 3. Then the 4 students, one per GPU. This worktree has no `data/`; symlink it
+>    as `../OS-SCL-confirm-seeds` does (`ln -s /home/f74134118/OS-SCL/data data`).
 
 ## Why this exists
 
