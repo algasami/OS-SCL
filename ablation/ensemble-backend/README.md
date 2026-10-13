@@ -1,11 +1,16 @@
 # Ensemble + back-end — can scoring alone take OS-SCL past the paper?
 
-> **Status: pre-registered, nothing confirmatory run yet.** Everything below
-> *Results* was written on 2026-10-12, before any eval-set score under the rules
-> tested here and before the seed-2026/2027 checkpoints existed. The only data
-> already seen is the dev-set exploration in *What has already been seen*.
-> Waits for [`../tfgram-linear`](../tfgram-linear) stage 2 (seed 2027 due
-> ~2026-10-13).
+> **Status: done (2026-10-13), 8 checkpoints, dev and eval.** **D1 holds:** a
+> sum of the 4 paper-model seeds (E1[relu4]) beats every member on both sets
+> (+0.96 dev, +0.54 eval AUC over the mean member). **D2:** it exceeds the
+> paper on 3 of 4 numbers by point estimate (dev AUC 95.79, dev pAUC 90.57,
+> eval 93.70; not dev mAUC 90.47), and every 95% interval still includes the
+> paper's value. **D3 fails:** the pre-registered fusion S1 is positive on only
+> 4/8 eval checkpoints. Its sensitivity variant S1′ (training-clip statistics,
+> the exploration's own choice) is positive in 16/16 cells. That is the
+> follow-up, not a result here. Everything above *Results* was written on
+> 2026-10-12, before any confirmatory score, and is left unedited apart from
+> the dated addendum.
 
 ## Why this exists
 
@@ -81,6 +86,16 @@ R0 eval CSVs for seeds 2024/2025 also exist, committed by `../tfgram-linear`;
 R0 is the baseline here, not a rule under test.
 **Not seen:** any eval score under any rule other than R0, and any score at all
 from the seed-2026/2027 checkpoints.
+
+**Addendum, 2026-10-13, before any confirmatory score.** `../tfgram-linear`
+stage 2 has since committed single-model R0 (S0) CSVs for seeds 2026/2027, so
+the baseline is now known. On this host, `relu_max` at n=4 scores dev
+94.82 ± 0.23 and eval 95.47 ± 0.30. Per machine on dev against the paper:
+ToyConveyor −3.03, pump −1.53, ToyCar −0.67, the rest within 0.1. Clearing the
+paper's dev AUC therefore needs E1[relu4] to add ≥ +0.89 over the mean member,
+against the exploration's +1.0 at n=4, so P2's dev half is closer to a coin flip
+than "moderate". The predictions above are left as committed. No rule under test
+(S1, E0–E2) has been scored on any new checkpoint or on eval.
 
 ## Design
 
@@ -250,15 +265,147 @@ exploration/    the 2026-10-12 dev-only scripts, kept as run (paths are scratch-
 results/        per-clip arrays, gitignored
 ```
 
-## Planned figures
+## Figures
 
-| figure | will show |
+Regenerate with `/home/f74134118/anaconda3/bin/python ablation/ensemble-backend/make_plots.py`
+(matplotlib lives in `base`). Reads `scores/` only. The headline ensemble is
+blue, the training-statistics variant orange; single models and the paper
+are references, drawn achromatic.
+
+| figure | shows |
 |--------|-----------|
-| `plots/fig1_ensemble_size.png` | AUC vs ensemble size n (every subset, mean and spread), dev and eval, with the paper's line |
-| `plots/fig2_per_machine.png` | E1[relu4] vs mean single model vs paper, per machine: where the gain comes from, and whether pump moves |
-| `plots/fig3_fusion_delta.png` | S1 − S0 per checkpoint, dev-fresh and eval, against the D3 threshold |
-| `plots/fig4_vs_paper.png` | bootstrap 95% CIs of E1[relu4] against the paper's three dev numbers and its eval number |
+| `plots/fig1_ensemble_size.png` | score vs ensemble size n over every subset of the 8 checkpoints: the mean rises at every step; E1[relu4] sits above the paper's dev AUC and eval number |
+| `plots/fig2_per_machine.png` | per machine, mean single model → E1[relu4], with the paper on dev: ToyConveyor carries the gain, pump stays 1.3 short, eval valve drops through calibration |
+| `plots/fig3_fusion_delta.png` | fusion − R0 per checkpoint for S1 (held-out statistics) and S1′ (training statistics): 4/8 vs 8/8 positive on eval |
+| `plots/fig4_vs_paper.png` | E1[relu4] with bootstrap 95% intervals against the paper's three dev numbers and its eval number |
 
 ## Results
 
-*Not run.*
+8 checkpoints (`relu_max`, `linear_avg` × seeds 2024–2027), dev and eval. One
+pass over every clip on one A4000: extraction 12 min, scoring and bootstrap
+4 min. Full scorecard in `scores/scorecard.txt`.
+
+### Verification
+
+- **Split replay: holds.** For all 8 checkpoints, the EMA's validation CE on
+  the replayed 5% split (1,815 clips, `trainer.valid()`'s batching)
+  reproduces the best-epoch `Valid_loss` in `curve.csv` to ≤ 1.2×10⁻⁵. So
+  the held-out clips are exactly the ones each model never trained on, and
+  the weights are the ones that were scored.
+- **P0, score reproduction: misses its tolerance, harmlessly.** Per-ID AUC
+  matches the committed CSVs to ≤ 3.6×10⁻⁴ (`relu_max_s2026` dev). 4 of 16
+  cells exceed the 1×10⁻⁴ I wrote. The cause is float32: batched inference
+  uses different kernels from eval.py's batch of 1, which reorders a few
+  near-tied clip pairs. `../scoring-probe`'s own batch-1 rerun differs from
+  the same CSVs by up to 1.8×10⁻⁴. No overall AUC moves at the second
+  decimal.
+
+### Headline: E1[relu4]
+
+```
+                          AUC     pAUC    mAUC    mean(AUC,pAUC)
+dev   single (mean of 4)  94.82   89.74   89.03   92.28
+      E1[relu4]           95.79   90.57   90.47   93.18
+      paper               95.71   90.23   91.23   92.97
+eval  single (mean of 4)  95.46   90.61   91.32   93.04
+      E1[relu4]           96.01   91.39   92.55   93.70
+      paper                 —       —       —     93.22
+```
+
+The members' overall AUC is 94.97 / 94.59 / 95.06 / 94.66 on dev and
+95.20 / 95.53 / 95.27 / 95.86 on eval. Note that a **single** `relu_max`
+model on this host is *below* the paper's eval number (93.04 vs 93.22). The
+seed-sweep's 93.32 was measured on the other host.
+
+Bootstrap 95% intervals (test-clip sampling only):
+
+```
+dev AUC    95.79 [95.42, 96.12]   paper 95.71   65% of draws above
+dev pAUC   90.57 [89.90, 91.19]   paper 90.23   84%
+dev mAUC   90.47 [89.27, 91.40]   paper 91.23    6%
+eval mean  93.70 [93.19, 94.23]   paper 93.22   96%
+best member − E1, AUC:  dev −0.73 [−0.93, −0.54]   eval −0.14 [−0.40, +0.11]
+```
+
+### Against the predictions
+
+- **P1: holds.** E1[relu4] beats the best member on both sets: dev 95.79 vs
+  95.06, eval 96.01 vs 95.86. The gain over the mean member is +0.96 dev
+  (predicted +0.6 to +1.2) and +0.54 eval (predicted +0.4 to +1.0). The size
+  curve rises at every n on both sets: dev 94.62 → 95.33 → 95.61 → 95.76 →
+  95.86 → 95.93 → 95.98 → 96.02. On eval the margin over the *best* member
+  is inside test-set noise (CI −0.40 to +0.11). On dev it is not.
+- **P2: dev AUC, dev pAUC and eval hold; dev mAUC does not** (90.47 vs 91.23,
+  called a coin flip). No interval excludes the paper's value. The eval lower
+  bound misses by 0.03.
+- **P3: holds.** Dev pump 94.96 vs the paper's 96.25. Per machine on dev
+  against the paper: ToyConveyor +1.45, fan +0.42, valve +0.14, slider −0.02,
+  ToyCar −0.24, pump −1.29. Against the mean single model, ToyConveyor gains
+  +4.48 on dev and +2.68 on eval. Most of the ensemble's gain is removing
+  ToyConveyor's seed variance (`../seed-sweep`).
+- **P4: fails.** S1 − S0 is positive on 4/8 eval checkpoints (needed ≥ 7) and
+  3/4 fresh dev checkpoints (needed 4/4). The means are +0.13 eval and +0.20
+  dev-fresh, inside the predicted +0.1 to +0.4. mAUC improves by +1.3 on both,
+  but single-model mAUC deltas under 2 points are not read.
+- **P5: dev holds, eval misses high.** E2 − E1 [relu4] is +0.18 dev and +0.35
+  eval (CI +0.21 to +0.51), above the predicted ceiling of +0.3. On eval,
+  adding kNN inside the ensemble helps in all three compositions (+0.35,
+  +0.23, +0.19).
+- **P6: fails.** The source of the statistics matters. |S1 − S1′| reaches
+  0.60 dev and 0.86 eval, and |E1 − E1′| reaches 0.41 on eval. The direction
+  is consistent: **training-clip statistics are better**. See below.
+- **P7: holds.** Mixed 2+2 ensembles average −0.02 dev and +0.17 eval
+  against relu4. E1[mix8] reaches 96.02 dev and 96.41 eval.
+
+### Decisions
+
+- **D1: adopted.** E1[relu4] is this repo's reported *ensemble* system.
+- **D2:** the claim allowed is "an ensemble of 4 OS-SCL models (4 × 1.38 M
+  parameters) exceeds the paper's dev AUC, dev pAUC and eval score by point
+  estimate". Not "clearly", and not on dev mAUC. `mix8` (dev 96.02 / 90.79 /
+  91.29) and E2 score higher, but by the pre-registration they do not replace
+  the headline.
+- **D3: not adopted.** R0 stays the single-model rule.
+
+### The unplanned result: held-out statistics hurt (post hoc)
+
+I made the normalisation statistics come from the 5% held-out clips because
+training clips are fit too well, and that was the principled-looking choice.
+The exploration had used training-part clips. On this data the change was a
+mistake:
+
+```
+mean Δ overall AUC vs R0      dev     eval    cells positive
+S1   (held-out statistics)   +0.22   +0.14   9/16
+S1′  (training statistics)   +0.42   +0.65   16/16
+```
+
+The same pattern shows in the ensembles. On eval, E1′[relu4] 96.42 > E0
+(raw sum) 96.26 > E1 96.01. The pre-registered headline is the *weakest* of
+the three normalisations on eval, so its claim against the paper is
+conservative.
+
+Likely mechanism (a hypothesis): each held-out ID has ~44 clips, so its mean
+and especially its standard deviation are noisy. z-scoring then rescales IDs
+inconsistently against each other. Per-ID ranking survives, but pooled
+machine AUC suffers. The clearest case is eval valve under E1[relu4]: every
+valve ID's AUC holds or rises (id_05 from ~0.969 to 0.976), yet pooled valve
+AUC falls 0.96 below the mean single model, while E0 gains +0.47 and E1′
++0.24. Training-part statistics use ~840 clips per ID. Their optimism bias is
+a near-constant shift per ID, which costs less than the variance.
+
+S1′ was pre-specified, but only as a sensitivity check. Promoting it now,
+after seeing eval, would be test-set selection. It is, however, exactly the
+rule the dev exploration found (+0.44), now replicated on 4 new checkpoints
+and on the unseen eval set in 16/16 cells. That makes it the natural primary
+rule for a follow-up confirmation on new checkpoints.
+
+## What next
+
+1. **Confirm S1′ as the single-model rule** on checkpoints that don't exist
+   yet. Any new 4-seed arm trained for the next ablation can serve: score it
+   with S1′ as the pre-registered primary. No extra training needed.
+2. **Turn the ensemble into one model.** D1 holds, so distillation (or a
+   shared-trunk weight average) is the route to a single-model claim.
+3. **Pump** (−1.29 vs the paper even ensembled) needs model-side work. No
+   scoring rule here moves it.
