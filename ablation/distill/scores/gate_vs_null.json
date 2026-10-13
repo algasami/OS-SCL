@@ -1,0 +1,9 @@
+{
+  "G1_bit_exact": false,
+  "G1_max_abs_diff": 7.830619812011719,
+  "G1_worst_tensor": "TFgramNet.pre_block3.bn1.running_var",
+  "G1_tensors_compared": 315,
+  "G2_its_gate": 1.49,
+  "G2_its_baseline": 2.2,
+  "G2_slowdown": 1.476510067114094
+}

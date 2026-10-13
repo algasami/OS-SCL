@@ -4,7 +4,8 @@
 #   KD_GPU=0 bash ablation/distill/run.sh gate         # G1 bit-exact repro + G2 timing (~1 h)
 #   KD_GPU=0 bash ablation/distill/run.sh diag         # G1 diagnosis: 20 steps x 5 modes (~15 min)
 #   KD_GPU=0 bash ablation/distill/run.sh null         # G1 diagnosis: 10 epochs, no teachers (~45 min)
-#   KD_GPUS="0 1 2" bash ablation/distill/run.sh students   # only after the gate passes
+#   bash ablation/distill/run.sh students              # 4 students on idle GPUs (KD_GPUS), ~28 h each
+#   bash ablation/distill/run.sh rerun                 # eval kdnull_s2024 once it finishes: the noise floor
 #
 # Teachers are leave-one-seed-out: the student at seed s learns from the other three
 # tfl_relu_max seeds. They and the baselines live in KD_TEACHER_DIR (the main checkout).
@@ -48,7 +49,7 @@ ten_epochs() {  # desc json [beta: omit for no teachers at all]
         $D/results/train_$1.log "$BASE_LOGS/train_tfl_relu_max_s2024.log" "$2"
 }
 
-case ${1:?usage: run.sh gate|null|diag|students} in
+case ${1:?usage: run.sh gate|null|diag|students|rerun} in
 gate)
     GPU=${KD_GPU:-0}
     echo "=== gate start $(date) | gpu=$GPU ==="
@@ -68,9 +69,16 @@ diag)  # G1 diagnosis: 20 steps per mode, each in a fresh process
     done
     $PY $D/diag_g1.py compare $D/results | tee $D/scores/diag_g1.txt
     echo "=== diag end $(date) ===" ;;
-students)
-    python3 -c "import json,sys; sys.exit(0 if json.load(open('$D/scores/gate.json'))['G1_bit_exact'] else 1)" \
-        || { echo "gate G1 has not passed; refusing to train students"; exit 1; }
-    echo "students: not wired yet (lands after the gate result is recorded)"; exit 1 ;;
+students)  # 4 students, one per idle GPU; amended G1 (README): diag must show 0 differing tensors
+    grep -q "tensors differing: [1-9]" $D/scores/diag_g1.txt 2>/dev/null || [ ! -f $D/scores/diag_g1.txt ] \
+        && { echo "amended G1 not passed (scores/diag_g1.txt); refusing to train students"; exit 1; }
+    echo "=== students start $(date) | gpus=${KD_GPUS:-0 1 2} ==="
+    printf '%s\n' $SEEDS | xargs -P 3 -I{} $D/run_one.sh {} 1
+    $PY ablation/distill_curves.py distill
+    echo "=== students end $(date) ===" ;;
+rerun)  # noise floor: kdnull_s2024 (started by `null`, left to run 300 epochs); eval once it ends
+    while pgrep -f -- "--desc kdnull_s2024 " >/dev/null; do sleep 300; done
+    $D/run_one.sh 2024 none
+    $PY ablation/distill_curves.py distill ;;
 *) echo "unknown stage"; exit 1 ;;
 esac

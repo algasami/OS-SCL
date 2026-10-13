@@ -1,0 +1,5 @@
+none    mixup lambdas same: True | first differing loss: step None | tensors differing: 0/222 | max |dW| 0.000e+00
+none2   mixup lambdas same: True | first differing loss: step None | tensors differing: 0/222 | max |dW| 0.000e+00
+loaded  mixup lambdas same: True | first differing loss: step None | tensors differing: 0/222 | max |dW| 0.000e+00
+side    mixup lambdas same: True | first differing loss: step None | tensors differing: 0/222 | max |dW| 0.000e+00
+add0    mixup lambdas same: True | first differing loss: step None | tensors differing: 0/222 | max |dW| 0.000e+00

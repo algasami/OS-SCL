@@ -1,17 +1,21 @@
 # Distill — can one OS-SCL network learn what the 4-seed ensemble knows?
 
-> **Status: pre-registered 2026-10-13 (a521f92). Nothing trained, nothing scored.**
-> The only measurements so far are on training clips, recorded under *What has
-> already been seen*.
+> **Status: students queued (2026-10-14). Nothing scored.** G2 passes (1.44×).
+> Bit-exact G1 failed. The diagnosis shows that no run on this host is
+> bit-reproducible over 10 epochs, and that the KD plumbing is exact. G1 was
+> amended before any student was trained; see *Diagnosis result and
+> amendment* under Gate.
 >
 > **Resume:**
-> 1. Implement `--kd_teachers/--kd_beta/--kd_tau` in `train.py`/`trainer.py`. They are
->    off by default, so the main behaviour is unchanged.
-> 2. Run gate G1 (10 epochs, β = 0, teachers on, seed 2024; it must bit-match
->    `tfl_relu_max_s2024/student_e10.pth`) and G2 (timing) on the first free GPU.
->    GPU 0 frees up after the memory-bank run; GPUs 1–2 after confirm-seeds.
-> 3. Then the 4 students, one per GPU. This worktree has no `data/`; symlink it
->    as `../OS-SCL-confirm-seeds` does (`ln -s /home/f74134118/OS-SCL/data data`).
+> - `kdnull_s2024` (noise-floor rerun) is training on GPU 0, started
+>   2026-10-14 02:37, ~20 h. Its log is `results/train_kdnull_s2024.log`.
+>   `run.sh rerun` evaluates it once it ends.
+> - `run.sh students` runs 4 students via `run_one.sh <seed> 1`. Each takes a
+>   GPU only once the card is idle, so they start as GPU 0 (kdnull) and GPUs
+>   1–2 (`../confirm-seeds`) free up. Logs: `results/run_students.log` and
+>   `results/train_kd_relu_max_s*.log`. The stage is resumable.
+> - Then write `make_plots.py` and the Results section against P1–P6 and the
+>   noise floor.
 
 ## Why this exists
 
@@ -187,6 +191,48 @@ run starts.
     instead of the archived `tfl_relu_max_s<seed>`. That costs 4 more runs. The
     predictions are unchanged.
   - If `null` is bit-exact, the plumbing is fixed until the gate passes.
+
+### Diagnosis result and amendment, 2026-10-14 (before any student is trained)
+
+```
+diag (scores/diag_g1.txt), 20 steps, each mode in a fresh process on GPU 0:
+  none, none2, loaded, side, add0   same mixup lambdas, same losses, 0/222 tensors differ
+
+10-epoch runs at seed 2024 (scores/gate*.json), EPOCH lines:
+                              epoch 0 train / valid    epoch 7 train    e10 vs archived baseline
+  archived tfl_relu_max       13.06018 / 17.45719      6.82969          -
+  null (no teachers, GPU 0)   13.05942 / 17.45877      6.83373          max |d| 10.5
+  gate (beta 0, GPU 0)        13.05942 / 17.45877      6.83371          max |d| 12.1; vs null 7.8
+```
+
+- **The plumbing is exact.** With teachers loaded, run, or added at β = 0, the
+  first 20 steps are bit-identical to no teachers: same mixup draws, losses
+  and weights.
+- **Training on this host is not bit-reproducible over many epochs.** The gate
+  and `null` agree to 5 decimals through epoch 6 and part at epoch 7. With 10
+  epochs of evidence, it can't be ruled out that the teachers trigger this by
+  some indirect route, but nothing in the 20-step test points that way. The
+  archived baseline (GPU 2, 2026-10-09) differs already at epoch 0. The
+  CLAUDE.md claim is reproduction "to 5 decimals", which is weaker than bit
+  exactness, and this matches it.
+- **Amended G1.** The question G1 was written to answer is whether the
+  teachers leak into the RNG, the batch order or the BatchNorm updates. That
+  is answered by `diag`: no leak. Bit-exact 10-epoch reproduction cannot be
+  reached on this host by *any* run, so it is dropped as a criterion. The
+  `students` stage now requires `diag` to show 0 differing tensors.
+- **What "paired" now means.** A student and its same-seed baseline share the
+  init, the split, the batch order and the mixup draws. They do not share a
+  bit-exact trajectory. So each student − baseline Δ contains numerical noise
+  on top of the KD effect. A fresh baseline would be only another draw of
+  that noise, so the fallback above is **not** used. Students are compared
+  with the archived `tfl_relu_max_s<seed>` as planned.
+- **Noise floor, added.** `kdnull_s2024`, the `null` run, is left to finish
+  300 epochs. It is the baseline recipe rerun at seed 2024. Its difference
+  from the archived `tfl_relu_max_s2024` (dev and eval R0 AUC) is reported
+  next to the student Δs as the size of a pure-noise Δ. The predictions and
+  D1–D3 are unchanged. If the rerun gap exceeds the students' mean Δ, the
+  write-up says that pairing bought no precision, and that n=4 can't separate
+  KD from noise.
 
 ## Predictions
 
