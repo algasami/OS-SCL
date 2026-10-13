@@ -1,0 +1,8 @@
+R0z                n=1 combos=4  AUC 94.90  pAUC 89.77  mAUC 89.29
+R0z                n=2 combos=6  AUC 95.54  pAUC 90.52  mAUC 90.37
+R0z                n=3 combos=4  AUC 95.80  pAUC 90.79  mAUC 90.82
+R0z                n=4 combos=1  AUC 95.93  pAUC 90.92  mAUC 91.04
+ens_R0z+knn_pre_z  n=1 combos=4  AUC 95.34  pAUC 90.16  mAUC 90.49
+ens_R0z+knn_pre_z  n=2 combos=6  AUC 95.76  pAUC 90.76  mAUC 91.14
+ens_R0z+knn_pre_z  n=3 combos=4  AUC 95.92  pAUC 91.00  mAUC 91.39
+ens_R0z+knn_pre_z  n=4 combos=1  AUC 95.99  pAUC 91.10  mAUC 91.48

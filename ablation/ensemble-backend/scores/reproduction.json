@@ -1,0 +1,74 @@
+{
+  "SCLTFSTgramMFN_tfl_relu_max_s2024": {
+    "dev_max_abs_id_auc_diff": 9.529411764697127e-05,
+    "eval_max_abs_id_auc_diff": 9.830985915493251e-05,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.356167853547915,
+    "valid_loss_curve": 0.35617,
+    "best_epoch": 281,
+    "valid_loss_abs_diff": 2.1464520849612256e-06
+  },
+  "SCLTFSTgramMFN_tfl_relu_max_s2025": {
+    "dev_max_abs_id_auc_diff": 9.477477477481955e-05,
+    "eval_max_abs_id_auc_diff": 5.577464788730779e-05,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.31592155145160083,
+    "valid_loss_curve": 0.31592,
+    "best_epoch": 289,
+    "valid_loss_abs_diff": 1.5514516008563461e-06
+  },
+  "SCLTFSTgramMFN_tfl_relu_max_s2026": {
+    "dev_max_abs_id_auc_diff": 0.0003589189189188158,
+    "eval_max_abs_id_auc_diff": 5.1971830986041745e-05,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.3441171634888536,
+    "valid_loss_curve": 0.34412,
+    "best_epoch": 299,
+    "valid_loss_abs_diff": 2.8365111464090376e-06
+  },
+  "SCLTFSTgramMFN_tfl_relu_max_s2027": {
+    "dev_max_abs_id_auc_diff": 6.216450216445235e-05,
+    "eval_max_abs_id_auc_diff": 4.478873239455172e-05,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.33956849141094575,
+    "valid_loss_curve": 0.33958,
+    "best_epoch": 292,
+    "valid_loss_abs_diff": 1.1508589054243235e-05
+  },
+  "SCLTFSTgramMFN_tfl_linear_avg_s2024": {
+    "dev_max_abs_id_auc_diff": 0.00018063063063067375,
+    "eval_max_abs_id_auc_diff": 2.924528301873064e-05,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.35677565314815374,
+    "valid_loss_curve": 0.35677,
+    "best_epoch": 238,
+    "valid_loss_abs_diff": 5.653148153761389e-06
+  },
+  "SCLTFSTgramMFN_tfl_linear_avg_s2025": {
+    "dev_max_abs_id_auc_diff": 4.999999999999449e-05,
+    "eval_max_abs_id_auc_diff": 8.831858407076787e-05,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.35620076857986155,
+    "valid_loss_curve": 0.35621,
+    "best_epoch": 289,
+    "valid_loss_abs_diff": 9.231420138477997e-06
+  },
+  "SCLTFSTgramMFN_tfl_linear_avg_s2026": {
+    "dev_max_abs_id_auc_diff": 9.138958909893358e-05,
+    "eval_max_abs_id_auc_diff": 0.0001384905660376523,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.3851892620890933,
+    "valid_loss_curve": 0.38519,
+    "best_epoch": 299,
+    "valid_loss_abs_diff": 7.379109066563139e-07
+  },
+  "SCLTFSTgramMFN_tfl_linear_avg_s2027": {
+    "dev_max_abs_id_auc_diff": 8.712643678177034e-05,
+    "eval_max_abs_id_auc_diff": 0.0001015492957746611,
+    "n_valid": 1815,
+    "valid_loss_replayed": 0.341418932824545,
+    "valid_loss_curve": 0.34142,
+    "best_epoch": 293,
+    "valid_loss_abs_diff": 1.0671754550051205e-06
+  }
+}
