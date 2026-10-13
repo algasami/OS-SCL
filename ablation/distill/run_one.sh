@@ -25,7 +25,17 @@ if [ -f $D/scores/$name/eval_dev.csv ] && [ -f $D/scores/$name/eval_eval.csv ]; 
     echo "[$(date +%T)] skip $desc (already complete)"; exit 0
 fi
 
-idle() { [ "$(nvidia-smi -i "$1" --query-gpu=memory.used --format=csv,noheader,nounits)" -lt 1000 ]; }
+# idle = no other ablation's lock and under 1 GB used on 3 checks a minute apart: a
+# confirm-seeds slot goes from train to eval to its next seed with seconds of idle between
+idle() {
+    for _ in 1 2 3; do
+        for l in /tmp/os-scl-*-locks/gpu"$1"; do
+            [ -d "$l" ] && [ "${l%/gpu*}" != "$LOCKS" ] && return 1
+        done
+        [ "$(nvidia-smi -i "$1" --query-gpu=memory.used --format=csv,noheader,nounits)" -lt 1000 ] || return 1
+        sleep 60
+    done
+}
 gpu=""
 while [ -z "$gpu" ]; do
     for g in $GPUS; do
