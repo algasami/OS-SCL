@@ -155,6 +155,39 @@ found.
 teachers drop to bf16 or two teachers. That change is recorded here before the
 run starts.
 
+### Gate result, 2026-10-13 (`scores/gate.json`)
+
+- **G2 passes:** 1.49 vs 2.15 it/s, a 1.44× slowdown. By epoch time it is
+  366 s vs 265 s, 1.38×.
+- **G1 fails.** At epoch 10, 188 of 315 tensors differ: every trained one. The
+  127 that match are the TFgram modules `forward()` never uses. The largest
+  difference is 12.1, in `TFgramNet.pre_block3.bn1.running_var`. The trained
+  weights differ by about 1% relative. The runs already part in epoch 0:
+  train loss is 13.05942 here against 13.06018 for the baseline.
+- **Reading, before diagnosis.** An RNG leak would change the mixup draws and
+  move the epoch-0 loss by around 1e-2, not 6e-5. Nothing in the model draws
+  random numbers in eval mode (there is no dropout). So the cause is
+  numerical. There are three candidates:
+  - (a) training is not bit-deterministic on smartlab1 even without teachers;
+  - (b) the 0 × KD backward path changes a gradient;
+  - (c) cuDNN or cuBLAS picks different kernels with the teachers on the GPU.
+
+  A tiny numerical difference is then amplified by training. That is not the
+  RNG unpairing G1 was meant to catch, but it still decorrelates the student
+  from its baseline. So the paired design holds only if (a) is ruled out.
+- **Diagnosis (`run.sh diag`, `run.sh null`, before any student).** `diag`
+  runs 20 steps in fresh processes under five conditions: no teachers twice,
+  teachers loaded only, teachers run with KD not added, and the gate's
+  loss + 0 × KD. It compares the losses and weights; the output goes to
+  `scores/diag_g1.txt`. `null` repeats the 10-epoch gate with no teachers
+  against the baseline (`scores/gate_null.json`).
+- **What follows from each outcome.**
+  - If `null` is not bit-exact, (a) holds: no run on this host is reproducible.
+    Each student is then compared with a **fresh baseline trained alongside it**
+    instead of the archived `tfl_relu_max_s<seed>`. That costs 4 more runs. The
+    predictions are unchanged.
+  - If `null` is bit-exact, the plumbing is fixed until the gate passes.
+
 ## Predictions
 
 Written before any student exists. Δ means student − same-seed `tfl_relu_max`
