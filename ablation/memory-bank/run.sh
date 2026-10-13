@@ -26,6 +26,8 @@ ARMS=${MB_ARMS:-"mfn mfn_l2 mfn_l3 mfn_cs10 tfgram imagenet"}
 MEL=""
 [ "${MB_MEL:-0}" = 1 ] && MEL=--imagenet-mel
 mkdir -p $D/results
+# the 1536-d imagenet banks fragment the allocator across IDs (OOM at 4.3 GB reserved-but-free)
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 case ${1:?usage: run.sh bank|score} in
 bank)
