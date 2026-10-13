@@ -22,7 +22,14 @@ is its zero-training version: the machine type is known at test time in DCASE
 use. Conditioning the network on machine type *during training* is a separate,
 costlier question that this probe can motivate but not answer.
 
-> **Status: done at n=1 per arm (seed 2024); stage-2 seeds pending.** Answer:
+> **[n=4] Status: done at n=4 per arm (seeds 2024–2027, 8 checkpoints, 16
+> cells).** The answer stands: **keep eval.py's rule.** R1 and R3 lose in all
+> 16 cells. R2 is null. R4 turns slightly positive at n=4 (+0.03 dev, +0.30
+> eval) but fails the decision rule and the dev-only selection rule. P4's n=1
+> failure goes away: the arm ordering is the same under every rule. See *n=4*
+> below; the n=1 text is left as written.
+>
+> **Status (n=1, superseded): done at n=1 per arm (seed 2024); stage-2 seeds pending.** Answer:
 > **keep eval.py's rule.** No alternative beats R0 consistently. Dropping the
 > margin (R1) or dropping the margin *and* the other machine types (R3) loses
 > to it in every cell. Restricting to the own machine type (R2) and own-centre
@@ -167,7 +174,7 @@ linear_avg).
 | R1 | **loses to R0**: negative in all 4 cells, mean −0.35. Keeping the training margin at test time helps. |
 | R2 | no effect: sign flips (eval relu_max +0.09), mean −0.14 |
 | R3 | **loses to R0**: negative in all 4 cells, mean −0.71; the worst rule, on every metric |
-| R4 | no effect: −0.13 on dev, +0.3 on eval. Loses on dev, so not adopted under the dev-only selection rule, however good eval looks |
+| R4 | no effect: −0.13 on dev, +0.3 on eval. Loses on dev, so not adopted under the dev-only selection rule, however good eval looks. **[n=4]** still no effect: dev +0.03, eval +0.30 (8/8 positive) |
 
 pAUC and mAUC point the same way (`fig1`; mAUC for R3 drops 1.0–2.1 points).
 Per machine (`fig2`), most of the movement is in the toy sets: R1 costs
@@ -199,7 +206,7 @@ So other machine types are a large part of eval.py's score, yet removing them
 | P1 | R2 ≈ R0 (|Δ| ≤ 0.2); cross-type mass < 10⁻³ | **outcome nearly, mechanism wrong**: |Δ| ≤ 0.23, mass ~15–80% |
 | P2 | R1: |Δ| < 0.5, sign unknown | **fails on size**: −0.60 / −0.51 on eval; sign is consistently negative |
 | P3 | R4 ≈ R0 on idAUC (< 0.5); pooled moves more; swings in valve/slider | idAUC **holds** (≤ 0.36); pooled does **not** move more; swings are in ToyConveyor/ToyCar, not valve/slider |
-| P4 | arm ordering survives every rule | **fails on eval for R2/R3**: `linear_avg − relu_max` is +0.25 under R0, −0.05 under R2, −0.32 under R3. That gap is below the n=1 noise floor either way, which is the point: a scoring choice is enough to flip it |
+| P4 | arm ordering survives every rule | **[n=4] holds** (mean ordering positive under every rule). n=1: **fails on eval for R2/R3**: `linear_avg − relu_max` is +0.25 under R0, −0.05 under R2, −0.32 under R3. That gap is below the n=1 noise floor either way, which is the point: a scoring choice is enough to flip it |
 
 ### Post-hoc mechanism (not pre-registered)
 
@@ -236,6 +243,62 @@ temperature varied at scoring time.
 - **For `../tfgram-linear`:** the arm difference (+0.25 eval under R0) is
   smaller than the effect of some scoring choices. That's another reason to
   read it only at n=4.
+
+### n=4: all eight checkpoints
+
+Rerun on 2026-10-13 after `../tfgram-linear` stage 2 landed: `run.sh` with no
+arguments picked up all 8 checkpoints (4 seeds × 2 arms), 16 paired cells,
+9 min on one A4000. Nothing in the rules, scoring or decision rule changed.
+
+**P0 holds at n=4.** R0 matches every committed per-ID AUC within 1.8×10⁻⁴,
+and no float32 score is exactly 0.
+
+Overall pooled AUC, rule − R0, mean over the 8 checkpoints (and how many of
+8 cells are negative):
+
+```
+             R1             R2             R3             R4
+dev    -0.37 (8/8)    -0.17 (8/8)    -0.76 (8/8)    +0.03 (2/8)
+eval   -0.58 (8/8)    +0.01 (3/8)    -0.61 (8/8)    +0.30 (0/8)
+all    -0.47          -0.08          -0.68          +0.17
+```
+
+Mean per-ID AUC (idAUC) gives the same pattern: R1 −0.49, R2 −0.03, R3 −0.61,
+R4 +0.20.
+
+**Decision rule** (same sign in every cell and |mean| ≥ 0.3), over 16 cells:
+
+| rule | n=1 verdict | n=4 verdict |
+|------|-------------|-------------|
+| R1 | loses to R0 | **loses to R0**: negative in 16/16, mean −0.47 |
+| R2 | no effect | no effect: sign flips, mean −0.08 |
+| R3 | loses to R0 | **loses to R0**: negative in 16/16, mean −0.68 |
+| R4 | no effect | **no effect, but leans positive**: 14/16 positive, mean +0.17 < 0.3 |
+
+**R4 is the one change.** At n=1 it lost on dev (−0.13, −0.14). At n=4 its
+dev mean is +0.03 (the two negative cells are the two seed-2024 checkpoints
+from n=1), and it is positive on all 8 eval cells (+0.17 to +0.39), mostly
+through ToyConveyor and ToyCar (fig2). It still isn't adopted, for two
+reasons that were both fixed in advance: it fails the decision rule (not one
+sign everywhere, mean below 0.3), and selection uses dev only, where it is
++0.03. Adopting it because eval looks good would be test-set selection. What
+it does say: the softmax over 41 centres adds nothing over the own-centre
+cosine on dev, and may cost a little on eval.
+
+**P4 now holds.** At n=1 the arm ordering flipped under R2/R3 on eval. At n=4
+the mean `linear_avg − relu_max` over seeds is positive under every rule on
+both sets: dev R0 +0.18, R1 +0.13, R2 +0.16, R3 +0.09, R4 +0.20; eval R0
++0.28, R1 +0.35, R2 +0.24, R3 +0.24, R4 +0.22. The n=1 flip was seed noise,
+as the n=1 text suspected. The ordering itself is still not significant
+(`../tfgram-linear`).
+
+**Cross-type diagnostic is stable.** Median R0 mass on other machine types
+for normal clips is 0.14–0.19 across all 8 checkpoints and both sets; for
+anomalous fan/pump/slider/valve it stays at 0.49–0.83 (fig3).
+
+**What this changes:** nothing in practice. R0 remains eval.py's rule. Every
+scoring rule here is a function of the 41 logits. Embedding back-ends and
+ensembles are a different question, pre-registered in `../ensemble-backend`.
 
 ## Figures
 
