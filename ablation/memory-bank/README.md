@@ -1,9 +1,17 @@
 # Memory bank — does patch-level nearest-neighbour scoring beat clip-level?
 
-> **Status: pre-registered 2026-10-13. Nothing has been scored.** Everything
-> below was written before any test clip was passed through a patch-level
-> scorer. The only GPU work done so far is a shape and timing smoke test on the
-> training clips of one ID (see *What has already been seen*).
+> **Status: running (2026-10-13).** Pre-registered at 332ac22 and the code
+> committed at 4e59b4d before any test-clip patch score. The primary arms (A1–A4)
+> have been running on GPU 0 since 17:39, about 11 h.
+>
+> **Resume:**
+> - Progress: `ablation/memory-bank/results/run_bank_primary.log`. Per-ID outputs are
+>   in `results/full/<arm>/<run>/`; the run is resumable, so a rerun skips finished
+>   IDs.
+> - When it finishes:
+>   1. `bash ablation/memory-bank/run.sh score` writes `scores/`.
+>   2. Run the sensitivity arms with `MB_ARMS="mfn_l2 mfn_l3 mfn_cs10" MB_REPO=/home/f74134118/OS-SCL bash ablation/memory-bank/run.sh bank`, then score again.
+>   3. Write `make_plots.py` and the Results section against the predictions below. Do not edit them.
 
 ## Why this exists
 
