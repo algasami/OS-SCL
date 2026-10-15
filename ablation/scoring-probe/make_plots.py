@@ -98,7 +98,7 @@ def by_arm(models):
 
 def fig1_overall(rows):
     models = by_arm({r['model'] for r in rows})
-    fig, axes = plt.subplots(2, 2, figsize=(9.2, 6.0), sharey='row')
+    fig, axes = plt.subplots(2, 2, figsize=(10.4, 6.2), sharey='row')
     for row, (metric, mlabel) in enumerate([('AUC', 'pooled AUC (eval.py)'), ('idAUC', 'mean per-ID AUC')]):
         d = deltas(rows, 'overall', metric)
         for col, ds in enumerate(['dev', 'eval']):
@@ -109,16 +109,17 @@ def fig1_overall(rows):
                 arm, seed = arm_seed(mo)
                 xs = np.arange(len(RULES)) + jitter(i, len(models))
                 ys = [d[(mo, ds, 'ALL', ru)] for ru in RULES]
-                ax.scatter(xs, ys, s=46, color=COLOR.get(arm, MUTED), edgecolor=SURFACE, lw=1.5, zorder=3,
-                           label=f'{LABEL.get(arm, arm)}, s{seed}' if (row, col) == (0, 0) else None)
+                ax.scatter(xs, ys, s=46, color=COLOR.get(arm, MUTED), edgecolor=SURFACE, lw=1.5, zorder=3)
             ax.set_xticks(range(len(RULES)), [RULE_TICK[r] for r in RULES], fontsize=8)
             ax.grid(axis='y')
             ax.set_title(f'{ds}: {mlabel}', loc='left', fontsize=9.5, color=INK)
             if col == 0:
                 ax.set_ylabel('rule − R0  (AUC points)')
-    axes[0, 0].legend(loc='upper left', bbox_to_anchor=(0, 1.24), ncol=4, fontsize=8)
-    fig.suptitle(overall_title(rows), x=0.07, y=1.06, ha='left', fontsize=11, color=INK)
-    fig.text(0.07, 1.005, f'Each dot is one checkpoint scored two ways; shaded band = ±{DECISION} '
+    # one entry per arm: a per-seed legend overflows the panel titles at n=4
+    handles = [plt.Line2D([], [], ls='', marker='o', ms=6, color=c, label=l) for _, l, c in ARMS]
+    fig.legend(handles=handles, loc='upper left', bbox_to_anchor=(0.06, 0.99), ncol=2, fontsize=8.5)
+    fig.suptitle(overall_title(rows), x=0.07, y=1.07, ha='left', fontsize=11, color=INK)
+    fig.text(0.07, 1.025, f'Each dot is one checkpoint scored two ways; shaded band = ±{DECISION} '
              'decision threshold (README).', fontsize=8.5, color=INK_2)
     fig.tight_layout()
     save(fig, 'fig1_overall_delta.png')
