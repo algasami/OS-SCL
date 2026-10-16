@@ -1,5 +1,11 @@
 # Ensemble + back-end — can scoring alone take OS-SCL past the paper?
 
+> **Superseded in part by `../confirm-seeds` (2026-10-16, 4 fresh seeds).** S1′ was
+> confirmed there and is now the single-model rule; E2′ = Σ S1′ replaced E1 as the
+> reported ensemble. E1[relu4]'s dev AUC claim below did **not** replicate on
+> fresh seeds (E1[N4] 95.64 vs the paper's 95.71). Numbers here are left as
+> written, with inline **[confirm-seeds]** notes.
+
 > **Status: done (2026-10-13), 8 checkpoints, dev and eval.** **D1 holds:** a
 > sum of the 4 paper-model seeds (E1[relu4]) beats every member on both sets
 > (+0.96 dev, +0.54 eval AUC over the mean member). **D2:** it exceeds the
@@ -362,10 +368,12 @@ best member − E1, AUC:  dev −0.73 [−0.93, −0.54]   eval −0.14 [−0.40
 - **D1: adopted.** E1[relu4] is this repo's reported *ensemble* system.
 - **D2:** the claim allowed is "an ensemble of 4 OS-SCL models (4 × 1.38 M
   parameters) exceeds the paper's dev AUC, dev pAUC and eval score by point
-  estimate". Not "clearly", and not on dev mAUC. `mix8` (dev 96.02 / 90.79 /
+  estimate". **[confirm-seeds]** On 4 fresh seeds E1 holds dev pAUC
+  and eval but not dev AUC (95.64); E2′ over the same seeds holds all four. Not "clearly", and not on dev mAUC. `mix8` (dev 96.02 / 90.79 /
   91.29) and E2 score higher, but by the pre-registration they do not replace
   the headline.
-- **D3: not adopted.** R0 stays the single-model rule.
+- **D3: not adopted.** R0 stays the single-model rule. **[confirm-seeds]** S1′ was adopted
+  there on 4 fresh seeds (4/4 on both sets).
 
 ### The unplanned result: held-out statistics hurt (post hoc)
 
