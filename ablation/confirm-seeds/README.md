@@ -1,14 +1,14 @@
 # Confirm seeds — fresh paper-model checkpoints for confirmation
 
-> **Status: pre-registered (2026-10-15), training ending. Nothing scored on the
-> new checkpoints, R0 included.** Seeds 2028/2029 are trained; 2030/2031 end
-> ~12:35 and ~15:00 on 2026-10-15.
+> **Status: pre-registered (2026-10-15); training done; score stage committed. Nothing scored on the
+> new checkpoints, R0 included.** All 4 seeds trained by 2026-10-15 15:00.
 >
 > **Resume:**
-> - Check progress: `tail -c 300 ablation/confirm-seeds/results/train_cs_relu_max_s<seed>.log` and `results/run_train.log`.
-> - When training ends, `run.sh train` copies each `config.json` and distils the curves.
-> - Then write the `score` stage exactly as *Planned files* says, commit it, and
->   run it. Nothing in *Pre-registration* may change after the first score.
+> - `run.sh score` waits for an idle GPU no other ablation has locked, then runs
+>   eval.py (R0 CSVs) on N4, `../ensemble-backend/extract.py` on N4 + O4 and
+>   `score.py`. Log: `results/run_score.log`. Resumable.
+> - Then write Results against P0–P7 and D1–D4, `make_plots.py` and figures.
+>   Nothing in *Pre-registration* may change after the first score.
 
 ## Why this exists
 
@@ -197,3 +197,12 @@ make_plots.py  reads scores/ only
 
 The score code is committed before it is run. A bug fix after the first run is
 allowed only for a crash or a P0 failure, and is logged in an addendum here.
+
+**Addendum, 2026-10-16, before any score on N4.** `score.py` was dry-run on
+already-seen checkpoints only: the cached ensemble-backend arrays, with
+`linear_avg` s2024–2027 standing in for N4 and 20 bootstrap replicates. It
+reproduced ensemble-backend exactly (P0 diffs, E1[lin4] 95.79 dev / 96.38
+eval). That run computed E2′ for the first time, on old checkpoints:
+E2′ − E1 [lin4] was +0.18 dev and +0.47 eval. These are inside P6's ranges
+and were seen after P6 was committed; nothing above changed. No N4 checkpoint
+was touched.
