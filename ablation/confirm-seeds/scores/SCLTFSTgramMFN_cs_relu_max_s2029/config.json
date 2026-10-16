@@ -1,0 +1,15 @@
+{
+    "m": 0.4,
+    "gpu_num": 1,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "cs_relu_max_s2029",
+    "seed": 2029,
+    "num_workers": 8,
+    "tf_act": "relu",
+    "tf_pool": "max",
+    "student_snapshots": "10,30,90,300",
+    "model_name": "SCLTFSTgramMFN_cs_relu_max_s2029"
+}
