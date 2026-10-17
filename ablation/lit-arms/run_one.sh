@@ -52,14 +52,29 @@ rm -f "check_points/${name}/probe.csv"
 
 echo "[$(date +%T)] TRAIN start ${desc} gpu=${gpu} fussion=${FUSSION} ${flags}"
 t0=$(date +%s)
-$PY train.py --m 0.4 --fussion "$FUSSION" --ht basic --gpu_num "$gpu" --num_workers 8 \
-    --seed "$seed" --epoch "$epochs" --desc "$desc" \
-    --amp fp16 --cudnn_bench 1 --lean 1 --cache_dir data/cache --probe_every 5 $flags \
-    > "${OUT}/train_${desc}.log" 2>&1
-rc=$?
-if [ $rc -ne 0 ] || [ ! -f "check_points/${name}/model.pth" ]; then
-    echo "[$(date +%T)] FAIL train ${desc} rc=${rc}"; exit 1
-fi
+# smartlab1's faulty RAM crashes processes now and then (fast-recipe README), so a run
+# snapshots its state every 10 epochs and a crash resumes from there, up to 3 attempts
+rm -f "check_points/${name}/state_last.pth"
+resume=""; attempt=1
+: > "${OUT}/train_${desc}.log"
+while :; do
+    $PY train.py --m 0.4 --fussion "$FUSSION" --ht basic --gpu_num "$gpu" --num_workers 8 \
+        --seed "$seed" --epoch "$epochs" --desc "$desc" \
+        --amp fp16 --cudnn_bench 1 --lean 1 --cache_dir data/cache --probe_every 5 --state_every 10 \
+        $flags $resume >> "${OUT}/train_${desc}.log" 2>&1
+    rc=$?
+    [ $rc -eq 0 ] && [ -f "check_points/${name}/model.pth" ] && break
+    if [ $attempt -ge 3 ]; then echo "[$(date +%T)] FAIL train ${desc} rc=${rc} after ${attempt} attempts"; exit 1; fi
+    attempt=$((attempt + 1))
+    if [ -f "check_points/${name}/state_last.pth" ]; then
+        resume="--crash_resume check_points/${name}/state_last.pth"
+    else
+        resume=""; rm -f "check_points/${name}/probe.csv"
+    fi
+    echo "[$(date +%T)] RETRY ${desc} rc=${rc} attempt ${attempt} ${resume:-from scratch}"
+    echo "${desc},$(date +%s),${rc},${attempt}" >> "check_points/${name}/crashes.csv"
+done
+rm -f "check_points/${name}/state_last.pth"
 echo "start,end,seconds,epochs,gpu" > "check_points/${name}/wall.csv"
 echo "$t0,$(date +%s),$(( $(date +%s) - t0 )),$epochs,$gpu" >> "check_points/${name}/wall.csv"
 echo "[$(date +%T)] TRAIN done ${desc}"

@@ -21,6 +21,9 @@ python eval.py ... --d --csv [path]                      # export eval matrix; b
 python cache_data.py --verify                            # train + dev-test wav/mel arrays -> data/cache (~37 GB)
 python train.py ... --amp fp16 --cudnn_bench 1 --lean 1 --cache_dir data/cache [--probe_every 5]
                                                          # fast recipe (ablation/fast-recipe); probe = dev-test log only
+python train.py ... --state_every 10 [--crash_resume check_points/<run>/state_last.pth]   # crash-safe
+python train.py ... --seed <trunk> --resume_state <trunk>/state_e150.pth --fork_seed N    # fork a trunk
+python soup.py --out <name> check_points/<fork1> ...    # weight-average forks into one net (ablation/trunk-soup)
 ```
 
 ## Config
@@ -60,6 +63,7 @@ Loss (`utils.os_scl`): mixup-interpolated ArcFace CE + `SupConLoss` on the embed
 - Run-to-run noise on this reproduction is ~1 point of eval AUC and >4 points on ToyConveyor. Any single-seed difference below that is not a result — see `ablation/seed-sweep/`.
 - Checkpoints are **310 MB** each because `TFgram.__init__` allocates ~80 M params of `conv_block1-6`/`fc*` that `forward` never uses. Budget disk before a sweep (16 runs ≈ 5 GB), or prune.
 - **smartlab1's host RAM flips bits** (non-ECC; GPU ECC is on and clean). A 29 GB float32 cache read back with single-bit flips. There were 20–40 per item at a 64/128-byte stride: 14 of 36k items on one pass, 3 on the next. The disk was clean after page eviction. One exponent flip made a mel 1.3e11 and NaN'd a run. Run `cache_data.py --verify` after a build. Anything float that sits in host RAM for long needs a range check; the cached dataloader does `cached_item_ok`. See `ablation/fast-recipe/`.
+- The same faulty RAM **crashes processes**: 5 Python GP faults or segfaults in `dmesg` on 2026-10-17, none in the 49 days before. Long runs should use `--state_every 10`, and a crash should be resumed with `--crash_resume <run>/state_last.pth`; `ablation/lit-arms/run_one.sh` retries automatically.
 - `--lean 1` checkpoints have different keys (no dead TFgram modules, no unused branch modules) and won't load into a non-lean net. `eval.py` reads `lean` from the checkpoint's `config.json`. A lean net also draws its init in a different order, so it is never a paired copy of a non-lean seed.
 - `--amp` autocasts training steps only. `valid()` and the probe stay fp32: the early EMA net's BatchNorm stats are near init and overflow fp16. GradScaler doesn't protect BatchNorm running stats, so a non-finite loss skips the step (`skip |` log lines).
 - These runs are **GPU-bound**, not dataloader-bound, despite `train_dataset.__getitem__` decoding the wav and computing the mel per item. Stacking jobs on one card *lowers* aggregate throughput (measured: 13.2 it/s alone vs 3×3.1 shared). Run one per GPU.

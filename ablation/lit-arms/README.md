@@ -30,6 +30,18 @@ shrinks a lot on top of OS-SCL. The point is to find which ones survive at n=4.
 | `--mel_gate tristat` | `model/net.py: tristat_gate`, `input_branches` | **One deviation:** s is z-scored over the clip's frames before alpha=2. ESTM only says "minus μ, the mean used for de-centering". On raw dB the variance term dominates (s has sd 5–34 across frames), and the gate saturates: 78–97% of frames get < 0.1 or > 0.9 on four sample clips. With z-scoring, 25–28% saturate. Computed in fp32. |
 | `--eca 1` | `model/net.py: ECA`, `Bottleneck(eca=)` | kernel from ECA's adaptive rule, which gives 5 at both widths (128, 512). +30 parameters. |
 
+**Crash resilience (added 2026-10-17, before any run).** This host's faulty RAM
+(`../fast-recipe`) has started crashing processes: the kernel logged 5 Python
+general-protection faults or segfaults in one evening, and none before in 49
+days of uptime. So every run here passes `--state_every 10`, which overwrites
+`state_last.pth` atomically with weights, EMA, optimiser, scheduler, scaler,
+best-so-far validation loss and RNG streams. `run_one.sh` retries a crashed
+run up to 3 times with `--crash_resume`. The resumed run keeps its own best
+validation loss, so checkpoint selection is unchanged. Crashes are logged to
+`scores/<run>/crashes.csv`. Tested by killing a 3-epoch run mid-epoch-2: it
+resumed at epoch 2 and kept epoch 0 as the best. The same code adds
+`--state_snapshots` / `--resume_state --fork_seed` for `../trunk-soup`'s forks.
+
 Default models keep identical state_dict keys (checked against
 `ablation/fast-recipe`). `eval.py` reads `mel_gate` and `eca` from the
 checkpoint's `config.json`. `../ensemble-backend/extract.py` now calls

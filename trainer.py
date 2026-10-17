@@ -1,6 +1,8 @@
 import json
 import os
+import random
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -45,6 +47,11 @@ class Trainer:
         # so probing training needs the student's own weights
         snaps = cfg.get('student_snapshots') or ''
         self.student_snapshots = {int(e) for e in str(snaps).split(',') if e.strip()}
+        # full training state for forks (ablation/trunk-soup)
+        snaps = cfg.get('state_snapshots') or ''
+        self.state_snapshots = {int(e) for e in str(snaps).split(',') if e.strip()}
+        # --state_every N: overwrite state_last.pth every N epochs, for --crash_resume
+        self.state_every = int(cfg.get('state_every') or 0)
 
         # distillation (ablation/distill): frozen teachers score the same mixed batch
         self.teachers = list(teachers)
@@ -78,11 +85,13 @@ class Trainer:
             w2m.amplitude_to_db.to(self.device)
             self.gpu_mel = w2m
 
-    def train(self, train_loader, valid_loader):
+    def train(self, train_loader, valid_loader, start_epoch=0):
         num_steps = len(train_loader)
-        min_val_loss = 1e10
+        # a fork selects its own best epoch from the fork point on, not against the trunk's;
+        # a crash-resume picks up the interrupted run's own best
+        min_val_loss = getattr(self, 'crash_min_val_loss', 1e10)
 
-        for epoch in tqdm(range(self.epochs), total=self.epochs, dynamic_ncols=True):
+        for epoch in tqdm(range(start_epoch, self.epochs), total=self.epochs - start_epoch, dynamic_ncols=True):
             sum_loss = 0.
             sum_accuracy = 0.
             sum_kd = 0.
@@ -140,9 +149,53 @@ class Trainer:
                 torch.save(self.ema_net.state_dict(), self.model_path)
             if self.probe_every and ((epoch + 1) % self.probe_every == 0 or epoch + 1 == self.epochs):
                 self.probe(epoch, valid_loss, saved)
+            if epoch + 1 in self.state_snapshots:
+                self.save_state(epoch, min_val_loss, valid_loss)
+            if self.state_every and (epoch + 1) % self.state_every == 0 and epoch + 1 < self.epochs:
+                self.save_state(epoch, min_val_loss, valid_loss, name='state_last.pth')
             if epoch + 1 in self.student_snapshots:
                 torch.save(self.net.state_dict(),
                            os.path.join(os.path.dirname(self.model_path), f'student_e{epoch + 1}.pth'))
+
+    def save_state(self, epoch, min_val_loss, valid_loss, name=None):
+        """Everything needed to continue this run after `epoch` (0-based): a fork
+        (--resume_state) or a crash-resume (--crash_resume). Written atomically."""
+        path = os.path.join(os.path.dirname(self.model_path), name or f'state_e{epoch + 1}.pth')
+        rng = {'torch': torch.get_rng_state(), 'cuda': torch.cuda.get_rng_state(self.device),
+               'numpy': np.random.get_state(), 'python': random.getstate()}
+        torch.save({'epoch': epoch, 'min_val_loss': min_val_loss, 'valid_loss': valid_loss,
+                    'net': self.net.state_dict(), 'ema_net': self.ema_net.state_dict(),
+                    'optimizer': self.optimizer.state_dict(), 'scheduler': self.scheduler.state_dict(),
+                    'scaler': self.scaler.state_dict(), 'rng': rng}, path + '.tmp')
+        os.replace(path + '.tmp', path)
+
+    def load_state(self, path):
+        """Load a save_state() file in place; returns the epoch to continue from.
+
+        load_state_dict copies into the existing tensors, so WeightEMA's references to
+        the student's and the EMA's tensors stay valid.
+        """
+        st = torch.load(path, map_location=self.device, weights_only=False)  # our own file: RNG state is not tensors
+        self.net.load_state_dict(st['net'])
+        self.ema_net.load_state_dict(st['ema_net'])
+        self.optimizer.load_state_dict(st['optimizer'])
+        self.scheduler.load_state_dict(st['scheduler'])
+        self.scaler.load_state_dict(st['scaler'])
+        self.resumed_valid_loss = st['valid_loss']
+        self.resumed_state = st
+        return st['epoch'] + 1
+
+    def crash_resume(self, path):
+        """Continue an interrupted run from its state_last.pth: weights, optimiser,
+        best-so-far validation loss and RNG streams (not bit-exact on this host)."""
+        start = self.load_state(path)
+        st = self.resumed_state
+        self.crash_min_val_loss = st['min_val_loss']
+        torch.set_rng_state(st['rng']['torch'].cpu())
+        torch.cuda.set_rng_state(st['rng']['cuda'].cpu(), self.device)
+        np.random.set_state(st['rng']['numpy'])
+        random.setstate(st['rng']['python'])
+        return start
 
     @torch.no_grad()
     def augment(self, wavs, mels, p=0.3):

@@ -17,6 +17,7 @@ score_run() {   # score_run <name>
     local n=$1
     mkdir -p $D/scores/$n
     cp -p check_points/$n/{config.json,probe.csv,wall.csv} $D/scores/$n/
+    [ -f check_points/$n/crashes.csv ] && cp -p check_points/$n/crashes.csv $D/scores/$n/
     for split in d e; do
         ds=dev; [ $split = e ] && ds=eval
         [ -f $D/scores/$n/eval_$ds.csv ] && continue
