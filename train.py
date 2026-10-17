@@ -63,6 +63,11 @@ def parse_arguments():
     parser.add_argument('--cache_dir', type=str, help='Read train/devtest arrays from cache_data.py output')
     parser.add_argument('--probe_every', type=int,
                         help='Log dev-test R0 metrics of the EMA net every N epochs (diagnostic only)')
+    parser.add_argument('--mel_gate', type=str, choices=['none', 'tristat'],
+                        help="Add a gated Log-Mel input channel: 'tristat' (ESTM). Default none")
+    parser.add_argument('--eca', type=int, choices=[0, 1], help='1 = ECA after each bottleneck depthwise conv')
+    parser.add_argument('--wave_aug', type=int, choices=[0, 1],
+                        help='1 = waveform noise/shift/gain augmentation before mixup (Sensors 26:3214)')
     parser.add_argument('--kd_teacher_dir', type=str, help="Directory holding the teachers (default check_points)")
     parser.add_argument('--kd_beta', type=float, help="Weight of the KD term (default 1.0)")
     parser.add_argument('--kd_tau', type=float, help="KD temperature on 30*cos (default 2.0)")

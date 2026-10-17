@@ -44,20 +44,42 @@ class LeakyReLUHead(nn.Module):
         return self.head(x)
 
 
+class ECA(nn.Module):
+    """Efficient channel attention (Wang et al., CVPR 2020): GAP -> 1-D conv over
+    channels -> sigmoid -> channel-wise scale. Kernel from the paper's adaptive
+    rule k = |log2(C)/2 + 1/2|_odd, which gives 5 for both of MobileFaceNet's
+    expanded widths here (128 and 512)."""
+
+    def __init__(self, channels):
+        super().__init__()
+        k = int(abs(math.log2(channels) / 2 + 0.5))
+        k = k if k % 2 else k + 1
+        self.conv = nn.Conv1d(1, 1, k, padding=k // 2, bias=False)
+
+    def forward(self, x):
+        w = self.conv(x.mean((2, 3)).unsqueeze(1)).squeeze(1)
+        return x * torch.sigmoid(w)[:, :, None, None]
+
+
 class Bottleneck(nn.Module):
-    def __init__(self, inp, oup, stride, expansion):
+    def __init__(self, inp, oup, stride, expansion, eca=False):
         super(Bottleneck, self).__init__()
         self.connect = stride == 1 and inp == oup
         #
+        dw = [
+            # dw
+            nn.Conv2d(inp * expansion, inp * expansion, 3, stride, 1, groups=inp * expansion, bias=False),
+            nn.BatchNorm2d(inp * expansion),
+            nn.PReLU(inp * expansion),
+        ]
+        if eca:  # after the depthwise conv, as in the Sensors 26:3214 ECA-MobileFaceNet
+            dw.append(ECA(inp * expansion))
         self.conv = nn.Sequential(
             # pw
             nn.Conv2d(inp, inp * expansion, 1, 1, 0, bias=False),
             nn.BatchNorm2d(inp * expansion),
             nn.PReLU(inp * expansion),
-            # dw
-            nn.Conv2d(inp * expansion, inp * expansion, 3, stride, 1, groups=inp * expansion, bias=False),
-            nn.BatchNorm2d(inp * expansion),
-            nn.PReLU(inp * expansion),
+            *dw,
 
             # pw-linear
             nn.Conv2d(inp * expansion, oup, 1, 1, 0, bias=False),
@@ -112,6 +134,32 @@ FUSSION_BRANCHES = {
 FUSSION_CHANNELS = {k: len(v) for k, v in FUSSION_BRANCHES.items()}
 
 
+def input_branches(cfg):
+    """The fussion mode's branches, plus the gated Log-Mel channel right after the
+    Log-Mel one when --mel_gate is set (ESTM's ESTgram order: Mel, EMel, T)."""
+    branches = FUSSION_BRANCHES[cfg['fussion']]
+    if (cfg.get('mel_gate') or 'none') == 'none':
+        return branches
+    i = branches.index('mel') + 1
+    return branches[:i] + ('emel',) + branches[i:]
+
+
+def tristat_gate(x_mel, alpha=2.0):
+    """ESTM's TriStat gating (arXiv 2509.02471, Eq. 1-2), parameter-free.
+
+    Per frame, over the 128 mel bins: s = median + RMS + variance; the gate is
+    sigmoid(alpha * (s - mu)) broadcast over frequency. The paper calls mu "the
+    mean used for de-centering". Here s is z-scored over the clip's 313 frames:
+    on raw dB the variance term (~1e2) dominates and the gate saturates to a
+    0/1 mask (ablation/lit-arms README). Computed in fp32.
+    """
+    with torch.autocast('cuda', enabled=False):
+        x = x_mel.float()
+        s = x.median(dim=2).values + x.pow(2).mean(2).sqrt() + x.var(2)       # (B, 1, T)
+        s = (s - s.mean(-1, keepdim=True)) / (s.std(-1, keepdim=True) + 1e-5)
+        return torch.sigmoid(alpha * s).unsqueeze(2) * x                      # (B, 1, F, T)
+
+
 class MobileFaceNet(nn.Module):
     def __init__(self,
                  num_class,
@@ -119,7 +167,8 @@ class MobileFaceNet(nn.Module):
                  cfg=None):
         super(MobileFaceNet, self).__init__()
 
-        self.conv1 = ConvBlock(FUSSION_CHANNELS[cfg["fussion"]], 64, 3, 2, 1)
+        self.conv1 = ConvBlock(len(input_branches(cfg)), 64, 3, 2, 1)
+        self.eca = bool(cfg.get('eca', False))
 
         self.dw_conv1 = ConvBlock(64, 64, 3, 1, 1, dw=True)
 
@@ -147,9 +196,9 @@ class MobileFaceNet(nn.Module):
         for t, c, n, s in setting:
             for i in range(n):
                 if i == 0:
-                    layers.append(block(self.inplanes, c, s, t))
+                    layers.append(block(self.inplanes, c, s, t, eca=self.eca))
                 else:
-                    layers.append(block(self.inplanes, c, 1, t))
+                    layers.append(block(self.inplanes, c, 1, t, eca=self.eca))
                 self.inplanes = c
 
         return nn.Sequential(*layers)
@@ -224,13 +273,15 @@ class SCLTFSTgramMFN(nn.Module):
 
     def branch_input(self, x_wav, x_mel, train=True):
         """The fussion mode's branches stacked as channels: the MobileFaceNet input."""
-        branches = FUSSION_BRANCHES[self.cfg['fussion']]
+        branches = input_branches(self.cfg)
 
         # only run the branches this fussion mode actually consumes
         feats = []
         for name in branches:
             if name == 'mel':
                 feats.append(x_mel)
+            elif name == 'emel':
+                feats.append(tristat_gate(x_mel))
             elif name == 'tgram':
                 feats.append(self.tgramnet(x_wav).unsqueeze(1))
             elif name == 'tfgram':

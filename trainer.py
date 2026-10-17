@@ -68,6 +68,16 @@ class Trainer:
         self._probe_data = None
         self.skipped = 0
 
+        # --wave_aug (ablation/lit-arms): the Sensors 26:3214 recipe, applied to the
+        # batch on the GPU before mixup; augmented clips get their mel recomputed there
+        self.wave_aug = bool(cfg.get('wave_aug'))
+        if self.wave_aug:
+            from dataloader import Wave2Mel
+            w2m = Wave2Mel()
+            w2m.mel_transform.to(self.device)
+            w2m.amplitude_to_db.to(self.device)
+            self.gpu_mel = w2m
+
     def train(self, train_loader, valid_loader):
         num_steps = len(train_loader)
         min_val_loss = 1e10
@@ -81,6 +91,9 @@ class Trainer:
                 self.net.train()
 
                 x_wavs, x_mels, labels = x_wavs.to(self.device), x_mels.to(self.device), labels.to(self.device)
+
+                if self.wave_aug:
+                    x_wavs, x_mels = self.augment(x_wavs, x_mels)
 
                 mixed_x_wavs, mixed_x_mels, y_a, y_b, lam, mixed_y = mixup_data(x_wavs, x_mels, labels,
                                                                                 self.device)
@@ -130,6 +143,33 @@ class Trainer:
             if epoch + 1 in self.student_snapshots:
                 torch.save(self.net.state_dict(),
                            os.path.join(os.path.dirname(self.model_path), f'student_e{epoch + 1}.pth'))
+
+    @torch.no_grad()
+    def augment(self, wavs, mels, p=0.3):
+        """Each op independently with probability p, per clip (Sensors 26:3214, Sec. 3):
+        Gaussian noise with std ~ U[0.001, 0.005]; a circular time shift of
+        ~ U[0.03, 0.08] of the length, random sign (direction is not stated in the
+        paper); gain ~ U[0.9, 1.1]. Mels of the touched clips are recomputed on the
+        GPU, which differs from the cached CPU mel by ~1e-5 dB on untouched audio.
+        """
+        b, dev = wavs.shape[0], wavs.device
+        u = lambda lo, hi: lo + (hi - lo) * torch.rand(b, 1, 1, device=dev)   # noqa: E731
+        noise, shift, gain = (torch.rand(b, device=dev) < p for _ in range(3))
+        wavs = wavs.clone()
+        if noise.any():
+            wavs[noise] += (torch.randn_like(wavs) * u(0.001, 0.005))[noise]
+        if shift.any():
+            n = wavs.shape[-1]
+            k = (u(0.03, 0.08).view(b) * n).long() * (torch.randint(0, 2, (b,), device=dev) * 2 - 1)
+            for i in torch.nonzero(shift).flatten().tolist():
+                wavs[i] = torch.roll(wavs[i], int(k[i]), dims=-1)
+        if gain.any():
+            wavs[gain] *= u(0.9, 1.1)[gain]
+        touched = noise | shift | gain
+        if touched.any():
+            mels = mels.clone()
+            mels[touched] = self.gpu_mel(wavs[touched])
+        return wavs, mels
 
     def kd_loss(self, wavs, mels, labels, feature):
         """tau^2 * KL(p_T || p_S) on margin-free 30*cos, p_T the teachers' mean softmax.

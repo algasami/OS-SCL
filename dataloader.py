@@ -170,7 +170,9 @@ class train_dataset(torch.utils.data.Dataset):
         if self.cache_dir:
             with open(os.path.join(self.cache_dir, 'train_files.txt')) as f:
                 cached = f.read().split()
-            if cached != self.unrolled_files_list:
+            # compare paths below data/dataset: the absolute prefix names the worktree
+            tail = lambda fs: [x.split(os.sep + 'dataset' + os.sep, 1)[-1] for x in fs]  # noqa: E731
+            if tail(cached) != tail(self.unrolled_files_list):
                 raise SystemExit(f'{self.cache_dir}/train_files.txt does not match the training file list')
 
     def __getitem__(self, idx):
