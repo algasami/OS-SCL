@@ -7,7 +7,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 D=ablation/lit-arms
-PY=${LA_PY:-/home/f74134118/anaconda3/envs/os-scl-cu124/bin/python}
+PY=${PY:-/home/f74134118/anaconda3/envs/os-scl-cu124/bin/python}
 FUSSION=${LA_FUSSION:?set LA_FUSSION}
 SEEDS="2040 2041 2042 2043"
 ARMS=${LA_ARMS:-"aug gate eca"}
@@ -17,7 +17,7 @@ score_run() {   # score_run <name>
     local n=$1
     mkdir -p $D/scores/$n
     cp -p check_points/$n/{config.json,probe.csv,wall.csv} $D/scores/$n/
-    [ -f check_points/$n/crashes.csv ] && cp -p check_points/$n/crashes.csv $D/scores/$n/
+    if [ -f check_points/$n/crashes.csv ]; then cp -p check_points/$n/crashes.csv $D/scores/$n/; fi
     for split in d e; do
         ds=dev; [ $split = e ] && ds=eval
         [ -f $D/scores/$n/eval_$ds.csv ] && continue

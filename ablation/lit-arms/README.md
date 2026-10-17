@@ -38,8 +38,12 @@ days of uptime. So every run here passes `--state_every 10`, which overwrites
 best-so-far validation loss and RNG streams. `run_one.sh` retries a crashed
 run up to 3 times with `--crash_resume`. The resumed run keeps its own best
 validation loss, so checkpoint selection is unchanged. Crashes are logged to
-`scores/<run>/crashes.csv`. Tested by killing a 3-epoch run mid-epoch-2: it
-resumed at epoch 2 and kept epoch 0 as the best. The same code adds
+`scores/<run>/crashes.csv`. Tested twice. A 3-epoch run killed mid-epoch-2
+resumed at epoch 2 and kept epoch 0 as its best. Through the shared runner
+`../train_one.sh`, a `kill -9` (rc 137) mid-epoch-1 retried from the snapshot
+and finished with the `done` marker. The runner (GPU lock, idle check, retry,
+`wall.csv`, `crashes.csv`) lives at `ablation/train_one.sh`, shared with
+`../trunk-soup`. The same code adds
 `--state_snapshots` / `--resume_state --fork_seed` for `../trunk-soup`'s forks.
 
 Default models keep identical state_dict keys (checked against
