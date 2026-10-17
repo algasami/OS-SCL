@@ -215,8 +215,8 @@ class SCLTFSTgramMFN(nn.Module):
         elif head_type == 'leaky_relu':
             self.head = LeakyReLUHead()
 
-    def forward(self, x_wav, x_mel, label, train=True):
-
+    def branch_input(self, x_wav, x_mel, train=True):
+        """The fussion mode's branches stacked as channels: the MobileFaceNet input."""
         branches = FUSSION_BRANCHES[self.cfg['fussion']]
 
         # only run the branches this fussion mode actually consumes
@@ -229,7 +229,11 @@ class SCLTFSTgramMFN(nn.Module):
             elif name == 'tfgram':
                 feats.append(self.TFgramNet(x_wav, train).unsqueeze(1))
 
-        x = feats[0] if len(feats) == 1 else torch.cat(feats, dim=1)
+        return feats[0] if len(feats) == 1 else torch.cat(feats, dim=1)
+
+    def forward(self, x_wav, x_mel, label, train=True):
+
+        x = self.branch_input(x_wav, x_mel, train)
 
         out, feature = self.mobilefacenet(x)
 

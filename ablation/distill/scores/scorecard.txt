@@ -1,0 +1,47 @@
+R0 overall AUC, student - same-seed baseline
+  seed      dev     eval
+  2024    -0.21    +0.52
+  2025    +0.01    +0.09
+  2026    -0.44    +0.10
+  2027    +0.45    -0.18
+  mean    -0.05    +0.13
+ floor    +0.08    -0.37   kdnull_s2024 - archived s2024 (pure rerun noise)
+
+P1 dev: delta > 0 on 2/4 (need >= 3), mean -0.05 (need >= +0.30) -> FAILS
+P2 eval: delta > 0 on 3/4 (need >= 3), mean +0.13 (need > 0) -> HOLDS
+P3 dev fraction of E1[relu4] gain (+0.97) recovered: -0.05 (need [0.10, 0.50]) -> FAILS
+P4 dev per-machine mean delta: fan -0.15, pump -0.51, slider -0.03, ToyCar +0.71, ToyConveyor +0.01, valve -0.32
+   largest: ToyCar (predicted ToyConveyor); pump -0.51 (predicted < +0.5). Conditional on P1, which fails: reported, not read
+P5 mean of 4 students: dev AUC 94.77 vs paper 95.71 -> below; eval mean 93.25 vs 93.22 -> above
+P6 ToyConveyor dev AUC sd: students 0.51, baselines 1.01 (reported, not read)
+
+D1 adopt KD recipe (P1 and P2): NOT ADOPTED
+D2 single-model claims vs paper (4-student mean > paper): eval_mean 93.25 > 93.22 (worst student below)
+   means  students / baselines / paper: AUC 94.77 / 94.82 / 95.71, pAUC 89.71 / 89.74 / 90.23, mAUC 88.93 / 89.03 / 91.23, eval_mean 93.25 / 93.04 / 93.22
+Noise floor: |rerun gap| dev 0.08, eval 0.37 vs |mean delta| dev 0.05, eval 0.13
+
+Secondary (reported only). Dump R0 vs committed per-ID AUC: max |diff| 3.6e-04
+                                  dev AUC/pAUC/mAUC  eval mean
+R0 mean of 4 students         94.77/89.71/88.93      93.25
+R0 mean of 4 baselines        94.82/89.74/89.03      93.04
+S1p mean of 4 students        95.31/90.27/90.40      93.95
+S1p mean of 4 baselines       95.34/90.14/90.31      93.75
+E1 over stu4                  95.69/90.79/90.67      93.70
+E1 over base4                 95.79/90.57/90.47      93.70
+E2p over stu4                 95.97/91.05/91.42      94.67
+E2p over base4                95.98/90.93/91.31      94.39
+R0 AUC delta per seed: dev -0.21 +0.01 -0.44 +0.45  eval +0.51 +0.09 +0.10 -0.17
+S1p AUC delta per seed: dev -0.23 +0.17 -0.45 +0.40  eval +0.52 +0.10 +0.05 -0.00
+Paired bootstrap, mean student - baseline (95% CI over test clips; seeds fixed):
+  R0_dev_AUC                           [-0.19, +0.10]  P(>0) 0.26
+  R0_dev_mean_AUC_pAUC                 [-0.18, +0.10]  P(>0) 0.30
+  R0_eval_AUC                          [-0.02, +0.29]  P(>0) 0.94
+  R0_eval_mean_AUC_pAUC                [+0.01, +0.38]  P(>0) 0.98
+  S1p_dev_AUC                          [-0.14, +0.09]  P(>0) 0.33
+  S1p_dev_mean_AUC_pAUC                [-0.09, +0.18]  P(>0) 0.75
+  S1p_eval_AUC                         [+0.04, +0.29]  P(>0) 1.00
+  S1p_eval_mean_AUC_pAUC               [+0.04, +0.37]  P(>0) 0.99
+  E2p_stu4_minus_base4_dev_AUC         [-0.13, +0.11]  P(>0) 0.40
+  E2p_stu4_minus_base4_dev_mean_AUC_pAUC [-0.11, +0.21]  P(>0) 0.73
+  E2p_stu4_minus_base4_eval_AUC        [+0.05, +0.31]  P(>0) 1.00
+  E2p_stu4_minus_base4_eval_mean_AUC_pAUC [+0.09, +0.47]  P(>0) 1.00

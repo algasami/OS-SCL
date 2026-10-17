@@ -1,0 +1,20 @@
+{
+  "SCLTFSTgramMFN_kd_relu_max_s2024/dev": 9.873239436619663e-05,
+  "SCLTFSTgramMFN_kd_relu_max_s2024/eval": 5.573033707861885e-05,
+  "SCLTFSTgramMFN_kd_relu_max_s2025/dev": 6.853146853147418e-05,
+  "SCLTFSTgramMFN_kd_relu_max_s2025/eval": 8.929577464789062e-05,
+  "SCLTFSTgramMFN_kd_relu_max_s2026/dev": 0.0001666666666666483,
+  "SCLTFSTgramMFN_kd_relu_max_s2026/eval": 0.0001128301886792471,
+  "SCLTFSTgramMFN_kd_relu_max_s2027/dev": 9.045977011490347e-05,
+  "SCLTFSTgramMFN_kd_relu_max_s2027/eval": 8.450704225348993e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2024/dev": 9.529411764697127e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2024/eval": 9.830985915493251e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2025/dev": 9.477477477481955e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2025/eval": 5.577464788730779e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2026/dev": 0.0003589189189188158,
+  "SCLTFSTgramMFN_tfl_relu_max_s2026/eval": 5.1971830986041745e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2027/dev": 6.216450216445235e-05,
+  "SCLTFSTgramMFN_tfl_relu_max_s2027/eval": 4.478873239455172e-05,
+  "SCLTFSTgramMFN_kdnull_s2024/dev": 7.749999999995261e-05,
+  "SCLTFSTgramMFN_kdnull_s2024/eval": 9.061946902655382e-05
+}

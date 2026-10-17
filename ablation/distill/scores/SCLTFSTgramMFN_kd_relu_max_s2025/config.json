@@ -1,0 +1,19 @@
+{
+    "m": 0.4,
+    "gpu_num": 1,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "kd_relu_max_s2025",
+    "seed": 2025,
+    "num_workers": 8,
+    "tf_act": "relu",
+    "tf_pool": "max",
+    "student_snapshots": "10,30,90,300",
+    "kd_teachers": "SCLTFSTgramMFN_tfl_relu_max_s2024,SCLTFSTgramMFN_tfl_relu_max_s2026,SCLTFSTgramMFN_tfl_relu_max_s2027",
+    "kd_teacher_dir": "/home/f74134118/OS-SCL/check_points",
+    "kd_beta": 1.0,
+    "kd_tau": 2.0,
+    "model_name": "SCLTFSTgramMFN_kd_relu_max_s2025"
+}
