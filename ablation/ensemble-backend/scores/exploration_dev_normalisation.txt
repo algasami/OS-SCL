@@ -1,0 +1,10 @@
+single R0 (mean of 4 models): AUC 94.91
+raw sum of R0 (no normalisation)   AUC 95.81  pAUC 90.80  mAUC 90.85
+sum of log R0                      AUC 95.84  pAUC 90.84  mAUC 90.89
+sum of per-ID z R0 (train stats)   AUC 95.93  pAUC 90.92  mAUC 91.04
+  fan          median CE train-normal 0.204  test-normal 0.215
+  pump         median CE train-normal 0.206  test-normal 0.254
+  slider       median CE train-normal 0.210  test-normal 0.226
+  ToyCar       median CE train-normal 0.206  test-normal 0.248
+  ToyConveyor  median CE train-normal 0.204  test-normal 0.225
+  valve        median CE train-normal 0.212  test-normal 0.235

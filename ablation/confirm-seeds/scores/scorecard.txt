@@ -1,0 +1,46 @@
+P0  max |per-ID AUC - eval.py CSV| (dev, eval) <= 5e-4, |valid loss replayed - curve.csv| <= 1e-4:
+    cs_relu_max_s2028      9.40e-05 9.56e-05  0.33009 vs 0.33007 (|d| 1.8e-05)  n_valid 1815  ok
+    cs_relu_max_s2029      8.92e-05 1.00e-04  0.33541 vs 0.33540 (|d| 8.5e-06)  n_valid 1815  ok
+    cs_relu_max_s2030      8.69e-05 9.11e-05  0.29970 vs 0.29971 (|d| 8.6e-06)  n_valid 1815  ok
+    cs_relu_max_s2031      1.38e-04 1.07e-04  0.36741 vs 0.36741 (|d| 2.4e-06)  n_valid 1815  ok
+    tfl_relu_max_s2024     9.53e-05 9.83e-05  0.35617 vs 0.35617 (|d| 2.1e-06)  n_valid 1815  ok
+    tfl_relu_max_s2025     9.48e-05 5.58e-05  0.31592 vs 0.31592 (|d| 1.5e-06)  n_valid 1815  ok
+    tfl_relu_max_s2026     3.59e-04 5.20e-05  0.34412 vs 0.34412 (|d| 2.8e-06)  n_valid 1815  ok
+    tfl_relu_max_s2027     6.22e-05 4.48e-05  0.33957 vs 0.33958 (|d| 1.2e-05)  n_valid 1815  ok
+P0  holds: True
+P1  dev: S0 AUC N4 95.15 94.94 94.79 94.74 mean 94.90 sd 0.18 | O4 mean 94.82 sd 0.23 | holds: True
+P1  eval: S0 AUC N4 95.44 95.09 95.02 95.57 mean 95.28 sd 0.27 | O4 mean 95.47 sd 0.30 | holds: True
+P2  dev: S1p-S0 AUC +0.46 +0.38 +0.35 +0.61 | positive 4/4 | mean +0.45 [+0.35, +0.56] (predicted +0.25..+0.75: True) | mAUC mean +1.34
+P2  eval: S1p-S0 AUC +0.59 +0.80 +0.56 +0.66 | positive 4/4 | mean +0.65 [+0.53, +0.78] (predicted +0.30..+1.00: True) | mAUC mean +1.39
+P3  dev: S1p-S0 per machine: fan +0.18 +0.31 -0.37 +0.55 | pump +0.03 -0.06 +0.77 +0.18 | slider +0.08 +0.18 +0.05 +0.17 | ToyCar +0.88 +0.59 +1.11 +1.21 | ToyConveyor +1.58 +1.22 +0.53 +1.59 | valve +0.01 +0.06 -0.00 -0.01
+P3  dev: ToyConveyor and ToyCar positive on >=3/4: True | pump |d| < 0.5 on 3/4
+P3  eval: S1p-S0 per machine: fan -0.01 +0.09 -0.02 +0.22 | pump +0.15 +0.14 +0.21 +0.29 | slider +0.14 +0.20 +0.10 +0.11 | ToyCar +2.18 +1.21 +1.92 +1.17 | ToyConveyor +1.36 +3.50 +1.74 +2.52 | valve -0.30 -0.31 -0.60 -0.31
+P3  eval: ToyConveyor and ToyCar positive on >=3/4: True | valve falls on 4/4 (>=3: True)
+P4  S0: eval mean 93.30 92.83 92.72 93.51 >=93.22 on 2/4 | dev AUC >=95.71 on 0/4 | dev pAUC >=90.23 on 1/4
+P4  S1p: eval mean 93.76 93.57 93.16 94.04 >=93.22 on 3/4 | dev AUC >=95.71 on 0/4 | dev pAUC >=90.23 on 1/4
+P5  dev: E1[N4] 95.64 | members 95.15 94.94 94.79 94.74 | beats best member: True | gain over mean +0.73 (predicted +0.6..+1.2)
+P5  eval: E1[N4] 96.21 | members 95.44 95.09 95.02 95.57 | beats best member: True | gain over mean +0.93 (predicted +0.3..+0.9)
+P5  E1[N4] vs paper: dev AUC 95.64 (False) pAUC 90.61 (True) mAUC 89.95 (False) | eval mean 93.86 (True)
+P5  E2p[N4] vs paper: dev AUC 96.05 (True) pAUC 90.94 (True) mAUC 91.34 (True) | eval mean 94.34 (True)
+P6  dev: E2p-E1 [N4] +0.41 [+0.27, +0.56] (predicted +0.0..+0.4: False) | E1p-E1 +0.22 | E0-E1 +0.28
+P6  eval: E2p-E1 [N4] +0.34 [+0.15, +0.53] (predicted +0.2..+0.8: True) | E1p-E1 +0.01 | E0-E1 -0.07
+P7  dev: E1[relu8] 96.00 vs N4 95.64, O4 95.79 (>= both: True) | E2p[relu8] 96.16
+P7  dev: E1 size curve mean AUC n=1..8 94.54 95.29 95.59 95.74 95.84 95.91 95.96 96.00 | non-decreasing: True
+P7  dev: E2p size curve mean AUC n=1..8 95.35 95.79 95.95 96.03 96.08 96.12 96.14 96.16 | non-decreasing: True
+P7  eval: E1[relu8] 96.30 vs N4 96.21, O4 96.01 (>= both: True) | E2p[relu8] 96.75
+P7  eval: E1 size curve mean AUC n=1..8 95.03 95.69 95.95 96.09 96.17 96.23 96.27 96.30 | non-decreasing: True
+P7  eval: E2p size curve mean AUC n=1..8 96.06 96.44 96.57 96.64 96.68 96.71 96.73 96.75 | non-decreasing: True
+D1  adopt S1p: True (eval 4/4, dev 4/4, means +0.65 / +0.45, eval CI low +0.53)
+D2  dev AUC: mean S1p 95.36 [95.02, 95.66] vs paper 95.71 | above: False | clearly: False | seeds above 0/4
+D2  dev pAUC: mean S1p 90.06 [89.46, 90.64] vs paper 90.23 | above: False | clearly: False | seeds above 1/4
+D2  dev mAUC: mean S1p 90.26 [89.15, 91.10] vs paper 91.23 | above: False | clearly: False | seeds above 0/4
+D2  eval mean_AUC_pAUC: mean S1p 93.63 [93.18, 94.11] vs paper 93.22 | above: True | clearly: False | seeds above 3/4
+D3  reported ensemble: E2p (E2p-E1 dev +0.41, eval +0.34)
+D3  E2p[N4] dev AUC: 96.05 [95.71, 96.36] vs paper 95.71 | above: True | clearly: True | O4 E1 95.79
+D3  E2p[N4] dev pAUC: 90.94 [90.30, 91.55] vs paper 90.23 | above: True | clearly: True | O4 E1 90.57
+D3  E2p[N4] dev mAUC: 91.34 [90.21, 92.28] vs paper 91.23 | above: True | clearly: False | O4 E1 90.47
+D3  E2p[N4] eval mean_AUC_pAUC: 94.34 [93.86, 94.82] vs paper 93.22 | above: True | clearly: True | O4 E1 93.70
+D4  relu8 (half seen) dev: E1 AUC 96.00 pAUC 90.95 mAUC 90.55 mean 93.48 | E2p AUC 96.16 pAUC 91.12 mAUC 91.52 mean 93.64
+D4  relu8 (half seen) eval: E1 AUC 96.30 pAUC 91.64 mAUC 92.67 mean 93.97 | E2p AUC 96.75 pAUC 92.18 mAUC 93.62 mean 94.46
+BOOT dev: {"mean_S1p_minus_S0_AUC": [0.45, 0.35, 0.56], "mean_S1p_AUC": [95.36, 95.02, 95.66], "E1_AUC": [95.64, 95.27, 95.99], "E2p_AUC": [96.05, 95.71, 96.36], "E2p_minus_E1_AUC": [0.41, 0.27, 0.56], "mean_S1p_minus_S0_pAUC": [0.44, 0.25, 0.69], "mean_S1p_pAUC": [90.06, 89.46, 90.64], "E1_pAUC": [90.61, 89.91, 91.29], "E2p_pAUC": [90.94, 90.3, 91.55], "E2p_minus_E1_pAUC": [0.33, 0.05, 0.63], "mean_S1p_minus_S0_mAUC": [1.34, 1.01, 1.64], "mean_S1p_mAUC": [90.26, 89.15, 91.1], "E1_mAUC": [89.95, 88.7, 90.94], "E2p_mAUC": [91.34, 90.21, 92.28], "E2p_minus_E1_mAUC": [1.4, 1.02, 1.88], "mean_S1p_minus_S0_mean_AUC_pAUC": [0.45, 0.32, 0.6], "mean_S1p_mean_AUC_pAUC": [92.71, 92.27, 93.13], "E1_mean_AUC_pAUC": [93.12, 92.63, 93.6], "E2p_mean_AUC_pAUC": [93.49, 93.04, 93.92], "E2p_minus_E1_mean_AUC_pAUC": [0.37, 0.19, 0.56], "frac_E1_AUC_above_paper": 0.335, "frac_E2p_AUC_above_paper": 0.975, "frac_E1_pAUC_above_paper": 0.857, "frac_E2p_pAUC_above_paper": 0.985, "frac_E1_mAUC_above_paper": 0.006, "frac_E2p_mAUC_above_paper": 0.545}
+BOOT eval: {"mean_S1p_minus_S0_AUC": [0.65, 0.53, 0.78], "mean_S1p_AUC": [95.94, 95.63, 96.26], "E1_AUC": [96.21, 95.83, 96.58], "E2p_AUC": [96.56, 96.24, 96.88], "E2p_minus_E1_AUC": [0.34, 0.15, 0.53], "mean_S1p_minus_S0_pAUC": [0.43, 0.24, 0.65], "mean_S1p_pAUC": [91.33, 90.67, 92.02], "E1_pAUC": [91.51, 90.38, 92.56], "E2p_pAUC": [92.12, 91.39, 92.82], "E2p_minus_E1_pAUC": [0.61, -0.05, 1.35], "mean_S1p_minus_S0_mAUC": [1.39, 0.99, 1.68], "mean_S1p_mAUC": [92.19, 91.23, 92.98], "E1_mAUC": [92.26, 91.2, 93.25], "E2p_mAUC": [93.23, 92.25, 94.11], "E2p_minus_E1_mAUC": [0.97, 0.51, 1.34], "mean_S1p_minus_S0_mean_AUC_pAUC": [0.54, 0.41, 0.69], "mean_S1p_mean_AUC_pAUC": [93.63, 93.18, 94.11], "E1_mean_AUC_pAUC": [93.86, 93.12, 94.54], "E2p_mean_AUC_pAUC": [94.34, 93.86, 94.82], "E2p_minus_E1_mean_AUC_pAUC": [0.48, 0.07, 0.92], "frac_E1_mean_above_paper": 0.958, "frac_E2p_mean_above_paper": 1.0}
