@@ -1,0 +1,8 @@
+NVIDIA RTX A4000, torch 2.6.0+cu124, batch 64, random inputs
+fussion 1  lean 0  cudnn det    amp none |  2.51 it/s |   81.2 M params | peak 10.4 GB
+fussion 1  lean 0  cudnn bench  amp none |  3.03 it/s |   81.2 M params | peak 12.6 GB
+fussion 1  lean 0  cudnn bench  amp fp16 |  5.08 it/s |   81.2 M params | peak  6.0 GB
+fussion 1  lean 1  cudnn bench  amp fp16 |  5.07 it/s |    1.4 M params | peak  5.7 GB
+fussion 4  lean 1  cudnn bench  amp fp16 | 10.75 it/s |    1.2 M params | peak  3.3 GB
+fussion 2  lean 1  cudnn bench  amp fp16 | 11.95 it/s |    0.9 M params | peak  3.2 GB
+fussion 2  lean 0  cudnn det    amp none |  6.78 it/s |   81.2 M params | peak  5.9 GB

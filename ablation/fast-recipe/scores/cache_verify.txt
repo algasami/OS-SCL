@@ -1,0 +1,53 @@
+train: exists, kept
+train[459] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_00_00000459.wav: cached |mel| max 49.9, recomputed 49.9, wav equal False
+train[1034] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_01_00000123.wav: cached |mel| max 39.03, recomputed 39.03, wav equal True
+train[1706] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_01_00000795.wav: cached |mel| max 38.98, recomputed 38.98, wav equal True
+train[2378] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_02_00000533.wav: cached |mel| max 48.85, recomputed 48.85, wav equal True
+train[2986] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_03_00000225.wav: cached |mel| max 41.31, recomputed 41.31, wav equal True
+train[3594] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_03_00000833.wav: cached |mel| max 43.02, recomputed 43.02, wav equal True
+train[4170] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_04_00000497.wav: cached |mel| max 39.3, recomputed 39.3, wav equal True
+train[4746] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_05_00000140.wav: cached |mel| max 40.76, recomputed 40.76, wav equal True
+train[5354] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_05_00000748.wav: cached |mel| max 53.02, recomputed 53.02, wav equal True
+train[6506] /home/f74134118/OS-SCL-fast/data/dataset/fan/train/normal_id_06_00000900.wav: cached |mel| max 36.35, recomputed 36.35, wav equal True
+train[7210] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_00_00000689.wav: cached |mel| max 43.49, recomputed 43.49, wav equal True
+train[8042] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_01_00000615.wav: cached |mel| max 39.86, recomputed 39.86, wav equal True
+train[9418] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_03_00000183.wav: cached |mel| max 36.17, recomputed 36.17, wav equal True
+train[9834] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_03_00000599.wav: cached |mel| max 37.25, recomputed 37.25, wav equal True
+train[10282] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_04_00000441.wav: cached |mel| max 40.14, recomputed 40.14, wav equal True
+train[10890] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_05_00000447.wav: cached |mel| max 38.36, recomputed 38.36, wav equal True
+train[11850] /home/f74134118/OS-SCL-fast/data/dataset/pump/train/normal_id_06_00000499.wav: cached |mel| max 50.37, recomputed 50.37, wav equal True
+train[12490] /home/f74134118/OS-SCL-fast/data/dataset/slider/train/normal_id_00_00000203.wav: cached |mel| max 41.04, recomputed 41.51, wav equal True
+train[13162] /home/f74134118/OS-SCL-fast/data/dataset/slider/train/normal_id_00_00000875.wav: cached |mel| max 49.68, recomputed 49.68, wav equal True
+train[13770] /home/f74134118/OS-SCL-fast/data/dataset/slider/train/normal_id_01_00000515.wav: cached |mel| max 39.51, recomputed 39.51, wav equal True
+train[14954] /home/f74134118/OS-SCL-fast/data/dataset/slider/train/normal_id_02_00000731.wav: cached |mel| max 45.51, recomputed 45.51, wav equal True
+train[16170] /home/f74134118/OS-SCL-fast/data/dataset/slider/train/normal_id_04_00000011.wav: cached |mel| max 40.42, recomputed 40.42, wav equal True
+train[17482] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_01_00000021.wav: cached |mel| max 75.82, recomputed 75.82, wav equal False
+train[17788] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_01_00000327.wav: cached |mel| max 65.79, recomputed 65.79, wav equal False
+train[18154] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_01_00000693.wav: cached |mel| max 62.9, recomputed 62.9, wav equal False
+train[18794] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_02_00000333.wav: cached |mel| max 73.56, recomputed 73.56, wav equal False
+train[20145] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_03_00000684.wav: cached |mel| max 62.79, recomputed 62.79, wav equal False
+train[20490] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_04_00000029.wav: cached |mel| max 67.01, recomputed 67.01, wav equal False
+train[21354] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_04_00000893.wav: cached |mel| max 63.14, recomputed 63.14, wav equal False
+train[24234] /home/f74134118/OS-SCL-fast/data/dataset/ToyCar/train/normal_id_07_00000773.wav: cached |mel| max 55.75, recomputed 55.75, wav equal False
+train[24811] /home/f74134118/OS-SCL-fast/data/dataset/ToyConveyor/train/normal_id_01_00000350.wav: cached |mel| max 57.63, recomputed 57.63, wav equal False
+train[25419] /home/f74134118/OS-SCL-fast/data/dataset/ToyConveyor/train/normal_id_01_00000958.wav: cached |mel| max 58.92, recomputed 58.92, wav equal False
+train[26731] /home/f74134118/OS-SCL-fast/data/dataset/ToyConveyor/train/normal_id_03_00000270.wav: cached |mel| max 58.22, recomputed 58.22, wav equal False
+train[27403] /home/f74134118/OS-SCL-fast/data/dataset/ToyConveyor/train/normal_id_03_00000942.wav: cached |mel| max 55.41, recomputed 55.41, wav equal False
+train[29931] /home/f74134118/OS-SCL-fast/data/dataset/ToyConveyor/train/normal_id_06_00000470.wav: cached |mel| max 54.42, recomputed 54.42, wav equal False
+train[31306] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_00_00000845.wav: cached |mel| max 37.95, recomputed 37.95, wav equal True
+train[31786] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_01_00000434.wav: cached |mel| max 45.86, recomputed 45.86, wav equal True
+train[32458] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_02_00000337.wav: cached |mel| max 48.18, recomputed 48.18, wav equal True
+train[32842] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_03_00000113.wav: cached |mel| max 51.35, recomputed 51.35, wav equal True
+train[33738] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_04_00000146.wav: cached |mel| max 47.28, recomputed 47.28, wav equal True
+train[34154] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_04_00000562.wav: cached |mel| max 45.52, recomputed 45.52, wav equal True
+train[34986] /home/f74134118/OS-SCL-fast/data/dataset/valve/train/normal_id_05_00000494.wav: cached |mel| max 51.98, recomputed 51.98, wav equal True
+train: verified 36283, repaired 42
+devtest: exists, kept
+devtest[3543] data/dataset/slider/test/anomaly_id_02_00000056.wav: cached |mel| max 38.48, recomputed 38.48, wav equal False
+devtest[4853] data/dataset/ToyCar/test/normal_id_03_00000132.wav: cached |mel| max 63.57, recomputed 63.57, wav equal True
+devtest[6325] data/dataset/ToyCar/test/anomaly_id_04_00000110.wav: cached |mel| max 66.8, recomputed 66.8, wav equal True
+devtest[8791] data/dataset/ToyConveyor/test/normal_id_03_00000711.wav: cached |mel| max 56.45, recomputed 56.45, wav equal False
+devtest[9399] data/dataset/ToyConveyor/test/anomaly_id_02_00000120.wav: cached |mel| max 62.88, recomputed 62.88, wav equal False
+devtest[10039] data/dataset/valve/test/normal_id_00_00000050.wav: cached |mel| max 44.32, recomputed 44.32, wav equal False
+devtest[10391] data/dataset/valve/test/anomaly_id_00_00000002.wav: cached |mel| max 44.34, recomputed 44.34, wav equal False
+devtest: verified 10868, repaired 7

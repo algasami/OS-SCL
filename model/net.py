@@ -201,14 +201,21 @@ class SCLTFSTgramMFN(nn.Module):
         self.arcface = ArcMarginProduct(in_features=c_dim, out_features=num_classes,
                                         m=m, s=s)
 
-        self.tgramnet = TgramNet(mel_bins=c_dim, win_len=win_len, hop_len=hop_len)
+        # lean: build only the branches this fussion mode consumes, and no dead TFgram
+        # modules. Changes the state_dict keys and the init draw order (ablation/fast-recipe).
+        lean = bool(cfg.get('lean', False))
+        branches = FUSSION_BRANCHES[cfg['fussion']]
+
+        if not lean or 'tgram' in branches:
+            self.tgramnet = TgramNet(mel_bins=c_dim, win_len=win_len, hop_len=hop_len)
 
         self.mobilefacenet = MobileFaceNet(num_class=num_classes,
                                            bottleneck_setting=bottleneck_setting,
                                            cfg=cfg)
 
-        self.TFgramNet = TFgram(classes_num=41, act=cfg.get('tf_act', 'relu'),
-                                pool=cfg.get('tf_pool', 'max'))
+        if not lean or 'tfgram' in branches:
+            self.TFgramNet = TFgram(classes_num=41, act=cfg.get('tf_act', 'relu'),
+                                    pool=cfg.get('tf_pool', 'max'), lean=lean)
         head_type = cfg["ht"]
         if head_type == 'basic':
             self.head = BasicHead()
@@ -237,8 +244,12 @@ class SCLTFSTgramMFN(nn.Module):
 
         out, feature = self.mobilefacenet(x)
 
-        feature = F.normalize(self.head(feature), dim=1)
-        out = self.arcface(feature, label)
+        # head, normalisation and the ArcFace margin stay fp32 under --amp: acos-free
+        # margin math needs sqrt(1 - cos^2) near |cos| = 1, and SupCon's 1/0.02 logits
+        # would overflow fp16. A no-op when autocast is off.
+        with torch.autocast('cuda', enabled=False):
+            feature = F.normalize(self.head(feature.float()), dim=1)
+            out = self.arcface(feature, label)
         return out, feature
 
 

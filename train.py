@@ -54,6 +54,15 @@ def parse_arguments():
     parser.add_argument('--kd_teachers', type=str,
                         help="Comma-separated model names to distil from (ablation/distill); each is "
                              "loaded from <kd_teacher_dir>/<name>/{model.pth,config.json}")
+    parser.add_argument('--amp', type=str, choices=['none', 'fp16', 'bf16'],
+                        help="Autocast precision for branches + MobileFaceNet (default none = fp32)")
+    parser.add_argument('--cudnn_bench', type=int, choices=[0, 1],
+                        help='1 = cudnn.benchmark on, deterministic off (faster, not bit-reproducible)')
+    parser.add_argument('--lean', type=int, choices=[0, 1],
+                        help='1 = build only the branches the fussion mode uses, no dead TFgram modules')
+    parser.add_argument('--cache_dir', type=str, help='Read train/devtest arrays from cache_data.py output')
+    parser.add_argument('--probe_every', type=int,
+                        help='Log dev-test R0 metrics of the EMA net every N epochs (diagnostic only)')
     parser.add_argument('--kd_teacher_dir', type=str, help="Directory holding the teachers (default check_points)")
     parser.add_argument('--kd_beta', type=float, help="Weight of the KD term (default 1.0)")
     parser.add_argument('--kd_tau', type=float, help="KD temperature on 30*cos (default 2.0)")
@@ -72,6 +81,11 @@ def main():
     print(cfg)
 
     random_seed(seed=cfg.get('seed', 2024))
+    if cfg.get('cudnn_bench'):
+        torch.backends.cudnn.deterministic = False
+        torch.backends.cudnn.benchmark = True
+    if cfg.get('probe_every') and not cfg.get('cache_dir'):
+        raise SystemExit('--probe_every needs --cache_dir (it reads devtest_*.npy)')
 
     name_list = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 
