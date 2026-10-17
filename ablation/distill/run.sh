@@ -6,6 +6,7 @@
 #   KD_GPU=0 bash ablation/distill/run.sh null         # G1 diagnosis: 10 epochs, no teachers (~45 min)
 #   bash ablation/distill/run.sh students              # 4 students on idle GPUs (KD_GPUS), ~28 h each
 #   bash ablation/distill/run.sh rerun                 # eval kdnull_s2024 once it finishes: the noise floor
+#   KD_GPU=0 bash ablation/distill/run.sh score        # P1-P6 scorecard; S1'/E1/E2' secondary (~15 min)
 #
 # Teachers are leave-one-seed-out: the student at seed s learns from the other three
 # tfl_relu_max seeds. They and the baselines live in KD_TEACHER_DIR (the main checkout).
@@ -16,6 +17,7 @@ PY=${KD_PY:-/home/f74134118/anaconda3/envs/os-scl-cu124/bin/python}
 TDIR=${KD_TEACHER_DIR:-/home/f74134118/OS-SCL/check_points}
 BASE_LOGS=${KD_BASE_LOGS:-/home/f74134118/OS-SCL/ablation/tfgram-linear/results}
 SEEDS="2024 2025 2026 2027"
+NULL_RUN=SCLTFSTgramMFN_kdnull_s2024
 mkdir -p $D/results $D/scores
 export OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 
@@ -80,5 +82,14 @@ rerun)  # noise floor: kdnull_s2024 (started by `null`, left to run 300 epochs);
     while pgrep -f -- "--desc kdnull_s2024 " >/dev/null; do sleep 300; done
     $D/run_one.sh 2024 none
     $PY ablation/distill_curves.py distill ;;
+score)  # P1-P6 from the committed CSVs; secondary rules from an embedding dump (../ensemble-backend)
+    RUNS="$NULL_RUN"; for s in $SEEDS; do
+        RUNS="$RUNS SCLTFSTgramMFN_kd_relu_max_s$s SCLTFSTgramMFN_tfl_relu_max_s$s"
+        n=SCLTFSTgramMFN_tfl_relu_max_s$s; [ -e check_points/$n ] || ln -s "$TDIR/$n" check_points/$n
+    done
+    $PY ablation/ensemble-backend/extract.py --gpu "${KD_GPU:-0}" --repo "$PWD" --out $D/results/emb --runs $RUNS \
+        > $D/results/extract.log 2>&1 || { echo "FAIL extract"; exit 1; }
+    $PY $D/score.py $D/results/emb
+    /home/f74134118/anaconda3/bin/python $D/make_plots.py ;;
 *) echo "unknown stage"; exit 1 ;;
 esac

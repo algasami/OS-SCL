@@ -1,21 +1,15 @@
 # Distill — can one OS-SCL network learn what the 4-seed ensemble knows?
 
-> **Status: students queued (2026-10-14). Nothing scored.** G2 passes (1.44×).
-> Bit-exact G1 failed. The diagnosis shows that no run on this host is
-> bit-reproducible over 10 epochs, and that the KD plumbing is exact. G1 was
-> amended before any student was trained; see *Diagnosis result and
-> amendment* under Gate.
+> **Status: done (2026-10-17). Null on dev; KD not adopted (D1).** The
+> decision-bearing prediction P1 fails: student − baseline dev AUC is
+> −0.21 / +0.01 / −0.44 / +0.45, mean −0.05, against a required ≥ +0.30 on ≥ 3
+> of 4 seeds. P2 (eval) holds by the letter (+0.13, 3/4), but D1 needs both. The
+> students recover none of the ensemble's dev gain (P3: −5%). On eval they edge up
+> by +0.13 AUC (+0.21 eval mean), which is smaller than one rerun's eval gap
+> (−0.37). Per D3, nothing is retuned on these seeds. See *Results*.
 >
-> **Resume:**
-> - `kdnull_s2024` (noise-floor rerun) is training on GPU 0, started
->   2026-10-14 02:37, ~20 h. Its log is `results/train_kdnull_s2024.log`.
->   `run.sh rerun` evaluates it once it ends.
-> - `run.sh students` runs 4 students via `run_one.sh <seed> 1`. Each takes a
->   GPU only once the card is idle, so they start as GPU 0 (kdnull) and GPUs
->   1–2 (`../confirm-seeds`) free up. Logs: `results/run_students.log` and
->   `results/train_kd_relu_max_s*.log`. The stage is resumable.
-> - Then write `make_plots.py` and the Results section against P1–P6 and the
->   noise floor.
+> **Reproduce:** `run.sh students`, `run.sh rerun`, then `KD_GPU=0 run.sh score`
+> (embedding dump, `score.py`, `make_plots.py`). The durable record is `scores/`.
 
 ## Why this exists
 
@@ -277,6 +271,105 @@ Fixed now. Dev selects, eval confirms. Nothing is tuned on eval.
   rescored on these students' eval. A second attempt picks its settings on dev
   only and is pre-registered again.
 - Single-model mAUC deltas under ~2 points are not read (`CLAUDE.md`).
+
+## Results
+
+All numbers come from `scores/scorecard.txt` (`score.py`). Δ = student
+`kd_relu_max_s<seed>` − archived `tfl_relu_max_s<seed>`, overall AUC, eval.py's R0.
+
+### Paired deltas and the noise floor
+
+```
+seed      dev     eval
+2024    -0.21    +0.52
+2025    +0.01    +0.09
+2026    -0.44    +0.10
+2027    +0.45    -0.18
+mean    -0.05    +0.13
+floor   +0.08    -0.37   kdnull_s2024 - archived s2024: same recipe, same seed, no KD
+```
+
+The noise floor is a single rerun. On dev its gap (0.08) is about the size of
+the students' mean Δ (0.05). On eval its gap (0.37) is almost three times the
+mean Δ (0.13). Per the amendment, pairing therefore bought no precision on
+eval, and n=4 can't separate KD from training noise there.
+
+### Against the pre-registration
+
+| | prediction | outcome |
+|---|---|---|
+| P1 | dev Δ > 0 on ≥ 3/4, mean ≥ +0.30 | **fails**: 2/4, mean −0.05 |
+| P2 | eval mean Δ > 0, Δ > 0 on ≥ 3/4 | holds by the letter: +0.13, 3/4 |
+| P3 | 10–50% of E1[relu4]'s dev gain (+0.97) recovered | **fails**: −5% |
+| P4 | if P1: ToyConveyor gains most, pump < +0.5 | not read (P1 fails). Reported: ToyCar +0.71, ToyConveyor +0.01, pump −0.51 |
+| P5 | dev AUC ≥ 95.71 (10%); eval mean ≥ 93.22 (45%) | dev 94.77, below; eval mean 93.25, above by 0.03 |
+| P6 | ToyConveyor dev sd, students < baselines | reported, not read: 0.51 vs 1.01 |
+
+- **D1: not adopted.** P1 fails.
+- **D2: one metric only, and not "clearly".** The 4-student mean exceeds the
+  paper only on eval mean(AUC, pAUC): 93.25 vs 93.22 (seed sd 0.32; worst
+  student 92.88). Worded per D2: *a single OS-SCL network (1.38 M parameters)
+  trained with distillation from 3 OS-SCL teachers reaches eval mean 93.25 by
+  point estimate, against the paper's 93.22.* The undistilled baselines'
+  mean is 93.04, so the margin is smaller than one rerun's noise. S1′ on one
+  undistilled model (93.63 on N4, `../confirm-seeds`) is the stronger
+  single-model eval claim, and it costs no extra training.
+- **D3: no rescue.** β and τ are not retuned on these students.
+
+### Secondary rules (reported only)
+
+```
+                              dev AUC/pAUC/mAUC   eval mean
+R0  mean of 4 students        94.77/89.71/88.93     93.25
+R0  mean of 4 baselines       94.82/89.74/89.03     93.04
+S1' mean of 4 students        95.31/90.27/90.40     93.95
+S1' mean of 4 baselines       95.34/90.14/90.31     93.75
+E1  over 4 students           95.69/90.79/90.67     93.70
+E1  over 4 baselines          95.79/90.57/90.47     93.70
+E2' over 4 students           95.97/91.05/91.42     94.67
+E2' over 4 baselines          95.98/90.93/91.31     94.39
+```
+
+The embedding dump reproduces the committed per-ID R0 AUCs to 3.6e-4.
+`scores/bootstrap.json` has a paired stratified bootstrap over test clips (2000
+replicates; seeds fixed, so training noise is *not* in it). There, mean
+student − baseline is null on dev under R0 and S1′ (CIs straddle 0). On eval
+it is positive: R0 eval mean +0.01 to +0.38, S1′ eval AUC +0.04 to +0.29.
+
+Read together: KD shifts **eval** up by about 0.1–0.3 under every rule and
+leaves **dev** flat. A test-clip bootstrap can't tell whether that eval shift
+is KD or the training noise a rerun produces (0.37 on eval at s2024). Dev is
+the selection set, so the pre-registered answer stands. E2′ over the students
+(eval 94.67) is not a new best system claim: it is a secondary number on a
+recipe D1 rejected.
+
+### What it means
+
+- **The ensemble's consensus doesn't transfer through this KD term.** The
+  ensemble's dev gain is mostly ToyConveyor (+4.48), and the students move
+  ToyConveyor by +0.01 on dev. This matches measurement 2 under *What has
+  already been seen*: even on mixed inputs, the teachers agree on 98.6% of
+  argmaxes, so the soft targets carry little the hard labels don't. The
+  ensemble's gain lives in how seeds differ on *test* clips, which matching
+  on training-clip mixups barely touches.
+- **Model selection is unchanged** (fig3). Validation curves of student and
+  baseline nearly coincide.
+- **ToyConveyor spread halves** (P6: sd 0.51 vs 1.01), but at n=4 an sd ratio
+  is not resolvable, so it is reported, not read.
+- **For beating the paper on dev with one network,** KD at β = 1, τ = 2 is
+  closed. A second attempt must pre-register again and select on dev (D3). The
+  candidates are out-of-fold teachers or targets computed on stronger
+  augmentation than mixup. Neither has a dev signal behind it yet.
+
+### Figures
+
+| figure | shows |
+|---|---|
+| `plots/fig1_paired_delta.png` | per-seed Δ on dev and eval, P1's threshold, the rerun noise band |
+| `plots/fig2_per_machine.png` | per-machine Δ, mean and per seed |
+| `plots/fig3_valid_curves.png` | best-so-far validation loss, student vs baseline, per seed |
+| `plots/fig4_vs_paper.png` | 4 students vs 4 baselines vs paper, R0 |
+| `plots/fig5_secondary_rules.png` | R0 / S1′ / E1 / E2′, students vs baselines |
 
 ## What this cannot answer
 
