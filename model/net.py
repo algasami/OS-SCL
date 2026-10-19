@@ -130,6 +130,10 @@ FUSSION_BRANCHES = {
     2: ('mel',),                     # Log-Mel only (paper)
     3: ('mel', 'tfgram'),            # Log-Mel + TFgram
     4: ('mel', 'tgram'),             # Log-Mel + Tgram (STgram)
+    # no Log-Mel: raw-waveform branches only (ablation/no-logmel)
+    5: ('tgram', 'tfgram'),          # Tgram + TFgram
+    6: ('tfgram',),                  # TFgram only
+    7: ('tgram',),                   # Tgram only
 }
 FUSSION_CHANNELS = {k: len(v) for k, v in FUSSION_BRANCHES.items()}
 
@@ -140,6 +144,8 @@ def input_branches(cfg):
     branches = FUSSION_BRANCHES[cfg['fussion']]
     if (cfg.get('mel_gate') or 'none') == 'none':
         return branches
+    if 'mel' not in branches:
+        raise ValueError(f"--mel_gate needs a Log-Mel branch; fussion {cfg['fussion']} has none")
     i = branches.index('mel') + 1
     return branches[:i] + ('emel',) + branches[i:]
 
