@@ -320,6 +320,20 @@ The runs fall into two groups:
 - A margin fix (warm-up from m = 0, or easy-margin) would be a separate
   amendment, written before it runs. It is outside the registered design.
 
+**Update 2026-10-20 03:45** (`scores/diag_margin_s2040_b.txt`):
+
+- **`nl_f6` un-collapsed but stayed in the trap.** From epoch ~150 its probe
+  AUC rose from 50 to 86 (by epoch 250). Its margin-free top-1 is now 0.999,
+  and different IDs sit at cos 0.885. But the embeddings still point away from
+  every class weight (cos to own class −0.74), and margin accuracy is still 0.
+  So the per-sample CE score can still rank anomalies from inside the trap.
+- **`nl_f7` finished in the trap.** Probe AUC 77.2 at epoch 299; the
+  diagnostic is unchanged.
+- **`nl_f5` finished healthy.** Its geometry matches `fr_f1`'s (cos to own
+  class +0.996, margin top-1 0.999). Yet its probe AUC plateaued at 89.7, below
+  `fr_f1`'s 94.5 at the same seed. So the two-branch net's loss is not explained
+  by the trap.
+
 ### Accuracy
 
 *(empty until the runs finish)*
