@@ -267,6 +267,59 @@ in the 2-epoch smoke runs (same cosine schedule):
 
 The loss falls in all three, so this is not a failure to train.
 
+**[Interim, 2026-10-19 22:30]** The last sentence above was too strong. Two of
+the three seed-2040 runs fall into a degenerate state that 2 epochs could not
+show (next section).
+
+### Interim: single-branch runs get stuck behind the ArcFace margin (seed 2040, mid-run)
+
+5-epoch probe, dev AUC at the epoch-150 check:
+
+| epoch | 24 | 49 | 74 | 99 | 124 | 149 |
+|---|---|---|---|---|---|---|
+| `fr_f1` (ref) | 48.7 | 50.4 | 55.1 | 66.3 | 83.3 | 89.6 |
+| `nl_f5` | 49.2 | 49.1 | 50.5 | 52.6 | 58.7 | 68.4 |
+| `nl_f6` | 48.5 | 48.4 | 49.1 | 47.9 | 48.1 | – |
+| `nl_f7` | 48.3 | 49.5 | 52.1 | 53.5 | 63.0 | 69.5 (76.6 at 274) |
+
+The runs fall into two groups:
+
+- **`nl_f5` trains and lags.** Its train loss and margin accuracy match
+  `fr_f1`'s at the same epochs: 3.3 and 0.37–0.42 against 3.3 and 0.37. Its
+  EMA validation loss falls ~25 epochs later.
+- **`nl_f6` and `nl_f7` stall.** Train and validation accuracy, both measured
+  with the margin applied, are exactly 0 from epoch ~55 on. Train loss sits at
+  ~4.6.
+
+`diag_margin.py` → `scores/diag_margin_s2040.txt` shows why:
+
+| run (best-EMA epoch) | top-1, no margin | top-1, margin 0.4 | cos to own class | cos, nearest other | emb cos, diff ID |
+|---|---|---|---|---|---|
+| `fr_f1` (300) | 1.000 | 0.999 | +0.996 | +0.734 | 0.732 |
+| `nl_f5` (151) | 0.461 | 0.135 | +0.885 | +0.859 | 0.905 |
+| `nl_f6` (110) | 0.022 | 0.000 | −0.906 | −0.849 | 0.998 |
+| `nl_f7` (158) | 0.873 | 0.000 | −0.834 | −0.887 | 0.920 |
+
+- **`nl_f7` has learned the IDs.** It ranks 87% of training clips correctly
+  without the margin.
+- **Its embeddings sit in a trap.** Every embedding points away from every
+  class weight, at cos ≈ −0.85. There the target's margin logit is cos(θ+m)
+  with θ+m near π, so its gradient −sin(θ+m) is almost 0. The non-target terms
+  keep pushing the embedding away from the other class weights, which sit in a
+  narrow cone. The antipode of that cone is a stable trap.
+- **`nl_f6` has also collapsed.** Different IDs embed at cos 0.998, and its
+  margin-free top-1 of 0.022 is chance (1/41).
+
+**What this changes.**
+
+- Scored as registered, `nl_f6` and `nl_f7` test whether this recipe
+  *converges* without Log-Mel. They do not test whether the raw-wave branches
+  carry the information.
+- The registered runs continue unchanged. Their 4 seeds give the trap rate,
+  and P3/P4 and C3/C4 are reported on them as registered.
+- A margin fix (warm-up from m = 0, or easy-margin) would be a separate
+  amendment, written before it runs. It is outside the registered design.
+
 ### Accuracy
 
 *(empty until the runs finish)*
