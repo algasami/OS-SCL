@@ -186,7 +186,8 @@ def fig3_probe():
             if sel is not None:
                 ax.scatter([ep[-1]], [sel], s=40, marker='s', color=SURFACE, edgecolor=col, lw=1.4, zorder=3)
         paper_line(ax, PAPER_DEV_AUC, 'paper 95.71')
-        ax.set_ylim(90, 97)
+        ax.set_ylim(90, 96.2)
+        ax.set_xlim(0, 310)
         ax.set_xlabel('epoch')
         ax.grid(axis='y')
         ax.set_title(label, loc='left', fontsize=9.5)
@@ -231,7 +232,7 @@ def fig4_oracle_by_machine():
     ax.set_xticks(range(len(MACH)), MACH)
     ax.set_ylabel('dev AUC at best probed epoch\n− saved checkpoint (points)')
     ax.grid(axis='y')
-    ax.legend(loc='upper left', fontsize=8)
+    ax.legend(loc='upper right', fontsize=8)
     allg = np.concatenate([np.array(g) for g in gains.values() if len(g)])
     top = MACH[int(np.argmax(allg.mean(0)))]
     ax.set_title(f'Where test-set selection would gain: most in {top}', loc='left', fontsize=10.5)
