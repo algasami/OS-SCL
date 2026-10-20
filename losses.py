@@ -32,6 +32,12 @@ class ArcMarginProduct(nn.Module):
         nn.init.xavier_uniform_(self.weight)
 
         self.easy_margin = easy_margin
+        self.set_margin(m)
+
+    def set_margin(self, m):
+        """Set the additive angular margin and every constant derived from it
+        (ablation/margin-warmup). Called once from __init__; the warm-up calls it per step."""
+        self.m = m
         self.cos_m = math.cos(m)
         self.sin_m = math.sin(m)
 

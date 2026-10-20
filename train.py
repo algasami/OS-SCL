@@ -81,6 +81,10 @@ def parse_arguments():
     parser.add_argument('--kd_teacher_dir', type=str, help="Directory holding the teachers (default check_points)")
     parser.add_argument('--kd_beta', type=float, help="Weight of the KD term (default 1.0)")
     parser.add_argument('--kd_tau', type=float, help="KD temperature on 30*cos (default 2.0)")
+    parser.add_argument('--m_warmup', type=str,
+                        help="START,END epochs (ablation/margin-warmup): the student's ArcFace margin is 0 "
+                             "before START, ramps linearly per step to --m at END, then stays at --m. "
+                             "The EMA net (validation, probe, model.pth) always uses --m. Off by default")
 
     return parser.parse_args()
 
