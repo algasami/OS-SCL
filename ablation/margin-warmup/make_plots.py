@@ -232,7 +232,7 @@ def fig3():
         return
     fig, ax = plt.subplots(figsize=(6.6, 4.6))
     ax.axvspan(0, 1.05, ymin=0.5 / 1.1 + 0.05 / 1.1, color=BAND, lw=0, zorder=0)
-    ax.text(1.0, 1.03, 'pass region', ha='right', va='bottom', fontsize=7.5, color=INK_2)
+    ax.text(0.03, 0.52, 'pass region', ha='left', va='bottom', fontsize=7.5, color=INK_2)
     colour = {a: c for a, _, c in ARMS}
     for (run, ep, who), (acc, marg, cos) in sorted(d.items()):
         arm = re.search(r'_(f\d)_', run).group(1)
@@ -243,9 +243,21 @@ def fig3():
         mk = {'e60': 's', 'e100': 'D', 'final': 'o'}[ep]
         ax.scatter(cos, marg, s=44 if who == 'ema_net' else 30, marker=mk,
                    color=col if fix else SURFACE, edgecolor=col, linewidth=1.3, zorder=3)
-        if fix:
-            ax.annotate(f'{arm} {ep}{"" if who == "ema_net" else " student"}', (cos, marg), xytext=(5, 3),
-                        textcoords='offset points', fontsize=6.5, color=col if col != GREEN else INK_2)
+        # Label only the points that stand apart; the e60 / EMA points pile up near the
+        # origin and the footnote explains their markers.
+        lab_col = col if col != GREEN else INK_2
+        if fix and ep == 'final':
+            dy = {'f2': 6, 'f6': -2, 'f7': -10}.get(arm, 0)
+            ax.annotate(f'{arm} final', (cos, marg), xytext=(-8, dy), ha='right',
+                        textcoords='offset points', fontsize=6.5, color=lab_col)
+        elif fix and ep == 'e100' and who != 'ema_net':
+            dy = {'f2': 4, 'f6': -10, 'f7': 5}.get(arm, 0)
+            ax.annotate(f'{arm} e100 student', (cos, marg), xytext=(6, dy),
+                        textcoords='offset points', fontsize=6.5, color=lab_col)
+        elif not fix:
+            dy = {'f6': 6, 'f7': -12}.get(arm, 0)
+            ax.annotate(f'registered {arm}', (cos, marg), xytext=(0, dy), ha='center',
+                        textcoords='offset points', fontsize=6.5, color=lab_col)
     ax.axvline(0, color=INK, lw=0.8)
     ax.set_xlim(-1.05, 1.05)
     ax.set_ylim(-0.05, 1.05)

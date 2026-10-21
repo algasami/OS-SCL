@@ -1,0 +1,5 @@
+G f6: 1 probe rows, student m at probes [0.4000 ], EPOCH-line m [| m: 0.1993 | m: 0.4000 ], 0 non-finite steps, 4.4M ckpt, eval.py strict: Average AUC: 0.50615,  Average pAUC: 0.49881 ,Average mAUC: 0.47253
+  diag(state_e1:net): SCLTFSTgramMFN_mw_f6_s1_e2@e1:net            acc(no margin) 0.107  acc(margin 0.4) 0.000  cos tgt +0.074 max-other +0.167  emb cos same-ID +0.176 diff-ID +0.008
+G f7: 1 probe rows, student m at probes [0.4000 ], EPOCH-line m [| m: 0.1993 | m: 0.4000 ], 0 non-finite steps, 4.6M ckpt, eval.py strict: Average AUC: 0.48096,  Average pAUC: 0.49795 ,Average mAUC: 0.46802
+  diag(state_e1:net): SCLTFSTgramMFN_mw_f7_s1_e2@e1:net            acc(no margin) 0.044  acc(margin 0.4) 0.000  cos tgt +0.018 max-other +0.143  emb cos same-ID +0.005 diff-ID +0.001
+gate passed 2026-10-21 19:27:53

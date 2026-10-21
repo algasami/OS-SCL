@@ -1,8 +1,9 @@
 # Margin warm-up: are the single-branch mel-free runs an optimisation failure?
 
-> **Status: pre-registered 2026-10-20, before any run.** Code and CPU checks done.
-> Stage 1 (pilot) is queued behind `../no-logmel`'s training queue by `chain.sh`.
-> Stage 2 is registered here but is launched by hand after the pilot is reviewed.
+> **Status: stage 1 (pilot, n=1) done 2026-10-22: all three arms PASS the mechanism
+> criterion, so D-pilot says launch stage 2.** Stage 2 awaits the user's go-ahead.
+> Pilot AUC is n=1 and is not a verdict; see [Results](#results).
+> Pre-registered 2026-10-20, before any run.
 > Branch `ablation/margin-warmup`, from `ablation/no-logmel` at `10e07e7`.
 
 ## Question
@@ -296,11 +297,88 @@ verdict is reported with per-seed values.
 
 ## Results
 
-*(empty until the pilot finishes)*
+### Stage 1 pilot (seed 2040, n=1), 2026-10-22
+
+Trained 2026-10-21 19:30 to 2026-10-22 06:51 on GPUs 0 and 2: f6 10.9 h,
+f7 5.9 h, f2 5.4 h. All runs had 0 non-finite steps, 0 crashes and 0
+RAM-cache recomputes. In every run `model.pth` is the epoch-299 EMA, because
+validation loss was still falling at the end.
+
+**Mechanism (gating).** `scores/diag_margin_mw_*.txt`, fig3.
+
+| run | acc (no margin) | acc (margin 0.4) | cos to own class | verdict | registered twin `nl_*_s2040` |
+|---|---|---|---|---|---|
+| `mw_f6` | 0.999 | 0.991 | +0.995 | **PASS** | 0.000 / −0.74, trapped |
+| `mw_f7` | 0.990 | 0.975 | +0.993 | **PASS** | 0.000 / −0.83, trapped |
+| `mw_f2` (control) | 0.999 | 0.999 | +0.995 | PASS | never trapped |
+
+Supporting checks (not gating) all hold:
+- **e60 student** (end of the m = 0 hold): no-margin top-1 is 0.82 (f6) and
+  0.85 (f7), and cos to own class is +0.19 and +0.17.
+- **e100 student** (m = 0.267): margin accuracy is 0.052 (f6) and 0.055 (f7),
+  so above 0.
+- **`Train_acc_mfinal`** never returns to 0 once the ramp ends (fig2).
+
+**AUC (eval.py R0, n=1, not a verdict).**
+
+| arm | dev: reg. n=4 mean [seed range] | dev: warm-up | dev: paired Δ (s2040) | eval: reg. n=4 mean | eval: warm-up | eval: paired Δ |
+|---|---|---|---|---|---|---|
+| TF only (f6) | 85.77 [85.52, 86.24] | **88.13** | +1.89 | 82.66 | **85.76** | +3.78 |
+| T only (f7) | 69.73 [66.91, 72.85] | **78.51** | +8.60 | 74.79 | **80.78** | +6.20 |
+| Log-Mel only (f2) | 94.13 [93.98, 94.31] | 93.98 | +0.01 | 95.47 | 95.59 | −0.05 |
+
+- Both mel-free warm-up runs land above every registered seed of their arm, on
+  dev and on eval.
+- Against the n=4 means, W6 − W2 = +2.52 dev / +2.98 eval and W7 − W2 = +8.93
+  dev / +5.87 eval. Both are past the +1.0 V1 bar, but each rests on one seed.
+
+**Predictions.**
+
+| | predicted | pilot | |
+|---|---|---|---|
+| P0 | f6 and f7 PASS | both PASS | ✓ |
+| P1 | `mw_f6` − `nl_f6` = +3.5 [+1.5, +7] | +1.89 (paired) | ✓ in range, below central |
+| P2 | `mw_f7` − `nl_f7` = +4 [+1, +9], near 81 | +8.60 (paired), 78.5 | ✓ in range, high end |
+| P3 | `mw_f2` − `nl_f2` = 0.0 [−0.6, +0.4] | +0.01 | ✓ |
+
+**Where the f7 gain comes from: mostly checkpoint selection.** fig1 shows the
+two arms gain in different ways.
+
+- **f7.** Its final-epoch probe barely moves: 78.5 against the registered
+  77.8 mean (`nl_f7_s2040` 77.0). The registered runs reached the same end
+  state. Inside the trap, though, their validation loss bottomed out at
+  epoch ~150, so `model.pth` froze there at 69.7. Out of the trap, validation
+  loss falls to the last epoch, so `model.pth` is the end state. The trap's
+  cost to f7 was **which net got saved**, not how good the net could get.
+- **f6.** The registered `model.pth` (85.8) already sat near its own final
+  probe (85.5; s2040 85.9). The warm-up run ends higher (88.1), so for f6 the
+  gain is in the end state itself.
+
+The per-machine dev change for f6 at s2040 is mixed:
+- **up:** slider +7.1, valve +5.8, pump +3.4, ToyCar +0.3
+- **down:** ToyConveyor −4.7, fan −0.6
+
+ToyConveyor's seed noise is above 4 points (CLAUDE.md), so none of these
+changes is resolvable at n=1.
+
+**Not pre-registered: EMA lag.**
+- At e100 the EMA net is still collapsed in all three arms, including the
+  control: all embeddings sit at cos ≥ 0.997 to each other. Meanwhile the
+  student already reaches no-margin top-1 ≥ 0.96.
+- The EMA net's time constant is 1/(1 − 0.9999) = 10⁴ steps, about 18.5
+  epochs at 539 steps per epoch. The EMA also averages over the early
+  collapsed weights.
+- This explains why the f6 probe stayed at chance until about epoch 150 even
+  though its student was healthy at epoch 100 (fig1). It does not change the
+  verdict.
+
+**D-pilot.** Both trapped arms PASS, so the rule says **launch stage 2 as
+registered**: `run.sh stage2`, `mw_{f6,f7,f2}` × seeds 2041–2043.
+- Measured wall time is 22.2 GPU-h per seed, so about 67 GPU-h in total, or
+  ~23 h on three cards.
+- Stage 2b (`mw_f5` × 4, ~44 GPU-h) stays optional.
 
 ## Figures
-
-*(empty until the pilot finishes; the figure set is fixed in `make_plots.py`)*
 
 | file | shows |
 |---|---|
