@@ -189,7 +189,10 @@ def fig2():
         ax.set_yticks(range(len(ylab)), ylab)
         ax.invert_yaxis()
         ax.grid(axis='x')
-        ax.set_xlabel(f'{ds} AUC − LM+T+TF (paper model), points; bar = ±1 se of the 4-vs-4 difference')
+        ax.set_xlabel(f'{ds} AUC − paper model (LM+T+TF), points')
+        ax.set_title(ds, fontsize=9, color=INK_2, loc='left')
+    fig.text(0.01, -0.02, 'Bar = ±1 se of the 4-vs-4 (Welch) difference. Hollow = with Log-Mel.',
+             fontsize=8, color=INK_2)
     axes[0].legend(loc='lower left', fontsize=8, ncol=1, title='arm (hollow = with Log-Mel)', title_fontsize=7.5)
     t = 'Per machine type, change against the paper model'
     if worst:
@@ -258,27 +261,37 @@ def fig3():
 def fig4():
     series = []
     for p, label, mel, col, mk, _ in CELLS:
-        curves = []
+        curves, saved = [], []
         for s in SEEDS:
             d = run_dir(f'SCLTFSTgramMFN_{p}_s{s}')
             r = rows(os.path.join(d, 'probe.csv')) if d else None
             if r:
                 curves.append({int(x['epoch']): 100 * float(x['AUC']) for x in r if x.get('AUC')})
+                sv = [int(x['epoch']) for x in r if x.get('saved') == '1']
+                if sv:
+                    saved.append(sv[-1])
         if not curves:
             continue
         ep = sorted(set.intersection(*[set(c) for c in curves]))
         if ep:
-            series.append((short(label), mel, col, ep, np.array([[c[e] for e in ep] for c in curves]).mean(0)))
+            series.append((short(label), mel, col, ep, np.array([[c[e] for e in ep] for c in curves]).mean(0),
+                           np.mean(saved) if saved else None))
     if not series:
         print('skip fig4: no probe.csv')
         return
     fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.2), gridspec_kw={'width_ratios': [1, 1.15]})
     for ax, lo in zip(axes, (0, 150)):
         ends = []
-        for label, mel, col, ep, y in series:
+        for label, mel, col, ep, y, sv in series:
             k = [i for i, e in enumerate(ep) if e >= lo]
             ax.plot([ep[i] for i in k], y[k], color=col, lw=2 if not mel else 1.4,
                     ls='-' if not mel else (0, (4, 2)))
+            ys = np.interp(sv, ep, y) if sv is not None else None
+            if not lo and sv is not None and y[-1] - ys > 2:   # saved checkpoint well below the final probe
+                ax.scatter([sv], [ys], s=60, marker='o', color=SURFACE, edgecolor=col, linewidth=1.6, zorder=4)
+                ax.annotate(f'{label}: model.pth saved here\n(mean epoch {sv:.0f}; val. loss\nstops falling; final probe {y[-1]:.1f})',
+                            (sv, ys), xytext=(190, 56), textcoords='data', fontsize=7.5, color=INK_2,
+                            arrowprops=dict(arrowstyle='-', color=INK_2, lw=0.7))
             ends.append([y[-1], label, ep[-1]])
         if lo:   # direct labels, dodged to at least 3% of the axis apart
             ends.sort()

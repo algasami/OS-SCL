@@ -1,10 +1,18 @@
 # No Log-Mel: can the raw-waveform branches replace the spectrogram?
 
-> **Status: pre-registered 2026-10-19; gate passed; cost bench done; the 16
-> runs are training.** Accuracy predictions
-> below are blind. Cost predictions P6–P7 were written after a smoke test of
-> `bench.py` had shown the per-clip Log-Mel and network times, so they are
-> not blind; they are kept as statements to check against the full bench.
+> **Status: done 2026-10-21. All 16 runs scored; D1 and D2 fail by wide
+> margins.** Dropping Log-Mel from the paper model costs **−4.9 dev / −3.3
+> eval AUC**: Tgram+TFgram reaches 90.0 / 91.9 against 94.9 / 95.3. TFgram
+> alone is 8.4 dev and 12.8 eval points below Log-Mel alone. The speed premise
+> also fails, because TFgram, not Log-Mel, is the expensive branch (Cost,
+> below). The single-branch runs are partly an optimisation failure, the
+> ArcFace margin trap (Interim, below). That is followed up in
+> `../margin-warmup` (branch `ablation/margin-warmup`).
+>
+> The accuracy predictions were written blind; P1, P2 and P5 fail.
+> Cost predictions P6–P7 were written after a smoke test of `bench.py` had
+> shown the per-clip Log-Mel and network times, so they are not blind; they
+> are kept as statements to check against the full bench.
 
 ## Why this exists
 
@@ -334,10 +342,112 @@ The runs fall into two groups:
   `fr_f1`'s 94.5 at the same seed. So the two-branch net's loss is not explained
   by the trap.
 
-### Accuracy
+### Accuracy (2026-10-21, `scores/summary.txt`, `scores/summary.csv`)
 
-*(empty until the runs finish)*
+R0 AUC from `eval.py` on each run's `model.pth`: the EMA net at its minimum
+validation loss, the same rule as every other cell. Mean over seeds 2040–2043,
+n = 4 in every cell.
+
+| cell | inputs | dev AUC (sd) | eval AUC (sd) | dev pAUC | dev mAUC |
+|---|---|---|---|---|---|
+| `fr_f1` (paper model) | LM+T+TF | **94.90** (0.34) | 95.25 (0.26) | 89.58 | 89.40 |
+| `fr_f4` | LM+T | 94.49 (0.33) | **96.06** (0.34) | 89.43 | 88.08 |
+| `nl_f2` | LM | 94.13 (0.15) | 95.47 (0.26) | 88.07 | 87.72 |
+| `nl_f5` | T+TF | 89.99 (0.23) | 91.94 (1.29) | 86.43 | 78.81 |
+| `nl_f6` | TF | 85.77 (0.33) | 82.66 (0.63) | 80.88 | 72.62 |
+| `nl_f7` | T | 69.73 (2.44) | 74.79 (1.93) | 66.85 | 50.54 |
+
+`nl_f5`'s eval sd comes from one seed: s2041 scores 90.12, the others
+92.17–93.17.
+
+**Contrasts** (Δ in points; se is Welch's 4-vs-4; the interval is a
+10k-draw seed bootstrap, 90%):
+
+| contrast | dev Δ (se) [90%] | eval Δ (se) [90%] |
+|---|---|---|
+| C1 `nl_f5` − `fr_f1` | **−4.91** (0.21) [−5.20, −4.61] | **−3.31** (0.66) [−4.31, −2.45] |
+| C2a `nl_f5` − `fr_f4` | −4.51 (0.20) [−4.79, −4.22] | −4.12 (0.67) [−5.09, −3.24] |
+| C2b `nl_f6` − `nl_f2` | −8.37 (0.18) [−8.61, −8.10] | −12.81 (0.34) [−13.27, −12.31] |
+| C3 `nl_f5` − `nl_f6` | +4.22 (0.20) [+3.92, +4.50] | +9.28 (0.72) [+8.20, +10.24] |
+| C4 `nl_f7` − `nl_f6` | −16.03 (1.23) [−17.70, −14.33] | −7.87 (1.02) [−9.33, −6.40] |
+
+Every interval excludes 0 and the −0.20 margin by a wide margin. The noise
+amendment's "not resolved at n=4" clause does not apply.
+
+**Per machine, C1** (dev / eval):
+
+| | fan | pump | slider | ToyCar | ToyConveyor | valve |
+|---|---|---|---|---|---|---|
+| dev | −1.1 | −4.0 | −3.0 | −0.8 | **−16.8** | −3.8 |
+| eval | +1.0 | −4.0 | −2.8 | −0.9 | −5.5 | **−7.7** |
+
+**Predictions.**
+
+| | prediction | outcome | |
+|---|---|---|---|
+| P1 | C1 dev in [−1.2, +0.2] (central −0.4); eval in [−1.5, +0.3] | dev −4.91, eval −3.31 | **fail**: the direction was right, but the loss is ~10× the central estimate |
+| P2 | C2b dev in [−2.5, +0.2] (central −1.0) | −8.37 | **fail**: TFgram alone is far worse than predicted |
+| P3 | `nl_f7` below `nl_f6` and `nl_f2` by ≥ 0.5 | −16.0 and −24.4 | pass |
+| P4 | C3 dev ≥ +0.3 (central +0.5) | +4.22 | pass, ~8× the central estimate |
+| P5 | ≥ 60% of C1's dev loss from the MIMII types | 40% | **fail**: ToyConveyor alone carries 57% (−16.8 of −29.7 summed). Eval is 68% MIMII, led by valve |
+| P6 | GPU Log-Mel < 1% of the paper model's GPU forward; 1-thread CPU Log-Mel costs more than that forward | 0.15%; 7.5 ms vs 0.89 ms | pass (not blind) |
+| P7 | on a CPU, f5 and f6 cost > 10× the Log-Mel they replace; f2 is cheaper than anything with TFgram | network 104.7 and 100.7 ms vs Log-Mel 7.46 ms (14.0×, 13.5×); f2 42 ms vs ≥ 101 ms | pass (not blind) |
+
+**Decisions.**
+
+- **D1 (drop Log-Mel from the paper model): FAIL.** −4.91 dev and −3.31 eval,
+  against a −0.20 margin. Both intervals exclude the margin by more than 2
+  points.
+- **D2 (TFgram functionally replaces Log-Mel): FAIL.** C2a is −4.51 / −4.12
+  and C2b is −8.37 / −12.81. The frame-level CKA redundancy between TFgram
+  and Log-Mel is representational only. The detector cannot use TFgram in
+  Log-Mel's place.
+- **D3 (deployment).** As written, no cell qualifies on both metrics: the
+  best dev is `fr_f1` (94.90) and the best eval is `fr_f4` (96.06), and
+  neither is within 0.20 of the other's best. Every mel-free cell is ≥ 4
+  points out. Among the Log-Mel cells, **Log-Mel only (`nl_f2`) is the
+  cheapest on both targets**: 0.69 ms per clip on the GPU server and 42 ms on
+  one CPU thread. It costs 0.77 dev and 0.59 eval below the best cells, i.e.
+  2–3 se. On a CPU, `fr_f4` (LM+T, 48 ms) is the cheapest cell within 0.41 dev
+  of the best, and the best on eval. The paper model `fr_f1` costs 110 ms on
+  a CPU for +0.4 dev and −0.8 eval against `fr_f4`.
+
+**How much of this is the margin trap?** The single-branch numbers above
+are what the registered recipe delivers. They mix two things:
+
+- **`nl_f7` (T): checkpoint selection.** All 4 seeds fall into the trap of
+  the Interim section, and all 4 have validation loss bottom out at epoch
+  144–154. So `model.pth` is the epoch-~150 EMA net (probe dev AUC 67–73),
+  while training continues to a final-epoch probe of 77.0–78.7. The 69.7 is
+  the registered number. The ~78 is a diagnostic: it is the dev set, read off
+  the probe, and selected by hand, so not usable as a result. Both numbers
+  sit near STgram-MFN's own Tgram-MFN, 75.2 dev with CE and no ArcFace.
+- **`nl_f6` (TF): bounded by the trap.** All 4 seeds sit at chance until
+  epoch ~150, then climb to ~86. In the one seed diagnosed, it stays in the
+  trap. Its checkpoint is within 0.5 of its final probe, so its number is not
+  a selection artefact. But the trap may still cap it.
+- **`nl_f5` (T+TF): not trapped.** Its geometry matches `fr_f1`'s, and its
+  checkpoint is its final probe. **C1 and C2a, the ablation's headline, do
+  not depend on the trap.**
+
+Whether a margin warm-up lifts f6 and f7, and so shrinks C2b and C4, is the
+question of `../margin-warmup`. That ablation was pre-registered before
+its own runs, against these numbers.
+
+**What this changes.**
+
+- **Log-Mel stays.** It is the cheapest input on both deployment targets
+  (Cost) and the most accurate single branch by 8+ points. Removing it costs
+  ~5 points even when both waveform branches are kept.
+- **TFgram's place is next to Log-Mel, not instead of it.** The LM+T vs
+  LM+T+TF comparison belongs to `../fast-recipe`, and the cost case for
+  dropping TFgram is in `scores/bench.txt`.
 
 ## Figures
 
-*(empty until the runs finish)*
+| figure | shows |
+|---|---|
+| ![fig1](plots/fig1_factorial_auc.png) | Dev and eval R0 AUC per seed and the 4-seed mean for all six cells; dashed = the paper's single number. The mel-free half sits 4–25 dev points below. |
+| ![fig2](plots/fig2_per_machine_delta.png) | Per machine type, each cell minus the paper model (±1 se). The mel-free losses are concentrated on ToyConveyor (dev) and valve (eval); TF and T collapse on different machines. |
+| ![fig3](plots/fig3_cost_vs_auc.png) | End-to-end ms per clip against dev AUC, for the GPU server and for one CPU thread. The mel-free cells are both slower and less accurate than Log-Mel only. |
+| ![fig4](plots/fig4_probe_curves.png) | Probe dev AUC during training, mean over seeds. The mel-free nets take off later; TF sits at chance until ~150. T's `model.pth` is saved at epoch ~148, below its final probe (open circle). |
