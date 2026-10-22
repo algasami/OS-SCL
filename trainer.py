@@ -58,6 +58,17 @@ class Trainer:
         self.kd_beta = float(cfg.get('kd_beta', 1.0))
         self.kd_tau = float(cfg.get('kd_tau', 2.0))
 
+        # --m_warmup START,END (ablation/margin-warmup): only the student's margin moves.
+        # ema_net keeps cfg['m'], so validation, checkpoint selection, the probe and
+        # model.pth all score with the final margin, as eval.py does. Off = original.
+        self.m_final = float(cfg['m'])
+        self.m_warmup = None
+        if cfg.get('m_warmup'):
+            start, end = (float(e) for e in str(cfg['m_warmup']).split(','))
+            if not 0 <= start <= end:
+                raise ValueError(f"--m_warmup needs 0 <= START <= END, got {cfg['m_warmup']!r}")
+            self.m_warmup = (start, end)
+
         self.criterion = ASDLoss().to(self.device)
         self.test_criterion = ASDLoss(reduction=False).to(self.device)
 
@@ -95,9 +106,12 @@ class Trainer:
             sum_loss = 0.
             sum_accuracy = 0.
             sum_kd = 0.
+            sum_acc_final = 0.
 
-            for _, (x_wavs, x_mels, labels) in tqdm(enumerate(train_loader), total=num_steps, dynamic_ncols=True):
+            for step, (x_wavs, x_mels, labels) in tqdm(enumerate(train_loader), total=num_steps, dynamic_ncols=True):
                 self.net.train()
+                if self.m_warmup:
+                    self.net.arcface.set_margin(self.margin_at(epoch + step / num_steps))
 
                 x_wavs, x_mels, labels = x_wavs.to(self.device), x_mels.to(self.device), labels.to(self.device)
 
@@ -117,6 +131,8 @@ class Trainer:
                     sum_kd += kd.item()
 
                 sum_accuracy += get_accuracy(logits, labels)
+                if self.m_warmup:
+                    sum_acc_final += self.acc_at_final_margin(feature, labels)
 
                 if self.amp and not torch.isfinite(loss):
                     # GradScaler only guards the gradients: BN running stats were already
@@ -145,7 +161,9 @@ class Trainer:
                 lr = self.scheduler.get_last_lr()[0]
                 print(
                     f'lr: {lr:.7f} | EPOCH: {epoch} | Train_loss: {avg_loss:.5f} | Train_accuracy: {avg_accuracy:.5f} | Valid_loss: {valid_loss:.5f} | Valid_accuracy: {valid_accuracy:.5f}'
-                    + (f' | KD: {sum_kd / num_steps:.5f}' if self.teachers else ''))
+                    + (f' | KD: {sum_kd / num_steps:.5f}' if self.teachers else '')
+                    + (f' | m: {self.net.arcface.m:.4f} | Train_acc_mfinal: {sum_acc_final / num_steps:.5f}'
+                       if self.m_warmup else ''))
                 torch.save(self.ema_net.state_dict(), self.model_path)
             if self.probe_every and ((epoch + 1) % self.probe_every == 0 or epoch + 1 == self.epochs):
                 self.probe(epoch, valid_loss, saved)
@@ -156,6 +174,25 @@ class Trainer:
             if epoch + 1 in self.student_snapshots:
                 torch.save(self.net.state_dict(),
                            os.path.join(os.path.dirname(self.model_path), f'student_e{epoch + 1}.pth'))
+
+    def margin_at(self, t):
+        """The student's margin at fractional epoch t under --m_warmup START,END."""
+        start, end = self.m_warmup
+        if t >= end:
+            return self.m_final
+        if t < start:
+            return 0.0
+        return self.m_final * (t - start) / (end - start)
+
+    @torch.no_grad()
+    def acc_at_final_margin(self, feature, labels):
+        """Train accuracy as the original run measures it (margin m_final on the target):
+        cos(theta_y + m_final) beats every other cosine. The trap signal, logged while the
+        student's own margin is still warming up."""
+        cos = F.linear(feature.float(), F.normalize(self.net.arcface.weight.float()))
+        tgt = cos.gather(1, labels[:, None])[:, 0]
+        other = cos.scatter(1, labels[:, None], -2.).max(1).values
+        return (torch.cos(torch.acos(tgt.clamp(-1, 1)) + self.m_final) > other).float().mean().item()
 
     def save_state(self, epoch, min_val_loss, valid_loss, name=None):
         """Everything needed to continue this run after `epoch` (0-based): a fork
@@ -271,6 +308,8 @@ class Trainer:
         if self._probe_data is None:
             self._probe_data = load_devtest(self.cfg['cache_dir'])
         row = {'epoch': epoch, 'valid_loss': f'{valid_loss:.5f}', 'saved': int(saved)}
+        if self.m_warmup:   # the student's margin at the end of this epoch; the probe itself scores at m_final
+            row['m'] = f'{self.net.arcface.m:.4f}'
         try:
             metrics_row = devtest_metrics(self.ema_net, self._probe_data, self.device)  # fp32, as valid()
         except Exception as e:  # a diagnostic must never kill the run
