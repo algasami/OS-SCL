@@ -200,8 +200,9 @@ class ConvPreWavBlockqt(nn.Module):
 
 
 class TFgram(nn.Module):
-    def __init__(self, classes_num, act='relu', pool='max'):
+    def __init__(self, classes_num, act='relu', pool='max', lean=False):
         super(TFgram, self).__init__()
+        self.lean = lean
         if act not in TF_ACTS or pool not in TF_POOLS:
             raise ValueError(f'unknown TFgram act/pool: {act!r}/{pool!r}')
         self.act = act
@@ -219,32 +220,35 @@ class TFgram(nn.Module):
         self.pre_block2 = ConvPreWavBlockqo(64, 128, act, pool)
         self.pre_block3 = ConvPreWavBlockqt(128, 128, act, pool)
 
-        self.pre_block4 = ConvBlock(in_channels=4, out_channels=64)
+        # forward never uses these (~80 M params, 310 MB checkpoints); lean=True skips them
+        if not lean:
+            self.pre_block4 = ConvBlock(in_channels=4, out_channels=64)
 
-        # Spec augmenter
-        self.spec_augmenter = SpecAugmentation(time_drop_width=64, time_stripes_num=2,
-                                               freq_drop_width=8, freq_stripes_num=2)
+            # Spec augmenter
+            self.spec_augmenter = SpecAugmentation(time_drop_width=64, time_stripes_num=2,
+                                                   freq_drop_width=8, freq_stripes_num=2)
 
-        self.bn0 = nn.BatchNorm2d(64)
+            self.bn0 = nn.BatchNorm2d(64)
 
-        self.conv_block1 = ConvBlock(in_channels=1, out_channels=64)
-        self.conv_block2 = ConvBlock(in_channels=64, out_channels=128)
-        self.conv_block3 = ConvBlock(in_channels=128, out_channels=256)
-        self.conv_block4 = ConvBlock(in_channels=256, out_channels=512)
-        self.conv_block5 = ConvBlock(in_channels=512, out_channels=1024)
-        self.conv_block6 = ConvBlock(in_channels=1024, out_channels=2048)
+            self.conv_block1 = ConvBlock(in_channels=1, out_channels=64)
+            self.conv_block2 = ConvBlock(in_channels=64, out_channels=128)
+            self.conv_block3 = ConvBlock(in_channels=128, out_channels=256)
+            self.conv_block4 = ConvBlock(in_channels=256, out_channels=512)
+            self.conv_block5 = ConvBlock(in_channels=512, out_channels=1024)
+            self.conv_block6 = ConvBlock(in_channels=1024, out_channels=2048)
 
-        self.fc1 = nn.Linear(2048, 2048, bias=True)
-        self.fc_audioset = nn.Linear(2048, classes_num, bias=True)
+            self.fc1 = nn.Linear(2048, 2048, bias=True)
+            self.fc_audioset = nn.Linear(2048, classes_num, bias=True)
 
         self.init_weight()
 
     def init_weight(self):
         init_layer(self.pre_conv0)
         init_bn(self.pre_bn0)
-        init_bn(self.bn0)
-        init_layer(self.fc1)
-        init_layer(self.fc_audioset)
+        if not self.lean:
+            init_bn(self.bn0)
+            init_layer(self.fc1)
+            init_layer(self.fc_audioset)
 
     def forward(self, input, train):
         """

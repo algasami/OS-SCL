@@ -1,0 +1,9 @@
+run,start,end,seconds,epochs,source
+SCLTFSTgramMFN_cs_relu_max_s2028,1791883168,1791960981,77813,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_cs_relu_max_s2029,1791883168,1791965445,82277,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_cs_relu_max_s2030,1791960984,1792038827,77843,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_cs_relu_max_s2031,1791965449,1792047610,82161,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_tfl_relu_max_s2024,1791547752,1791624502,76750,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_tfl_relu_max_s2025,1791633247,1791709729,76482,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_tfl_relu_max_s2026,1791709943,1791786461,76518,300,mtime config.json -> student_e300.pth
+SCLTFSTgramMFN_tfl_relu_max_s2027,1791786661,1791863015,76354,300,mtime config.json -> student_e300.pth

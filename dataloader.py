@@ -32,6 +32,46 @@ class Wave2Mel(object):
         return self.amplitude_to_db(self.mel_transform(x))
 
 
+def machine_ids(name):
+    """The machine's IDs, in class-index order. Changing this invalidates every checkpoint."""
+    if name == 'ToyConveyor':
+        return ['id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06']
+    if name == 'ToyCar':
+        return ['id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06', 'id_07']
+    return ['id_00', 'id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06']
+
+
+def load_wav(file_name):
+    """(1, 160000) float waveform: the first 10 s at 16 kHz."""
+    y, sr = torchaudio.load(file_name)
+    return y[..., :sr * 10], sr
+
+
+def test_index(root_path, name_list):
+    """test_dataset's clips for every machine, in its order, without loading audio.
+
+    Rows are (file, machine, id, class label, y_true), y_true 1 for anomalies.
+    """
+    rows = []
+    for name in name_list:
+        d = os.path.join(root_path, name, 'test')
+        files = [(f, 0) for f in sorted(glob.glob(f'{d}/normal_*'))] + \
+                [(f, 1) for f in sorted(glob.glob(f'{d}/anomaly_*'))]
+        init = sum(len(machine_ids(n)) for n in name_list[:name_list.index(name)])
+        for f, y in files:
+            hits = [i for i, lab in enumerate(machine_ids(name)) if lab in f]
+            assert len(hits) == 1, f
+            rows.append((f, name, machine_ids(name)[hits[0]], init + hits[0], y))
+    return rows
+
+
+def cached_item_ok(wav, mel):
+    """Range check for a cached item: 16-bit PCM lies in [-1, 1] and the dB mel
+    (amin 1e-10, ref 1) in about [-100, 100]. Catches the exponent and sign-bit
+    flips that smartlab1's faulty RAM produces (ablation/fast-recipe)."""
+    return bool(np.isfinite(mel).all() and np.abs(mel).max() <= 200 and np.abs(wav).max() <= 1.0)
+
+
 class test_dataset(torch.utils.data.Dataset):
     def __init__(self, root_path, test_name, name_list, cfg):
         dataset_dir = os.path.join(root_path, test_name, 'test')
@@ -86,23 +126,12 @@ class test_dataset(torch.utils.data.Dataset):
 
     def _file_load(self, file_name):
         try:
-            y, sr = torchaudio.load(file_name)
-            y = y[..., :sr * 10]
-            return y, sr
+            return load_wav(file_name)
         except:
             print("file_broken or not exists!! : {}".format(file_name))
 
     def _get_label_list(self, name):
-        if name == 'ToyConveyor':
-            label_list = ['id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06']
-
-        elif name == 'ToyCar':
-            label_list = ['id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06', 'id_07']
-
-        else:
-            label_list = ['id_00', 'id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06']
-
-        return label_list
+        return machine_ids(name)
 
 
 class train_dataset(torch.utils.data.Dataset):
@@ -134,7 +163,31 @@ class train_dataset(torch.utils.data.Dataset):
 
         self.labels = torch.LongTensor(self.labels)
 
+        # --cache_dir: read the arrays cache_data.py wrote (the same values) instead of
+        # decoding each wav and computing its mel per item. Opened lazily per worker.
+        self.cache_dir = cfg.get('cache_dir') if cfg else None
+        self._cache = None
+        if self.cache_dir:
+            with open(os.path.join(self.cache_dir, 'train_files.txt')) as f:
+                cached = f.read().split()
+            # compare paths below data/dataset: the absolute prefix names the worktree
+            tail = lambda fs: [x.split(os.sep + 'dataset' + os.sep, 1)[-1] for x in fs]  # noqa: E731
+            if tail(cached) != tail(self.unrolled_files_list):
+                raise SystemExit(f'{self.cache_dir}/train_files.txt does not match the training file list')
+
     def __getitem__(self, idx):
+        if self.cache_dir:
+            if self._cache is None:
+                self._cache = tuple(np.load(os.path.join(self.cache_dir, f'train_{k}.npy'), mmap_mode='r')
+                                    for k in ('wav', 'mel'))
+            wav, mel = self._cache
+            w, m = np.array(wav[idx]), np.array(mel[idx])
+            if not cached_item_ok(w, m):
+                # an exponent flip in a cached float32 mel reached 1e11 and NaN'd a run
+                print(f'cache: item {idx} out of range (|mel| max {np.abs(m).max():.3g}); recomputed', flush=True)
+                y, _ = self._file_load(self.unrolled_files_list[idx])
+                return y, self.Logmel(y), self.labels[idx]
+            return torch.from_numpy(w), torch.from_numpy(m), self.labels[idx]
 
         y, sr = self._file_load(self.unrolled_files_list[idx])
         y_specgram = self.Logmel(y)
@@ -144,16 +197,7 @@ class train_dataset(torch.utils.data.Dataset):
         return len(self.unrolled_files_list)
 
     def _get_label_list(self, name):
-        if name == 'ToyConveyor':
-            label_list = ['id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06']
-
-        elif name == 'ToyCar':
-            label_list = ['id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06', 'id_07']
-
-        else:
-            label_list = ['id_00', 'id_01', 'id_02', 'id_03', 'id_04', 'id_05', 'id_06']
-
-        return label_list
+        return machine_ids(name)
 
     def _file_list_generator(self, target_dir):
         training_list_path = os.path.abspath('{dir}/*.wav'.format(dir=target_dir))
@@ -164,8 +208,6 @@ class train_dataset(torch.utils.data.Dataset):
 
     def _file_load(self, file_name):
         try:
-            y, sr = torchaudio.load(file_name)
-            y = y[..., :sr * 10]
-            return y, sr
+            return load_wav(file_name)
         except:
             print("file_broken or not exists!! : {}".format(file_name))

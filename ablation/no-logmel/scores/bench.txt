@@ -1,0 +1,43 @@
+NVIDIA RTX A4000, torch 2.6.0+cu124, 28 / Intel(R) Core(TM) i7-14700
+gpu-vs-cpu logmel max |diff| = 3.81e-05 dB
+feat  decode f-  cpu thr 1  b  1 fp32 |     0.379 ms/clip
+feat  logmel f-  cpu thr 1  b  1 fp32 |     7.458 ms/clip
+feat  logmel f-  cpu thr 8  b  1 fp32 |     1.291 ms/clip
+feat  logmel f-  cpu thr 8  b 64 fp32 |     1.405 ms/clip
+feat  logmel f-  gpu thr -  b 64 fp32 |     0.001 ms/clip
+train step   f1  gpu thr -  b 64 fp16 |     3.027 ms/clip | 5.16 it/s | 1.3775 M
+train step   f4  gpu thr -  b 64 fp16 |     1.436 ms/clip | 10.88 it/s | 1.1782 M
+train step   f2  gpu thr -  b 64 fp16 |     1.285 ms/clip | 12.16 it/s | 0.8973 M
+train step   f5  gpu thr -  b 64 fp16 |     3.046 ms/clip | 5.13 it/s | 1.3770 M
+train step   f6  gpu thr -  b 64 fp16 |     2.925 ms/clip | 5.34 it/s | 1.0960 M
+train step   f7  gpu thr -  b 64 fp16 |     1.439 ms/clip | 10.86 it/s | 1.1777 M
+infer net    f1  gpu thr -  b 64 fp32 |     1.449 ms/clip | 1.3775 M
+infer net    f1  gpu thr -  b 64 fp16 |     0.886 ms/clip | 1.3775 M
+infer net    f1  gpu thr -  b  1 fp32 |     1.975 ms/clip | 1.3775 M
+infer net    f4  gpu thr -  b 64 fp32 |     0.675 ms/clip | 1.1782 M
+infer net    f4  gpu thr -  b 64 fp16 |     0.391 ms/clip | 1.1782 M
+infer net    f4  gpu thr -  b  1 fp32 |     1.018 ms/clip | 1.1782 M
+infer net    f2  gpu thr -  b 64 fp32 |     0.609 ms/clip | 0.8973 M
+infer net    f2  gpu thr -  b 64 fp16 |     0.313 ms/clip | 0.8973 M
+infer net    f2  gpu thr -  b  1 fp32 |     0.852 ms/clip | 0.8973 M
+infer net    f5  gpu thr -  b 64 fp32 |     1.447 ms/clip | 1.3770 M
+infer net    f5  gpu thr -  b 64 fp16 |     0.879 ms/clip | 1.3770 M
+infer net    f5  gpu thr -  b  1 fp32 |     2.095 ms/clip | 1.3770 M
+infer net    f6  gpu thr -  b 64 fp32 |     1.375 ms/clip | 1.0960 M
+infer net    f6  gpu thr -  b 64 fp16 |     0.804 ms/clip | 1.0960 M
+infer net    f6  gpu thr -  b  1 fp32 |     1.814 ms/clip | 1.0960 M
+infer net    f7  gpu thr -  b 64 fp32 |     0.674 ms/clip | 1.1777 M
+infer net    f7  gpu thr -  b 64 fp16 |     0.361 ms/clip | 1.1777 M
+infer net    f7  gpu thr -  b  1 fp32 |     1.029 ms/clip | 1.1777 M
+infer net    f1  cpu thr 1  b  1 fp32 |   102.077 ms/clip | 1.3775 M
+infer net    f4  cpu thr 1  b  1 fp32 |    40.480 ms/clip | 1.1782 M
+infer net    f2  cpu thr 1  b  1 fp32 |    34.293 ms/clip | 0.8973 M
+infer net    f5  cpu thr 1  b  1 fp32 |   104.692 ms/clip | 1.3770 M
+infer net    f6  cpu thr 1  b  1 fp32 |   100.690 ms/clip | 1.0960 M
+infer net    f7  cpu thr 1  b  1 fp32 |    39.192 ms/clip | 1.1777 M
+infer net    f1  cpu thr 8  b  1 fp32 |    38.446 ms/clip | 1.3775 M
+infer net    f4  cpu thr 8  b  1 fp32 |    13.379 ms/clip | 1.1782 M
+infer net    f2  cpu thr 8  b  1 fp32 |    10.164 ms/clip | 0.8973 M
+infer net    f5  cpu thr 8  b  1 fp32 |    38.654 ms/clip | 1.3770 M
+infer net    f6  cpu thr 8  b  1 fp32 |    35.724 ms/clip | 1.0960 M
+infer net    f7  cpu thr 8  b  1 fp32 |    12.939 ms/clip | 1.1777 M

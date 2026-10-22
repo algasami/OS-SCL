@@ -39,7 +39,7 @@ sys.path.insert(0, os.path.join(HERE, '..', '..'))
 sys.path.insert(0, os.path.join(HERE, '..'))
 from dataloader import Wave2Mel, train_dataset     # noqa: E402
 from losses import ASDLoss                         # noqa: E402
-from model.net import FUSSION_BRANCHES, SCLTFSTgramMFN  # noqa: E402
+from model.net import SCLTFSTgramMFN  # noqa: E402
 from scores_path import scores_dir                 # noqa: E402
 from utils import dataset_split                    # noqa: E402
 
@@ -100,16 +100,8 @@ def test_table(data):
 
 
 def forward(net, wav, mel, label):
-    tr = wav.shape[0] > 1
-    br = []
-    for name in FUSSION_BRANCHES[net.cfg['fussion']]:
-        if name == 'mel':
-            br.append(mel)
-        elif name == 'tgram':
-            br.append(net.tgramnet(wav).unsqueeze(1))
-        else:
-            br.append(net.TFgramNet(wav, tr).unsqueeze(1))
-    x = br[0] if len(br) == 1 else torch.cat(br, 1)
+    # the model's own branch stacking, so new input channels (--mel_gate) score correctly
+    x = net.branch_input(wav, mel, train=wav.shape[0] > 1)
     _, pre = net.mobilefacenet(x)
     logits = net.arcface(F.normalize(net.head(pre), dim=1), label)
     return logits, pre

@@ -138,6 +138,9 @@ def main():
             if trained != asked:
                 raise SystemExit(f'{key} mismatch: checkpoint trained with {trained!r}, '
                                  f'eval asked for {asked!r} ({ckpt_cfg_path})')
+        # architecture-shaping keys the command line has no flag for
+        for key, default in (('lean', False), ('mel_gate', 'none'), ('eca', False)):
+            cfg[key] = ckpt_cfg.get(key, default)
 
     net = SCLTFSTgramMFN(m=cfg['m'], cfg=cfg).to(device)
     strict = cfg.get('strict', True)

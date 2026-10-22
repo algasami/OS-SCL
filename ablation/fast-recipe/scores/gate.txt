@@ -1,0 +1,5 @@
+G1 cache identity: max |live - cached| over 64 train + 64 devtest items = 0 -> ok
+G2 probe vs eval.py (SCLTFSTgramMFN_cs_relu_max_s2028): max |machine AUC diff| fp32 1.20e-05 -> ok | fp16 probe 2.65e-04 (reported)
+   probe fp32 overall AUC 0.95147 pAUC 0.90337 mAUC 0.89640
+G3 f1: 2 probe lines, 5.4M ckpt, eval.py: Average AUC: 0.48436,  Average pAUC: 0.50399 ,Average mAUC: 0.41844
+G3 f4: 2 probe lines, 4.7M ckpt, eval.py: Average AUC: 0.49594,  Average pAUC: 0.50122 ,Average mAUC: 0.46101

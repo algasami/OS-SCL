@@ -54,6 +54,30 @@ def parse_arguments():
     parser.add_argument('--kd_teachers', type=str,
                         help="Comma-separated model names to distil from (ablation/distill); each is "
                              "loaded from <kd_teacher_dir>/<name>/{model.pth,config.json}")
+    parser.add_argument('--amp', type=str, choices=['none', 'fp16', 'bf16'],
+                        help="Autocast precision for branches + MobileFaceNet (default none = fp32)")
+    parser.add_argument('--cudnn_bench', type=int, choices=[0, 1],
+                        help='1 = cudnn.benchmark on, deterministic off (faster, not bit-reproducible)')
+    parser.add_argument('--lean', type=int, choices=[0, 1],
+                        help='1 = build only the branches the fussion mode uses, no dead TFgram modules')
+    parser.add_argument('--cache_dir', type=str, help='Read train/devtest arrays from cache_data.py output')
+    parser.add_argument('--probe_every', type=int,
+                        help='Log dev-test R0 metrics of the EMA net every N epochs (diagnostic only)')
+    parser.add_argument('--mel_gate', type=str, choices=['none', 'tristat'],
+                        help="Add a gated Log-Mel input channel: 'tristat' (ESTM). Default none")
+    parser.add_argument('--eca', type=int, choices=[0, 1], help='1 = ECA after each bottleneck depthwise conv')
+    parser.add_argument('--wave_aug', type=int, choices=[0, 1],
+                        help='1 = waveform noise/shift/gain augmentation before mixup (Sensors 26:3214)')
+    parser.add_argument('--state_snapshots', type=str,
+                        help="Comma-separated epochs at which to save the full training state (state_e<N>.pth)")
+    parser.add_argument('--resume_state', type=str,
+                        help='Continue from a state_e<N>.pth (fork). --seed must be the trunk seed (same split)')
+    parser.add_argument('--fork_seed', type=int,
+                        help='Re-seed every RNG after loading --resume_state: the fork gets its own batch '
+                             'order and mixup draws')
+    parser.add_argument('--state_every', type=int, help='Overwrite state_last.pth every N epochs')
+    parser.add_argument('--crash_resume', type=str,
+                        help="Continue an interrupted run from its state_last.pth (same flags otherwise)")
     parser.add_argument('--kd_teacher_dir', type=str, help="Directory holding the teachers (default check_points)")
     parser.add_argument('--kd_beta', type=float, help="Weight of the KD term (default 1.0)")
     parser.add_argument('--kd_tau', type=float, help="KD temperature on 30*cos (default 2.0)")
@@ -72,6 +96,11 @@ def main():
     print(cfg)
 
     random_seed(seed=cfg.get('seed', 2024))
+    if cfg.get('cudnn_bench'):
+        torch.backends.cudnn.deterministic = False
+        torch.backends.cudnn.benchmark = True
+    if cfg.get('probe_every') and not cfg.get('cache_dir'):
+        raise SystemExit('--probe_every needs --cache_dir (it reads devtest_*.npy)')
 
     name_list = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 
@@ -110,7 +139,26 @@ def main():
     trainer = Trainer(device=device, net=model, ema_net=model_ema, epochs=cfg['epoch'], cfg=cfg,
                       ema_skip_keys=skip_keys, teachers=teachers)
 
-    trainer.train(train_dataloader, valid_dataloader)
+    start_epoch = 0
+    if cfg.get('crash_resume'):
+        start_epoch = trainer.crash_resume(cfg['crash_resume'])
+        print(f"crash-resumed {cfg['crash_resume']} at epoch {start_epoch}")
+    elif cfg.get('resume_state'):
+        # The split and both inits were drawn above from the trunk seed, so the fork sees
+        # the trunk's exact train/valid split; the loaded state then replaces the weights.
+        start_epoch = trainer.load_state(cfg['resume_state'])
+        # same split + same EMA weights => the trunk's valid loss at that epoch, to ~1e-5
+        vl, _ = trainer.valid(valid_dataloader)
+        print(f'resume check | valid loss {vl:.5f} vs trunk {trainer.resumed_valid_loss:.5f} '
+              f'| {"ok" if abs(vl - trainer.resumed_valid_loss) < 1e-3 else "MISMATCH"}')
+        if cfg.get('fork_seed') is not None:
+            random_seed(seed=cfg['fork_seed'])
+            if cfg.get('cudnn_bench'):
+                torch.backends.cudnn.deterministic = False
+                torch.backends.cudnn.benchmark = True
+        print(f"resumed {cfg['resume_state']} at epoch {start_epoch} | fork_seed {cfg.get('fork_seed')}")
+
+    trainer.train(train_dataloader, valid_dataloader, start_epoch=start_epoch)
 
 
 def load_teachers(cfg, device):
