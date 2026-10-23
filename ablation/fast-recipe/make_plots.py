@@ -95,12 +95,15 @@ def paper_line(ax, y, text, xfrac=0.0, ha='left'):
 def fig1_speed():
     old = rows(os.path.join(SCORES, 'relu8_wall.csv'))
     hours = {'relu8': [int(r['seconds']) / 3600 for r in old] if old else []}
+    slow = {}                       # runs on GPU 1, whose PCIe link trained at x1 (README, Results)
     for arm, _, _ in ARMS:
         hours[arm] = []
+        slow[arm] = []
         for run in runs(arm):
             w = rows(os.path.join(SCORES, run, 'wall.csv'))
             if w:
                 hours[arm].append(int(w[0]['seconds']) / 3600)
+                slow[arm].append(w[0].get('gpu') == '1')
     if not hours['relu8'] or not any(hours[a] for a, _, _ in ARMS):
         print('skip fig1: wall-clock inputs missing')
         return
@@ -113,7 +116,11 @@ def fig1_speed():
             continue
         med = np.median(h)
         ax.barh(y, med, height=0.5, color=col, alpha=0.18 if key != 'relu8' else 0.25, zorder=1)
-        ax.scatter(h, [y] * len(h), s=44, color=col, edgecolor=SURFACE, lw=1.2, zorder=3)
+        sl = slow.get(key, [False] * len(h))
+        hh = [v for v, q in zip(h, sl) if not q]
+        hs = [v for v, q in zip(h, sl) if q]
+        ax.scatter(hh, [y] * len(hh), s=44, color=col, edgecolor=SURFACE, lw=1.2, zorder=3)
+        ax.scatter(hs, [y] * len(hs), s=44, color=SURFACE, edgecolor=col, lw=1.4, zorder=3)
         ax.annotate(f'{med:.1f} h  ({base / med:.1f}×)', (max(h), y), xytext=(8, 0), textcoords='offset points',
                     va='center', fontsize=8.5, color=INK)
     ax.set_yticks(range(len(order)), [o[1] for o in reversed(order)])
@@ -123,6 +130,8 @@ def fig1_speed():
     fast = min(np.median(hours[a]) for a, _, _ in ARMS if hours[a])
     ax.set_title(f'The fast recipe cuts a run from {base:.1f} h to {fast:.1f} h', loc='left', fontsize=10.5)
     fig.tight_layout()
+    fig.text(0.01, -0.03, 'Dots = runs; bar and label = median. Hollow = GPU 1, whose PCIe link runs at x1 '
+             '(GPU 0 x16, GPU 2 x4). relu8 GPUs are not recorded.', fontsize=7.5, color=INK_2)
     save(fig, 'fig1_speed.png')
 
 
@@ -232,7 +241,7 @@ def fig4_oracle_by_machine():
     ax.set_xticks(range(len(MACH)), MACH)
     ax.set_ylabel('dev AUC at best probed epoch\n− saved checkpoint (points)')
     ax.grid(axis='y')
-    ax.legend(loc='upper right', fontsize=8)
+    ax.legend(loc='upper left', fontsize=8)
     allg = np.concatenate([np.array(g) for g in gains.values() if len(g)])
     top = MACH[int(np.argmax(allg.mean(0)))]
     ax.set_title(f'Where test-set selection would gain: most in {top}', loc='left', fontsize=10.5)
