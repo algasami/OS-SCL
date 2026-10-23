@@ -3,6 +3,7 @@
 #
 #   LA_FUSSION=4 bash ablation/lit-arms/run.sh train          # la_aug / la_gate / la_eca x seeds 2040-2043
 #   LA_FUSSION=4 bash ablation/lit-arms/run.sh score          # eval.py dev+eval CSVs, probe, wall, curves -> scores/
+#   LA_FUSSION=4 bash ablation/lit-arms/run.sh plots          # make_plots.py -> plots/, summary -> scores/summary.txt
 #   LA_FUSSION=4 LA_COMBO="..." bash ablation/lit-arms/run.sh combo   # stage 2, only after D1 is recorded
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -27,7 +28,7 @@ score_run() {   # score_run <name>
     done
 }
 
-case ${1:?usage: run.sh train|score|combo} in
+case ${1:?usage: run.sh train|score|combo|plots} in
 train)
     echo "=== train start $(date) | fussion=$FUSSION arms=$ARMS ==="
     for arm in $ARMS; do for s in $SEEDS; do echo "$arm $s"; done; done | xargs -P 3 -L1 $D/run_one.sh
@@ -39,5 +40,7 @@ combo)
 score)
     for d in check_points/SCLTFSTgramMFN_la_*_s20[0-9][0-9]; do score_run "$(basename $d)" || exit 1; done
     $PY ablation/distill_curves.py lit-arms ;;
+plots)
+    /home/f74134118/anaconda3/bin/python $D/make_plots.py | tee $D/scores/summary.txt ;;
 *) echo "unknown stage"; exit 1 ;;
 esac

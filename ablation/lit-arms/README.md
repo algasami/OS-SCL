@@ -1,8 +1,9 @@
 # Literature arms: three published add-ons, each at n=4 on the fast recipe
 
-> **Status: pre-registered 2026-10-17. Nothing trained.** Phase 1 of the plan.
-> Waits for `../fast-recipe` to fix the base model (its decision D2) and to free
-> the GPUs.
+> **Status: training since 2026-10-23, base `fussion 1`.** Pre-registered
+> 2026-10-17. A pre-launch addendum (2026-10-23, below Decision rules) fixes
+> the base and records the measured noise. The predictions and rules are
+> unchanged.
 
 ## Why this exists
 
@@ -104,6 +105,52 @@ Scores per run: eval.py's R0 on dev and eval (the primary score), and S1′
   the paper under R0 and S1′.
 - **D3.** If none passes, drop all three and go to Phase 2 (shared-trunk weight
   soup) on the bare base.
+
+## Addendum before launch (2026-10-23, before any 300-epoch run)
+
+This addendum was written after `../fast-recipe` was scored and before any
+lit-arms run trained beyond 2 epochs. It fills in what the pre-registration
+left open. It changes no prediction and no decision rule.
+
+- **Base = `fussion 1`** (the paper's TFSTgram), per `../fast-recipe`'s D2.
+  That arm cost 0.40 dev AUC without TFgram (`fr_f4` − `fr_f1`), which fails
+  D2's −0.15 bar. `run.sh` runs with `LA_FUSSION=1`.
+  - **`gate` has four input channels:** Mel, EMel, Tgram and TFgram. That is
+    one more than the three-channel (Mel, EMel, Tgram) layout the arm table
+    describes for `fussion 4`.
+- **Paired baseline** = `fr_f1_s2040–2043` (`../fast-recipe/scores/`), the same
+  seeds and recipe. It scores **94.90 dev** (sd 0.34) and **95.25 eval**
+  (sd 0.26) AUC under R0.
+- **The noise is larger than D1 assumed.** D1's "se ≈ 0.13" came from
+  relu8's sd of 0.19. `fr_f1`'s dev sd is 0.34, so a 4-vs-4 difference has
+  se ≈ 0.24, and D1's +0.20 bar is only ~0.8 se. D1 stays as registered, but
+  every arm is reported with:
+  - its Welch se and a bootstrap 95% interval
+  - its four seed-paired Δs
+
+  D1 already treats a single pass as "a lead, not a result", and D2's
+  fresh-seed replication (2044–2047) carries the evidential weight. An arm
+  that passes D1 with an interval that includes 0 is labelled a **weak
+  pass**. It still goes to D2.
+- **Code.** The branch was fast-forwarded to main (`236cacd`). That brings in
+  later flags, all off by default: `--m_warmup`, `--state_snapshots` and the
+  mel-free fussion modes. `../margin-warmup` checked that with `--m_warmup`
+  off, training is bit-identical to the old code.
+  - **Re-smoke on the merged code at `fussion 1`** (2026-10-23): 2 epochs of
+    each arm, `la_{aug,gate,eca}_s1_e2`, one per GPU.
+  - All three train with 0 skipped steps, write `probe.csv`, and finish
+    through `../train_one.sh`.
+  - **All three reload strictly in `eval.py` at `fussion 1`.** The smoke
+    evals were stopped partway through dev scoring once loading had passed;
+    a 2-epoch model's AUC means nothing.
+- **Schedule.** 12 runs, arm-major (aug, then gate, then eca; seeds
+  2040–2043), three at a time via `run.sh train`.
+  - At `fr_f1`'s pace, that is ~11.5 h per run, or ~13.5 h on GPU 1, whose
+    PCIe link is x1 (CLAUDE.md). That makes ~2 days in all.
+  - Then `LA_FUSSION=1 run.sh score`.
+  - S1′ (`../confirm-seeds`) is reported after R0, as registered.
+- **Figures.** `make_plots.py` is written during training, before any score
+  exists, and reads `scores/` only.
 
 ## Results
 
