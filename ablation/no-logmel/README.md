@@ -1,5 +1,15 @@
 # No Log-Mel: can the raw-waveform branches replace the spectrogram?
 
+> **[Annotation, 2026-10-23, from `../margin-warmup` (n=4).]** A student-margin
+> warm-up removes the ArcFace margin trap in f6 and f7 (12/12 runs PASS). It
+> lifts TF-only to 87.25 dev / 86.68 eval and T-only to 79.75 / 81.41.
+>
+> - **Shrunk:** C2b (TF − LM) becomes **−6.77 / −9.08**, and C4 (T − TF)
+>   becomes **−7.50 / −5.27**. Most of T-only's old deficit was checkpoint
+>   selection at epoch ~150.
+> - **Unchanged:** C1, C2a, D1, D2 and D3 rest on never-trapped cells. TFgram
+>   alone still does not replace Log-Mel. The original numbers below are kept.
+
 > **Status: done 2026-10-21. All 16 runs scored; D1 and D2 fail by wide
 > margins.** Dropping Log-Mel from the paper model costs **−4.9 dev / −3.3
 > eval AUC**: Tgram+TFgram reaches 90.0 / 91.9 against 94.9 / 95.3. TFgram
@@ -367,9 +377,9 @@ n = 4 in every cell.
 |---|---|---|
 | C1 `nl_f5` − `fr_f1` | **−4.91** (0.21) [−5.20, −4.61] | **−3.31** (0.66) [−4.31, −2.45] |
 | C2a `nl_f5` − `fr_f4` | −4.51 (0.20) [−4.79, −4.22] | −4.12 (0.67) [−5.09, −3.24] |
-| C2b `nl_f6` − `nl_f2` | −8.37 (0.18) [−8.61, −8.10] | −12.81 (0.34) [−13.27, −12.31] |
+| C2b `nl_f6` − `nl_f2` | −8.37 (0.18) [−8.61, −8.10] **[warm-up: −6.77]** | −12.81 (0.34) [−13.27, −12.31] **[warm-up: −9.08]** |
 | C3 `nl_f5` − `nl_f6` | +4.22 (0.20) [+3.92, +4.50] | +9.28 (0.72) [+8.20, +10.24] |
-| C4 `nl_f7` − `nl_f6` | −16.03 (1.23) [−17.70, −14.33] | −7.87 (1.02) [−9.33, −6.40] |
+| C4 `nl_f7` − `nl_f6` | −16.03 (1.23) [−17.70, −14.33] **[warm-up: −7.50]** | −7.87 (1.02) [−9.33, −6.40] **[warm-up: −5.27]** |
 
 Every interval excludes 0 and the −0.20 margin by a wide margin. The noise
 amendment's "not resolved at n=4" clause does not apply.
@@ -432,7 +442,8 @@ are what the registered recipe delivers. They mix two things:
 
 Whether a margin warm-up lifts f6 and f7, and so shrinks C2b and C4, is the
 question of `../margin-warmup`. That ablation was pre-registered before
-its own runs, against these numbers.
+its own runs, against these numbers. **[Answered 2026-10-23: yes. Both PASS 4/4,
+V1 holds for both, and C2b and C4 shrink as annotated at the top.]**
 
 **What this changes.**
 

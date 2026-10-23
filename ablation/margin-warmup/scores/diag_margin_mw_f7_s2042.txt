@@ -1,0 +1,8 @@
+# diag_margin.py 2026-10-23 12:43:21, DEV=cuda:0, same 1024 train clips as ../no-logmel's diag;
+# @e60 = end of the m=0 hold, @e100 = mid-ramp (student m 0.267); last row = best-EMA model.pth.
+# All rows measured at the final margin 0.4. Pass (README): final acc(margin) >= 0.5 and cos tgt > 0.
+SCLTFSTgramMFN_mw_f7_s2042@e60:net           acc(no margin) 0.864  acc(margin 0.4) 0.000  cos tgt +0.148 max-other +0.070  emb cos same-ID +0.951 diff-ID +0.878
+SCLTFSTgramMFN_mw_f7_s2042@e60:ema_net       acc(no margin) 0.028  acc(margin 0.4) 0.000  cos tgt -0.023 max-other +0.111  emb cos same-ID +1.000 diff-ID +1.000
+SCLTFSTgramMFN_mw_f7_s2042@e100:net          acc(no margin) 0.942  acc(margin 0.4) 0.068  cos tgt +0.455 max-other +0.187  emb cos same-ID +0.954 diff-ID +0.802
+SCLTFSTgramMFN_mw_f7_s2042@e100:ema_net      acc(no margin) 0.025  acc(margin 0.4) 0.000  cos tgt +0.046 max-other +0.293  emb cos same-ID +0.999 diff-ID +0.997
+SCLTFSTgramMFN_mw_f7_s2042                   acc(no margin) 0.990  acc(margin 0.4) 0.979  cos tgt +0.993 max-other +0.777  emb cos same-ID +0.992 diff-ID +0.767

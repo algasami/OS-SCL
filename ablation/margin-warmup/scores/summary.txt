@@ -5,22 +5,31 @@ wrote fig4_auc.png
 
 == dev / eval AUC (eval.py R0), mean over seeds present
 arm                      ds         registered          warm-up   delta
-TF only                  dev       85.77 (n=4)      88.13 (n=1)   +2.37
-TF only                  eval      82.66 (n=4)      85.76 (n=1)   +3.10
-T only                   dev       69.73 (n=4)      78.51 (n=1)   +8.78
-T only                   eval      74.79 (n=4)      80.78 (n=1)   +6.00
-Log-Mel only (control)   dev       94.13 (n=4)      93.98 (n=1)   -0.15
-Log-Mel only (control)   eval      95.47 (n=4)      95.59 (n=1)   +0.12
+TF only                  dev       85.77 (n=4)      87.25 (n=4)   +1.48
+TF only                  eval      82.66 (n=4)      86.68 (n=4)   +4.02
+T only                   dev       69.73 (n=4)      79.75 (n=4)  +10.02
+T only                   eval      74.79 (n=4)      81.41 (n=4)   +6.62
+Log-Mel only (control)   dev       94.13 (n=4)      94.02 (n=4)   -0.11
+Log-Mel only (control)   eval      95.47 (n=4)      95.76 (n=4)   +0.29
 T+TF                     dev       89.99 (n=4)        nan (n=0)    +nan
 T+TF                     eval      91.94 (n=4)        nan (n=0)    +nan
-W(f6) - W(f2) dev: +2.52  (decision: >= +1.0 dev, > 0 eval)
-W(f6) - W(f2) eval: +2.98  (decision: >= +1.0 dev, > 0 eval)
-W(f7) - W(f2) dev: +8.93  (decision: >= +1.0 dev, > 0 eval)
-W(f7) - W(f2) eval: +5.87  (decision: >= +1.0 dev, > 0 eval)
+W(f6) - W(f2) dev: +1.59  (decision: >= +1.0 dev, > 0 eval)
+W(f6) - W(f2) eval: +3.73  (decision: >= +1.0 dev, > 0 eval)
+W(f7) - W(f2) dev: +10.13  (decision: >= +1.0 dev, > 0 eval)
+W(f7) - W(f2) eval: +6.34  (decision: >= +1.0 dev, > 0 eval)
 W(f5) - W(f2) dev: +nan  (decision: >= +1.0 dev, > 0 eval)
 W(f5) - W(f2) eval: +nan  (decision: >= +1.0 dev, > 0 eval)
 
 == mechanism (final best-EMA; pass = acc(margin 0.4) >= 0.5 and cos tgt > 0)
 SCLTFSTgramMFN_mw_f2_s2040         acc 0.999 acc@0.4 0.999 cos tgt +0.995 -> PASS
+SCLTFSTgramMFN_mw_f2_s2041         acc 1.000 acc@0.4 1.000 cos tgt +0.994 -> PASS
+SCLTFSTgramMFN_mw_f2_s2042         acc 1.000 acc@0.4 0.998 cos tgt +0.994 -> PASS
+SCLTFSTgramMFN_mw_f2_s2043         acc 1.000 acc@0.4 0.998 cos tgt +0.994 -> PASS
 SCLTFSTgramMFN_mw_f6_s2040         acc 0.999 acc@0.4 0.991 cos tgt +0.995 -> PASS
+SCLTFSTgramMFN_mw_f6_s2041         acc 1.000 acc@0.4 0.990 cos tgt +0.995 -> PASS
+SCLTFSTgramMFN_mw_f6_s2042         acc 0.999 acc@0.4 0.990 cos tgt +0.995 -> PASS
+SCLTFSTgramMFN_mw_f6_s2043         acc 0.999 acc@0.4 0.983 cos tgt +0.995 -> PASS
 SCLTFSTgramMFN_mw_f7_s2040         acc 0.990 acc@0.4 0.975 cos tgt +0.993 -> PASS
+SCLTFSTgramMFN_mw_f7_s2041         acc 0.991 acc@0.4 0.976 cos tgt +0.993 -> PASS
+SCLTFSTgramMFN_mw_f7_s2042         acc 0.990 acc@0.4 0.979 cos tgt +0.993 -> PASS
+SCLTFSTgramMFN_mw_f7_s2043         acc 0.996 acc@0.4 0.979 cos tgt +0.994 -> PASS

@@ -1,9 +1,17 @@
 # Margin warm-up: are the single-branch mel-free runs an optimisation failure?
 
-> **Status: stage 1 (pilot, n=1) done 2026-10-22: all three arms PASS the mechanism
-> criterion, so D-pilot says launch stage 2.** Stage 2 awaits the user's go-ahead.
-> Pilot AUC is n=1 and is not a verdict; see [Results](#results).
-> Pre-registered 2026-10-20, before any run.
+> **Status: done 2026-10-23 (n=4).** All 12 warm-up runs PASS the mechanism
+> criterion, so the warm-up removes the trap every time.
+>
+> **V1 (optimisation failure) holds for both trapped arms:**
+> - **f6 (TF only):** W6 − W2 = **+1.59 dev** / +3.73 eval.
+> - **f7 (T only):** W7 − W2 = **+10.13 dev** / +6.34 eval.
+>
+> **V4 fails.** Even converged, TFgram alone stays well below Log-Mel alone: R1 =
+> −6.77 dev / −9.08 eval. The control is unchanged (W2 = −0.11 / +0.29). See
+> [Stage 2](#stage-2-n4-2026-10-23).
+>
+> Pre-registered 2026-10-20, before any run; stage 2 user-approved 2026-10-22.
 > Branch `ablation/margin-warmup`, from `ablation/no-logmel` at `10e07e7`.
 
 ## Question
@@ -377,6 +385,129 @@ registered**: `run.sh stage2`, `mw_{f6,f7,f2}` × seeds 2041–2043.
 - Measured wall time is 22.2 GPU-h per seed, so about 67 GPU-h in total, or
   ~23 h on three cards.
 - Stage 2b (`mw_f5` × 4, ~44 GPU-h) stays optional.
+
+### Stage 2 (n=4), 2026-10-23
+
+**Run.** Seeds 2041–2043 trained 2026-10-22 10:17 to 2026-10-23 12:30 on GPUs
+0–2 and were then scored, diagnosed and plotted by the detached
+`results/stage2_chain.sh`. The tables pool them with the s2040 pilot.
+
+**Health.** 0 crashes, 0 non-finite steps and 0 RAM-cache recomputes.
+`model.pth` is a late EMA in every run: last saved epoch 294–299, except
+`mw_f7_s2041` at 264. The registered `nl_f7` runs saved at 144–154, and
+`nl_f6` at 234–239.
+
+**Mechanism: 12 of 12 PASS** (`scores/summary.txt`, fig3).
+
+| arm | acc (margin 0.4), seeds 2040–43 | cos to own class | registered |
+|---|---|---|---|
+| f6 | 0.991 0.990 0.990 0.983 | +0.995 (all) | 0.000, −0.74 |
+| f7 | 0.975 0.976 0.979 0.979 | +0.993/+0.994 | 0.000, −0.83 |
+| f2 | 0.999 1.000 0.998 0.998 | +0.994/+0.995 | (never trapped) |
+
+**AUC per seed** (eval.py R0, seeds 2040, 2041, 2042, 2043).
+
+| arm | ds | registered `nl_*` | warm-up `mw_*` | paired Δ | mean reg. → warm-up |
+|---|---|---|---|---|---|
+| f6 TF only | dev | 86.24 85.76 85.52 85.54 | 88.13 87.08 86.54 87.25 | +1.89 +1.31 +1.02 +1.71 | 85.77 → **87.25** |
+| f6 TF only | eval | 81.98 82.53 83.49 82.63 | 85.76 86.07 86.74 88.14 | +3.78 +3.54 +3.25 +5.51 | 82.66 → **86.68** |
+| f7 T only | dev | 69.92 72.85 66.91 69.26 | 78.51 79.89 81.37 79.22 | +8.60 +7.04 +14.47 +9.96 | 69.73 → **79.75** |
+| f7 T only | eval | 74.58 77.20 72.48 74.88 | 80.78 82.43 80.70 81.73 | +6.20 +5.23 +8.21 +6.86 | 74.79 → **81.41** |
+| f2 LM (control) | dev | 93.98 94.18 94.06 94.32 | 93.98 94.16 94.04 93.91 | +0.01 −0.03 −0.02 −0.40 | 94.13 → 94.02 |
+| f2 LM (control) | eval | 95.64 95.71 95.38 95.14 | 95.59 95.86 95.89 95.68 | −0.05 +0.15 +0.51 +0.53 | 95.47 → 95.76 |
+
+Every paired Δ for f6 and f7 is positive, on both sets. The warm-up also
+narrows the seed spread of f7: dev sd 1.22, against 2.45 registered.
+
+**Contrasts**: means of 4 vs 4, Welch se, bootstrap 95% (20k resamples).
+
+| contrast | dev | eval |
+|---|---|---|
+| W6 − W2 | **+1.59** (se 0.38) [+0.98, +2.25] | **+3.73** (se 0.63) [+2.70, +4.83] |
+| W7 − W2 | **+10.13** (se 1.37) [+7.78, +12.38] | **+6.34** (se 1.06) [+4.55, +8.11] |
+| W2 (control) | −0.11 (se 0.09) | +0.29 (se 0.15) |
+| R1 = `mw_f6` − `mw_f2` | **−6.77** (se 0.33) [−7.30, −6.15] | **−9.08** (se 0.53) [−9.87, −8.11] |
+| R2 = `mw_f7` − `mw_f6` | −7.50 (se 0.69) [−8.61, −6.29] | −5.27 (se 0.67) [−6.44, −4.19] |
+
+**Verdicts.**
+
+| | rule | result | |
+|---|---|---|---|
+| **V1, f6** | PASS ≥ 3/4, W6 − W2 ≥ +1.0 dev and > 0 eval | 4/4; +1.59 dev, +3.73 eval | **holds**, with a thin dev margin: 1.5 se above the bar, and the bootstrap lower bound is +0.98 |
+| **V1, f7** | same | 4/4; +10.13 dev, +6.34 eval | **holds**, decisively |
+| V2 / V3 | | | not reached |
+| **V4** | R1 ≥ −0.20 dev and eval | −6.77 / −9.08 | **fails**: TFgram alone does not replace Log-Mel, even converged |
+| Control flag | \|W2\| ≥ 0.5 on dev and eval | −0.11 / +0.29 | neither: warm-up neither helps nor hurts a healthy net |
+
+**Predictions.**
+
+| | predicted | result | |
+|---|---|---|---|
+| P0 | f6 and f7 PASS | 8/8 PASS | ✓ |
+| P1 | W6 = +3.5 [+1.5, +7] (dev) | W6 = +1.48 (n=4) | ✗ just below the range; the pilot seed (+1.89) was the best of four |
+| P2 | W7 = +4 [+1, +9], near 81 | W7 = +10.02, mean 79.75 | ✗ above the range. The gain was under-predicted because checkpoint selection was not foreseen (below). The level, 79.8 against 81, is close |
+| P3 | W2 = 0.0 [−0.6, +0.4] (dev) | −0.11 | ✓ |
+| P4 | W6 − W2 ≥ +1.0 and W7 − W2 ≥ +1.0 (dev) | +1.59, +10.13 | ✓ |
+| P5 | R1 ≤ −2 (central −5); R2 < 0 (central −8) | −6.77; −7.50 | ✓ ✓ |
+
+**Two different gains.** Where does each gain come from: the final net, or
+which epoch gets saved? fig1 shows each arm's final-epoch probe, which is
+dev, at m = 0.4, on the EMA net.
+
+| arm | final probe: reg. → warm-up | `model.pth` dev: reg. → warm-up | share from checkpoint selection |
+|---|---|---|---|
+| f6 | 85.50 → 87.25 (+1.75) | 85.77 → 87.25 (+1.48) | none: the registered `model.pth` already sat at its end state |
+| f7 | 77.83 → 79.82 (+1.99) | 69.73 → 79.75 (+10.02) | **~8 of the 10 points** |
+
+- **f7: the trap mostly cost checkpoint selection, not capacity.**
+  - The registered runs' validation loss bottomed out at epoch 144–154. The
+    trap kept the margin logit pinned while the net kept improving, so
+    `model.pth` froze about 150 epochs early, at 69.7, even though the nets
+    reached ~77.8 by the end.
+  - Out of the trap, validation loss tracks the net to the end. The end state
+    itself is also +2.0 better.
+- **f6: the gain is in the end state.**
+  - The registered f6 un-collapsed inside the trap (`../no-logmel`, interim
+    2026-10-20), so its `model.pth` was already late. Escaping the trap adds
+    +1.5 to +1.75 to where the net ends up.
+  - **Per machine** (Δ at n=4, dev):
+    - up: slider +5.9, valve +4.9, pump +4.0, ToyCar +0.4
+    - down: fan −3.1, ToyConveyor −3.2
+
+    On eval, valve gains +19.3 and slider +10.4, while ToyCar loses −2.6 and
+    ToyConveyor −3.5.
+  - The gain is in the stationary machines (valve, slider, pump). ToyConveyor
+    moves by less than its >4-point seed noise. The fan loss on dev is not
+    resolvable per machine at n=4, and on eval it is −0.3.
+
+**EMA lag** (not pre-registered).
+- The e100 EMA net is collapsed in all 12 warm-up runs: embedding cos ≥ 0.990
+  even between different IDs (`diag_margin_*.txt`), while the student is already healthy.
+- The probe takes off 20–50 epochs after the student (fig1).
+- This explains why the f6 probe sits at chance until about epoch 150. It
+  does not change any verdict.
+
+**What this changes for `../no-logmel`.**
+- **Its headline stands.**
+  - Its C1 (paper − T+TF) and C2a contrasts rest on f5, which was never
+    trapped. D1 and D2 still fail.
+  - LM-only is still the cheapest cell within 0.2 of the paper model. TF-only
+    is still 6.8 / 9.1 points below LM-only (R1 here), the same verdict as
+    its C2b (−8.37 / −12.81).
+- **Its single-branch deficits were inflated by the trap:**
+  - C2b (TF − LM): from −8.37 dev / −12.81 eval to **−6.77 / −9.08**.
+  - C4 (T − TF): from −16.03 / −7.87 to **−7.50 / −5.27**.
+
+  The no-logmel README carries an annotation pointing here.
+- **For anyone training a single-branch or weak-input ArcFace net on this
+  recipe:**
+  - Use `--m_warmup 60,120`.
+  - Better, check that `model.pth`'s epoch is late. A last-saved epoch far
+    before the end, with probe AUC still rising, is the trap's signature.
+
+**Not done.** Stage 2b (`mw_f5` × 4, ~44 GPU-h) would test whether warm-up
+also closes f5's lag. f5 was never trapped, and the control flag is neutral,
+so the expected gain is small. It is left for a separate decision.
 
 ## Figures
 

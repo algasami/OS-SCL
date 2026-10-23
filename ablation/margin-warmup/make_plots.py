@@ -135,10 +135,10 @@ def fig1():
                         ls='-' if fix else (0, (4, 2)), zorder=3 if fix else 2)
                 ends.setdefault((arm, fix), []).append(a[-1])
         ys = {fix: np.mean(ends[(arm, fix)]) for fix in (False, True) if (arm, fix) in ends}
-        if len(ys) == 2 and abs(ys[True] - ys[False]) < 3:     # keep the two end labels apart
+        if len(ys) == 2 and abs(ys[True] - ys[False]) < 5:     # keep the two (2-line) end labels apart
             hi = max(ys, key=ys.get)
-            ys[hi] += 1.5
-            ys[not hi] -= 1.5
+            ys[hi] += 2.5
+            ys[not hi] -= 2.5
         for fix, y in ys.items():
             v = ends[(arm, fix)]
             end_label(ax, 300, y, f'{"warm-up" if fix else "reg."} {np.mean(v):.1f}'
@@ -165,6 +165,18 @@ def fig1():
 
 
 # ---------------------------------------------------------------- fig2: train accuracy at m = 0.4
+def gap_break(e, a, gap=10):
+    """NaN between EPOCH lines more than `gap` epochs apart: no line drawn where nothing was logged."""
+    E, A = [], []
+    for i, (x, y) in enumerate(zip(e, a)):
+        if i and x - e[i - 1] > gap:
+            E.append(np.nan)
+            A.append(np.nan)
+        E.append(x)
+        A.append(y)
+    return E, A
+
+
 def fig2():
     arms = [a for a in ARMS if any(table(True, a[0], s, 'curve_mw.csv') for s in SEEDS)]
     if not arms:
@@ -177,13 +189,13 @@ def fig2():
         for s in SEEDS:
             r = table(False, arm, s, 'curve.csv')       # registered: Train_accuracy is already at m = 0.4
             if r:
-                ax.plot([int(x['epoch']) for x in r], [float(x['train_acc']) for x in r], color=col,
+                ax.plot(*gap_break([int(x['epoch']) for x in r], [float(x['train_acc']) for x in r]), color=col,
                         lw=1.2, alpha=0.75, ls=(0, (3, 1.5)))
             r = table(True, arm, s, 'curve_mw.csv')
             if r:
                 e = [int(x['epoch']) for x in r]
                 a = [float(x['train_acc_mfinal']) for x in r]
-                ax.plot(e, a, color=col, lw=1.5, marker='.', ms=2.5, zorder=3)
+                ax.plot(*gap_break(e, a), color=col, lw=1.5, marker='.', ms=2.5, zorder=3)
                 late = [v for ep, v in zip(e, a) if ep >= RAMP_END]
                 if late and max(late) == 0:
                     trapped.append(label)
@@ -200,7 +212,7 @@ def fig2():
         'Train accuracy measured at the final margin: registered runs hit 0 at ~epoch 55'
     fig.suptitle(t, x=0.01, ha='left', fontsize=11, y=1.03)
     fig.text(0.01, -0.07, 'Solid: warm-up run, its logged Train_acc_mfinal. Dashed: registered run\'s Train_accuracy '
-             '(margin 0.4). Both count cos(θ_y + 0.4) > every other cos. The ~0.4 ceiling is mixup.',
+             '(margin 0.4). Both count cos(θ_y + 0.4) > every other cos. The ~0.4 ceiling is mixup. Gaps: no line logged for > 10 epochs.',
              fontsize=7.5, color=INK_2)
     save(fig, 'fig2_train_margin_acc.png')
 
@@ -234,6 +246,7 @@ def fig3():
     ax.axvspan(0, 1.05, ymin=0.5 / 1.1 + 0.05 / 1.1, color=BAND, lw=0, zorder=0)
     ax.text(0.03, 0.52, 'pass region', ha='left', va='bottom', fontsize=7.5, color=INK_2)
     colour = {a: c for a, _, c in ARMS}
+    labelled = set()
     for (run, ep, who), (acc, marg, cos) in sorted(d.items()):
         arm = re.search(r'_(f\d)_', run).group(1)
         col = colour.get(arm, MUTED)
@@ -246,13 +259,17 @@ def fig3():
         # Label only the points that stand apart; the e60 / EMA points pile up near the
         # origin and the footnote explains their markers.
         lab_col = col if col != GREEN else INK_2
+        key = (arm, ep, who, fix)
+        if key in labelled:
+            continue
+        labelled.add(key)
         if fix and ep == 'final':
             dy = {'f2': 6, 'f6': -2, 'f7': -10}.get(arm, 0)
             ax.annotate(f'{arm} final', (cos, marg), xytext=(-8, dy), ha='right',
                         textcoords='offset points', fontsize=6.5, color=lab_col)
         elif fix and ep == 'e100' and who != 'ema_net':
-            dy = {'f2': 4, 'f6': -10, 'f7': 5}.get(arm, 0)
-            ax.annotate(f'{arm} e100 student', (cos, marg), xytext=(6, dy),
+            dx, dy, ha = {'f2': (6, 4, 'left'), 'f6': (6, -10, 'left'), 'f7': (-6, 8, 'right')}.get(arm, (6, 0, 'left'))
+            ax.annotate(f'{arm} e100 student', (cos, marg), xytext=(dx, dy), ha=ha,
                         textcoords='offset points', fontsize=6.5, color=lab_col)
         elif not fix:
             dy = {'f6': 6, 'f7': -12}.get(arm, 0)
