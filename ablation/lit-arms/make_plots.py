@@ -267,7 +267,7 @@ def fig4_probe():
         for p in have[arm]:
             ax.plot([int(x['epoch']) + 1 for x in p], [100 * float(x['AUC']) for x in p], color=col, lw=1.4,
                     zorder=3)
-        ax.set_ylim(90, 96.2)
+        ax.set_ylim(90, 96.6)
         ax.set_xlim(100, 305)
         ax.set_xlabel('epoch')
         ax.grid(axis='y')

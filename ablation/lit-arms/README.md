@@ -1,9 +1,12 @@
 # Literature arms: three published add-ons, each at n=4 on the fast recipe
 
-> **Status: training since 2026-10-23, base `fussion 1`.** Pre-registered
-> 2026-10-17. A pre-launch addendum (2026-10-23, below Decision rules) fixes
-> the base and records the measured noise. The predictions and rules are
-> unchanged.
+> **Status: stage 1 done (2026-10-26); D2 replication of `aug` next.**
+> `aug` (waveform augmentation) passes D1: +0.84 dev AUC [+0.45, +1.25],
+> 4/4 seeds, but only +0.20 eval [−0.20, +0.59]. `gate` and `eca` fail on dev
+> (−0.02, −0.04). Under S1′, `aug` beats all four paper numbers on 4/4
+> seeds; that is not a claim until the fresh-seed replication. Pre-registered 2026-10-17. A pre-launch addendum
+> (2026-10-23, below Decision rules) fixes the base and records the measured
+> noise. The predictions and rules are unchanged.
 
 ## Why this exists
 
@@ -152,10 +155,151 @@ left open. It changes no prediction and no decision rule.
 - **Figures.** `make_plots.py` is written during training, before any score
   exists, and reads `scores/` only.
 
-## Results
+## Results (2026-10-26)
 
-*(empty until the runs finish)*
+All 12 runs finished 300 epochs with 0 skipped steps. One crashed:
+`la_eca_s2041` segfaulted (rc 139) at about epoch 270 and resumed from its
+epoch-270 snapshot through `../train_one.sh`; see its `crashes.csv`. Scores
+are eval.py's R0 from `scores/<run>/eval_{dev,eval}.csv`. The contrasts come
+from `make_plots.py`, which writes `scores/summary.txt`.
+
+### D1: `aug` passes; `gate` and `eca` fail
+
+Δ = arm − `fr_f1`, R0 overall AUC, 4-seed means, in points. Se is Welch's;
+the brackets are a bootstrap 95% interval over seeds. Paired Δs are by seed
+label (2040, 2041, 2042, 2043).
+
+| arm | dev AUC | dev Δ (se) [95%] | paired dev Δ | eval AUC | eval Δ (se) [95%] | paired eval Δ | D1 |
+|---|---|---|---|---|---|---|---|
+| `fr_f1` (base) | 94.90 | — | — | 95.25 | — | — | — |
+| `aug` | **95.73** | **+0.84** (0.24) [+0.45, +1.25] | +1.02 +0.94 +0.78 +0.61 | 95.45 | +0.20 (0.23) [−0.20, +0.59] | −0.03 +0.33 −0.05 +0.55 | **PASS** |
+| `gate` | 94.88 | −0.02 (0.20) [−0.35, +0.30] | +0.41 −0.34 −0.09 −0.06 | 95.65 | +0.41 (0.23) [+0.02, +0.79] | +0.98 −0.28 +0.60 +0.32 | fail |
+| `eca` | 94.85 | −0.04 (0.18) [−0.35, +0.26] | +0.23 −0.27 +0.20 −0.34 | 95.77 | +0.52 (0.20) [+0.20, +0.85] | +0.63 +0.13 +0.17 +1.16 | fail |
+
+- **`aug` is a full pass, not a weak one.** Its dev interval excludes 0, all
+  four seeds gain (+0.61 to +1.02), and pAUC gains on both sets: dev
+  +1.27 [+0.72, +1.86], eval +0.95 [+0.34, +1.63]. The gain shows on the
+  whole probe curve from about epoch 150, not only at the end (fig4).
+- **But `aug`'s eval AUC gain is small and uncertain.** +0.20, with an
+  interval that includes 0. Two of four seeds sit at −0.03 and −0.05. Eval
+  ToyCar falls 2.34 points while dev ToyCar rises 1.89. D1 needs eval Δ ≥ 0,
+  and +0.20 clears it, but by less than one se.
+- **`gate` and `eca` do nothing on dev and gain on eval.** This was not
+  predicted and D1 does not act on it: D1 is led by dev. `eca`'s eval gain is
+  +0.52 [+0.20, +0.85] with all four seeds positive. Most of it is
+  ToyConveyor (+1.69 eca, +2.93 gate), whose seed noise is above 4 points
+  (CLAUDE.md). Left as an observation.
+- **Cost.** All three add-ons cost little or no training time. On GPU 0,
+  `fr_f1` took 39.9k s per run; `aug` took 41.3k s (+3.5%), `gate` 40.4k s and
+  `eca` 42.3k s (with its crash and resume). Every difference is within the
+  spread between GPUs.
+
+### Per machine (mean Δ AUC vs `fr_f1`, points)
+
+| arm | set | fan | pump | slider | ToyCar | ToyConveyor | valve | overall mAUC |
+|---|---|---|---|---|---|---|---|---|
+| `aug` | dev | +0.40 | **+1.13** | +0.00 | **+1.89** | **+1.96** | −0.35 | +2.32 |
+| `aug` | eval | +0.50 | −0.07 | +0.59 | **−2.34** | +2.57 | −0.06 | −0.20 |
+| `gate` | dev | −0.65 | +0.01 | −0.01 | −0.08 | +0.54 | +0.07 | +0.01 |
+| `gate` | eval | +0.07 | +0.11 | +0.14 | −0.32 | +2.93 | −0.49 | +0.63 |
+| `eca` | dev | +0.21 | −0.06 | −0.03 | +0.48 | −1.06 | +0.21 | −0.14 |
+| `eca` | eval | +0.09 | +0.11 | +0.10 | +0.27 | +1.69 | +0.86 | +0.68 |
+
+mAUC is a minimum per machine; deltas under ~2 points are not resolvable
+(CLAUDE.md).
+
+### Predictions, checked as written
+
+| | prediction | observed | verdict |
+|---|---|---|---|
+| P1 | `aug` dev Δ in [−0.1, +0.6] | +0.84 | **fails, too high** |
+| | ToyCar and ToyConveyor gain the most | +1.89 / +1.96, the top two | holds |
+| | dev pump pAUC falls on ≥ 3/4 seeds | rises on 4/4 (+0.49 to +2.90) | **fails** |
+| P2 | `gate` dev Δ in [−0.2, +0.5] | −0.02 | holds |
+| | ToyCar + ToyConveyor carry ≥ 60% of the gain | no gain to share | not testable |
+| P3 | `eca` dev Δ in [−0.2, +0.4] | −0.04 | holds |
+| P4 | at most one arm passes D1 | exactly one | holds |
+| P5 | no arm moves dev pump AUC by more than ±0.5 | `aug` +1.13 | **fails** |
+
+The failures are all `aug`, and all in the same direction: it helped more,
+and in more places, than the survey's numbers suggested. The worry behind
+P1's pump clause, that 7 dB noise would hurt the quiet MIMII machines, was
+wrong on dev. Pump gained the most pAUC of any machine after the toys.
+
+### Against the paper
+
+The paper's numbers (`../confirm-seeds`): 95.71 dev AUC, 90.23 dev pAUC,
+91.23 dev mAUC, 93.22 eval mean(AUC, pAUC).
+
+- Under R0, `aug`'s 4-seed dev mean is **95.73**, level with the paper's
+  95.71. Only one seed clears it (96.20; the others 95.70, 95.54, 95.48).
+  `fr_f1` is 0.81 below.
+- `aug`'s eval mean(AUC, pAUC) is 93.33, above the paper's 93.22. `fr_f1`'s
+  is 92.75.
+
+**Under S1′, as registered.** S1′ is `../confirm-seeds`' adopted
+single-model rule: R0 plus a kNN distance, both z-scored with training-part
+statistics. `score_s1p.py` computes it from `../ensemble-backend/extract.py`
+dumps, using that ablation's rule code unchanged, and writes `scores/s1p.csv`.
+`fr_f1` was scored too, as the paired base.
+
+Two checks pass (`scores/s1p_check.json`):
+
+- S0 recomputed from the dumps matches eval.py's committed per-ID AUCs to
+  within 2.8e-4.
+- The replayed 5% split gives each run's best validation loss to within 7.9e-6.
+
+```
+S1′, 4-seed means     dev AUC   dev pAUC   dev mAUC   eval AUC   eval mean(AUC,pAUC)
+fr_f1                  95.27     90.01      90.27      95.92      93.41
+aug                    96.26     91.31      92.70      96.21      93.96
+  Δ vs fr_f1           +0.99     +1.30      +2.42      +0.28      +0.55
+gate                   95.30     89.99      90.48      96.20      93.77
+eca                    95.26     90.14      90.27      96.29      94.06
+paper (one model)      95.71     90.23      91.23        —        93.22
+```
+
+- **S1′ keeps D1's verdict.** The dev Δs are `aug` +0.99 (per seed +1.27
+  +1.03 +0.87 +0.80), `gate` +0.03 and `eca` −0.01.
+- **`aug` with S1′ beats all four of the paper's numbers, on every seed.**
+  - dev AUC: 96.07 to 96.52
+  - dev pAUC: 90.80 to 91.87
+  - dev mAUC: 92.13 to 93.62
+  - eval mean(AUC, pAUC): 93.35 to 94.76
+
+  `../confirm-seeds`' single model under S1′ beat only the eval number. Here
+  `fr_f1` under S1′ still falls short on all three dev numbers.
+- **Not yet a claim.** `aug` was picked as the best of three arms on these same
+  dev scores. The replication on fresh seeds (D2, below) decides whether this
+  holds.
+
+### Decision
+
+**D2 applies, as the replication branch:** exactly one arm passes, so
+`la_combo` is `aug` alone on 4 fresh seeds, 2044–2047, run with
+`LA_FUSSION=1 LA_ARMS=aug LA_SEEDS="2044 2045 2046 2047" run.sh train`. D3
+(drop all three, go to trunk-soup on the bare base) is not triggered.
+
+Predictions for the replication, written before it trains:
+
+- **R1.** The fresh-seed `aug` dev mean beats `fr_f1`'s (94.90) by ≥ +0.20.
+  Central +0.5: `aug` was picked as the best of three, so its +0.84 should
+  shrink toward the mean.
+- **R2.** Its eval Δ is ≥ 0. Likelier to fail than R1: stage 1's eval gain was
+  +0.20 with 2/4 seeds below 0.
+- **R3.** Pooled over all 8 `aug` seeds, the dev Δ against `fr_f1`'s 4 has a
+  bootstrap 95% interval that excludes 0.
+
+`aug` is adopted into the recipe if R1 and R2 both hold. The baseline stays
+`fr_f1_s2040–2043`: this host is not bit-reproducible, so pairing by seed
+label carried no information, and training fresh baseline seeds would double
+the cost. The comparison is unpaired, 4 against 4.
 
 ## Figures
 
-*(empty until the runs finish)*
+| figure | what it shows |
+|---|---|
+| `plots/fig1_auc.png` | dev and eval AUC per seed for the base and each arm; bar = mean. `aug` separates on dev, not on eval |
+| `plots/fig2_contrasts.png` | each arm's Δ against `fr_f1`: mean, ±1 se, bootstrap 95%, paired Δs, and the D1 bars |
+| `plots/fig3_machines.png` | Δ per machine type. `aug`'s dev gain is ToyCar, ToyConveyor and pump; eval ToyCar goes the other way |
+| `plots/fig4_probe.png` | dev AUC probe every 5 epochs, arm vs base. Diagnostic only; never used to pick a checkpoint |

@@ -1,0 +1,23 @@
+wrote plots/fig1_auc.png
+wrote plots/fig2_contrasts.png
+wrote plots/fig3_machines.png
+wrote plots/fig4_probe.png
+
+== R0 overall, arm − fr_f1 (mean diff, Welch se, bootstrap 95%, paired by seed)
+AUC  aug (wave augmentation)      dev  95.73 vs 94.90  +0.84 (se 0.24) [+0.45, +1.25]  paired +1.02 +0.94 +0.78 +0.61  n=4
+AUC  aug (wave augmentation)      eval 95.45 vs 95.25  +0.20 (se 0.23) [-0.20, +0.59]  paired -0.03 +0.33 -0.05 +0.55  n=4
+AUC  gate (TriStat)               dev  94.88 vs 94.90  -0.02 (se 0.20) [-0.35, +0.30]  paired +0.41 -0.34 -0.09 -0.06  n=4
+AUC  gate (TriStat)               eval 95.65 vs 95.25  +0.41 (se 0.23) [+0.02, +0.79]  paired +0.98 -0.28 +0.60 +0.32  n=4
+AUC  eca (channel attention)      dev  94.85 vs 94.90  -0.04 (se 0.18) [-0.35, +0.26]  paired +0.23 -0.27 +0.20 -0.34  n=4
+AUC  eca (channel attention)      eval 95.77 vs 95.25  +0.52 (se 0.20) [+0.20, +0.85]  paired +0.63 +0.13 +0.17 +1.16  n=4
+pAUC aug (wave augmentation)      dev  90.85 vs 89.58  +1.27 (se 0.34) [+0.72, +1.86]  paired +1.32 +1.63 +0.88 +1.24  n=4
+pAUC aug (wave augmentation)      eval 91.20 vs 90.24  +0.95 (se 0.38) [+0.34, +1.63]  paired +0.47 +1.44 +0.50 +1.40  n=4
+pAUC gate (TriStat)               dev  89.54 vs 89.58  -0.04 (se 0.22) [-0.34, +0.38]  paired +0.66 -0.36 -0.27 -0.19  n=4
+pAUC gate (TriStat)               eval 90.67 vs 90.24  +0.43 (se 0.36) [-0.15, +1.06]  paired +0.44 -0.70 +1.27 +0.70  n=4
+pAUC eca (channel attention)      dev  89.59 vs 89.58  +0.01 (se 0.24) [-0.35, +0.44]  paired +0.39 -0.36 +0.23 -0.24  n=4
+pAUC eca (channel attention)      eval 91.30 vs 90.24  +1.06 (se 0.31) [+0.53, +1.56]  paired +0.56 +0.72 +0.98 +1.97  n=4
+
+== D1 (dev ≥ +0.20 and eval ≥ 0, AUC, 4-seed means)
+aug (wave augmentation)      PASS
+gate (TriStat)               fail
+eca (channel attention)      fail
