@@ -95,6 +95,10 @@ class Trainer:
             w2m.mel_transform.to(self.device)
             w2m.amplitude_to_db.to(self.device)
             self.gpu_mel = w2m
+        # --wave_aug_ops (ablation/aug-ops): which of the three ops run; default all
+        ops = cfg.get('wave_aug_ops') or 'noise,shift,gain'
+        self.wave_ops = set(ops.split(','))
+        assert self.wave_ops and self.wave_ops <= {'noise', 'shift', 'gain'}, f'bad --wave_aug_ops {ops}'
 
     def train(self, train_loader, valid_loader, start_epoch=0):
         num_steps = len(train_loader)
@@ -245,6 +249,9 @@ class Trainer:
         b, dev = wavs.shape[0], wavs.device
         u = lambda lo, hi: lo + (hi - lo) * torch.rand(b, 1, 1, device=dev)   # noqa: E731
         noise, shift, gain = (torch.rand(b, device=dev) < p for _ in range(3))
+        # a disabled op still draws its mask, so the other ops' draws keep their place in the stream
+        ops = getattr(self, 'wave_ops', {'noise', 'shift', 'gain'})
+        noise, shift, gain = (m & (o in ops) for m, o in ((noise, 'noise'), (shift, 'shift'), (gain, 'gain')))
         wavs = wavs.clone()
         if noise.any():
             wavs[noise] += (torch.randn_like(wavs) * u(0.001, 0.005))[noise]
