@@ -30,6 +30,7 @@ _spec.loader.exec_module(eb)
 SEEDS = (2040, 2041, 2042, 2043)
 GROUPS = {'fr_f1': 'fr_f1', 'aug': 'la_aug', 'gate': 'la_gate', 'eca': 'la_eca'}
 RUNS = {g: [f'SCLTFSTgramMFN_{p}_s{s}' for s in SEEDS] for g, p in GROUPS.items()}
+RUNS['aug_rep'] = [f'SCLTFSTgramMFN_la_aug_s{s}' for s in (2044, 2045, 2046, 2047)]   # D2 replication
 KEYS = ('AUC', 'pAUC', 'mAUC', 'mean_AUC_pAUC')
 
 
@@ -81,12 +82,12 @@ def main():
             cells = [('dev', 'AUC'), ('dev', 'pAUC'), ('dev', 'mAUC'), ('eval', 'AUC'), ('eval', 'mean_AUC_pAUC')]
             s = '  '.join(f'{ds[:3]} {k[:4]} {m[(ds, k)]:6.2f}' + (f' ({m[(ds, k)] - b[(ds, k)]:+.2f})' if g != 'fr_f1' else '')
                           for ds, k in cells)
-            print(f'{g:6s} {s}')
+            print(f'{g:7s} {s}')
         print(f"paper  dev AUC {eb.PAPER['dev']['AUC']}  pAUC {eb.PAPER['dev']['pAUC']}  "
               f"mAUC {eb.PAPER['dev']['mAUC']}  eval mean {eb.PAPER['eval_mean']}")
         if rule == 'S1p':
             for g in ('aug', 'gate', 'eca'):
-                print(f'{g:6s} per seed dev AUC Δ',
+                print(f'{g:7s} per seed dev AUC Δ',
                       ' '.join(f"{val[(a, rule, 'dev')]['AUC'] - val[(b, rule, 'dev')]['AUC']:+.2f}"
                                for a, b in zip(RUNS[g], RUNS['fr_f1'])))
 

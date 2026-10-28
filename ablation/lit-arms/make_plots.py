@@ -298,9 +298,101 @@ def summary():
         print(f'{label:28s} {verdict(contrast(arm, "dev"), contrast(arm, "eval"))}')
 
 
+# ---------------------------------------------------------------- D2: aug on fresh seeds
+REP_SEEDS = (2044, 2045, 2046, 2047)
+R1_DEV, R2_EVAL = 0.20, 0.0
+
+
+def seeds_of(arm, seeds, ds, key='AUC'):
+    return [v for v in (overall(arm, s, ds, key) for s in seeds) if v is not None]
+
+
+def boot_ci(a, b, n=20000):
+    a, b = np.array(a), np.array(b)
+    d = [RNG.choice(a, len(a)).mean() - RNG.choice(b, len(b)).mean() for _ in range(n)]
+    return np.percentile(d, [2.5, 97.5])
+
+
+def fig5_replication():
+    base = {ds: seeds_of(BASE[0], SEEDS, ds) for ds in ('dev', 'eval')}
+    st1 = {ds: seeds_of('la_aug', SEEDS, ds) for ds in ('dev', 'eval')}
+    rep = {ds: seeds_of('la_aug', REP_SEEDS, ds) for ds in ('dev', 'eval')}
+    if any(len(v[ds]) < 4 for v in (base, st1, rep) for ds in ('dev', 'eval')):
+        print('skip fig5_replication: D2 scores incomplete')
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+    groups = [('baseline fr_f1\nseeds 2040–43', base, INK_2, True),
+              ('aug, stage 1\nseeds 2040–43', st1, BLUE, False),
+              ('aug, replication\nseeds 2044–47', rep, BLUE, False)]
+    for ax, ds in zip(axes, ('dev', 'eval')):
+        b = np.mean(base[ds])
+        bar, name = (b + R1_DEV, 'R1 bar (base +0.20)') if ds == 'dev' else (b + R2_EVAL, 'R2 bar (base +0.00)')
+        ax.axhline(bar, color=INK, lw=1.0, ls=(0, (4, 3)), zorder=1)
+        ax.annotate(name, (2.55, bar), va='bottom', ha='right', fontsize=7.5, color=INK,
+                    xytext=(0, 2), textcoords='offset points')
+        if ds == 'dev':
+            ax.axhline(95.71, color=MUTED, lw=0.9, ls=(0, (1, 2)), zorder=1)
+            ax.annotate('paper 95.71', (-0.45, 95.71), va='bottom', ha='left', fontsize=7.5, color=INK_2,
+                        xytext=(0, 2), textcoords='offset points')
+        for x, (label, g, col, hollow) in enumerate(groups):
+            v = np.array(g[ds])
+            jit = np.linspace(-0.12, 0.12, len(v))
+            ax.scatter(x + jit, v, s=40, color=SURFACE if hollow else col, edgecolor=col, lw=1.4, zorder=3)
+            m = v.mean()
+            ax.plot([x - 0.25, x + 0.25], [m, m], color=col, lw=2, zorder=2)
+            txt = f'{m:.2f}' if hollow else f'{m:.2f} ({m - b:+.2f})'
+            # the base mean sits on the R2 line (base +0.00): label it just below
+            ax.annotate(txt, (x + 0.3, m), va='top' if hollow else 'center', fontsize=8, color=INK,
+                        xytext=(0, -3 if hollow else 0), textcoords='offset points',
+                        bbox=dict(boxstyle='square,pad=0.1', fc=SURFACE, ec='none'), zorder=4)
+        ax.set_xticks(range(len(groups)))
+        ax.set_xticklabels([g[0] for g in groups])
+        ax.set_xlim(-0.5, 2.6)
+        ax.grid(axis='y')
+        ax.set_title(f'{ds} set', loc='left', fontsize=9.5)
+    axes[0].set_ylabel("overall AUC (%), eval.py's score (R0)")
+    d_dev = np.mean(rep['dev']) - np.mean(base['dev'])
+    d_ev = np.mean(rep['eval']) - np.mean(base['eval'])
+    fig.suptitle(f"Fresh seeds repeat aug's dev gain ({d_dev:+.2f}) but not its eval gain ({d_ev:+.2f})",
+                 x=0.06, ha='left', fontsize=10.5)
+    fig.text(0.06, -0.04, 'Bar = mean of 4 seeds; labels give mean and Δ vs fr_f1. Dashed = the pre-registered '
+             'replication bars (R1 dev Δ ≥ +0.20, R2 eval Δ ≥ 0).', fontsize=7.5, color=INK_2)
+    fig.tight_layout()
+    save(fig, 'fig5_replication.png')
+
+
+def summary_d2():
+    b_dev, b_ev = seeds_of(BASE[0], SEEDS, 'dev'), seeds_of(BASE[0], SEEDS, 'eval')
+    r_dev, r_ev = seeds_of('la_aug', REP_SEEDS, 'dev'), seeds_of('la_aug', REP_SEEDS, 'eval')
+    if min(len(b_dev), len(b_ev), len(r_dev), len(r_ev)) < 4:
+        print('\n== D2: replication incomplete')
+        return
+    print('\n== D2: aug on fresh seeds 2044–2047 vs fr_f1 2040–2043 (R0, unpaired)')
+    for ds in ('dev', 'eval'):
+        for key in ('AUC', 'pAUC'):
+            b = seeds_of(BASE[0], SEEDS, ds, key)
+            r = seeds_of('la_aug', REP_SEEDS, ds, key)
+            p = seeds_of('la_aug', SEEDS, ds, key) + r
+            se = np.sqrt(np.var(r, ddof=1) / len(r) + np.var(b, ddof=1) / len(b))
+            lo, hi = boot_ci(r, b)
+            plo, phi = boot_ci(p, b)
+            print(f'{key:4s} {ds:4s} rep {np.mean(r):.2f} vs {np.mean(b):.2f}  {np.mean(r) - np.mean(b):+.2f} '
+                  f'(se {se:.2f}) [{lo:+.2f}, {hi:+.2f}]  seeds {" ".join(f"{x:.2f}" for x in r)}  |  '
+                  f'pooled n=8 {np.mean(p) - np.mean(b):+.2f} [{plo:+.2f}, {phi:+.2f}]')
+    p_dev = seeds_of('la_aug', SEEDS, 'dev') + r_dev
+    r1 = np.mean(r_dev) - np.mean(b_dev) >= R1_DEV
+    r2 = np.mean(r_ev) - np.mean(b_ev) >= R2_EVAL
+    r3 = boot_ci(p_dev, b_dev)[0] > 0
+    print(f'R1 dev Δ ≥ +0.20: {"holds" if r1 else "fails"}   R2 eval Δ ≥ 0: {"holds" if r2 else "fails"}   '
+          f'R3 pooled dev interval excludes 0: {"holds" if r3 else "fails"}')
+    print(f'adopt aug (R1 and R2): {"YES" if r1 and r2 else "NO"}')
+
+
 if __name__ == '__main__':
     fig1_auc()
     fig2_contrasts()
     fig3_machines()
     fig4_probe()
+    fig5_replication()
     summary()
+    summary_d2()

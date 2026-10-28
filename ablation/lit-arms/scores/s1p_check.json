@@ -94,5 +94,29 @@
     "eval_max_abs_id_auc_diff": 8.69014084508013e-05,
     "valid_loss_replayed": 0.3365480650243918,
     "valid_loss_curve": 0.33655
+  },
+  "SCLTFSTgramMFN_la_aug_s2044": {
+    "dev_max_abs_id_auc_diff": 0.00014482517482516943,
+    "eval_max_abs_id_auc_diff": 8.591549295766665e-05,
+    "valid_loss_replayed": 0.30482690972174803,
+    "valid_loss_curve": 0.30484
+  },
+  "SCLTFSTgramMFN_la_aug_s2045": {
+    "dev_max_abs_id_auc_diff": 7.999999999996898e-05,
+    "eval_max_abs_id_auc_diff": 6.0422535211324124e-05,
+    "valid_loss_replayed": 0.2987406249119686,
+    "valid_loss_curve": 0.29874
+  },
+  "SCLTFSTgramMFN_la_aug_s2046": {
+    "dev_max_abs_id_auc_diff": 7.394366197177593e-05,
+    "eval_max_abs_id_auc_diff": 6.1126760563468e-05,
+    "valid_loss_replayed": 0.31302934187999193,
+    "valid_loss_curve": 0.31303
+  },
+  "SCLTFSTgramMFN_la_aug_s2047": {
+    "dev_max_abs_id_auc_diff": 8.738738738744978e-05,
+    "eval_max_abs_id_auc_diff": 9.336283185845673e-05,
+    "valid_loss_replayed": 0.2954183016998646,
+    "valid_loss_curve": 0.29542
   }
 }
