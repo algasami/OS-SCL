@@ -1,8 +1,9 @@
 # Mixed ensemble — do different kinds of model ensemble better than copies of one?
 
-> **Status: pre-registered 2026-10-28; nothing scored yet.** Stage A (dev)
-> runs next; stage B (eval) only after the eval predictions are committed. CPU
-> only: every member is already trained and dumped.
+> **Status: stage A (dev) done 2026-10-28; eval predictions committed; stage
+> B (eval) next.** The dev pick is `A8`, all 8 `aug` models: 97.05 dev AUC,
+> +0.90 over E2′[relu8]. CPU only: every member is already trained and
+> dumped.
 
 ## Why this exists
 
@@ -160,6 +161,84 @@ The full set comes in the addendum after stage A. These are fixed now:
 - **D3.** Whatever D2 says, every fixed system is reported on eval, and per
   machine for ToyConveyor, pump and ToyCar. These are secondary and carry no
   claims, since picking among them on eval would be test-set selection.
+
+## Stage A results (dev only, 2026-10-28)
+
+`scores/scorecard_dev.txt`, `systems_dev.csv`, `combos_dev.csv` and
+`bootstrap_dev.json`. Eval was not computed.
+
+```
+dev, E2′              n    AUC    pAUC   mAUC   mean  |  pump  ToyCar  ToyConv
+P4 (plain)            4   95.94  90.83  91.35  93.39  |  94.89  96.74   85.77
+A8 (aug)              8   97.05  92.48  94.10  94.77  |  96.00  98.54   89.26
+PA12                 12   96.84  92.12  93.45  94.48  |  95.66  98.16   88.72
+F20                  20   96.64  91.83  92.91  94.24  |  95.52  97.88   88.07
+ALL32                32   96.54  91.67  92.57  94.10  |  95.55  97.61   87.70
+N4 (adopted)          4   96.05  90.94  91.34  93.49  |  95.33  96.74   86.33
+relu8 (bar)           8   96.16  91.12  91.52  93.64  |  95.45  96.83   86.40
+paper, one model          95.71  90.23  91.23         |  96.25  96.55   83.56
+
+family (combo mean)   n    AUC    mean   | pump  ToyCar ToyConv
+hom4_plain            4   95.94  93.39   | 94.89  96.74  85.77
+hom4_aug              4   96.93  94.62   | 95.88  98.48  88.82
+hom4_old              4   96.03  93.50   | 95.36  96.78  85.87
+mix4_PAGE             4   96.28  93.82   | 95.25  97.54  86.74
+mix4_PGE+P            4   95.95  93.42   | 94.99  96.91  85.67
+hom8_aug              8   97.05  94.77   | 96.00  98.54  89.26
+mix8_PAGE             8   96.41  93.96   | 95.33  97.60  87.23
+```
+
+| | prediction | observed | verdict |
+|---|---|---|---|
+| P0 | `N4`, `relu8` reproduce 96.05 / 96.16 | 96.0505 / 96.1581, and pAUC and mAUC to 4 decimals | holds |
+| P1 | `hom4_plain` dev AUC in [95.6, 96.2] | 95.94 | holds |
+| P2 | `hom4_aug` in [96.4, 97.0] | 96.93 | holds |
+| P3 | `mix4_PAGE` below `hom4_aug` by 0.2–0.5 | by 0.65 | **fails**: more dilution than expected |
+| | and above `hom4_plain` by 0.1–0.5 | by 0.34 | holds |
+| P4 | ToyConveyor and pump highest in the `aug`-heavy families | `hom8_aug`: 89.26 and 96.00 | holds |
+| P5 | the dev pick is `A8` or `PA12` | **`A8`** (dev mean 94.77) | holds |
+
+What dev shows:
+
+- **On dev, the ensemble is `aug`, diluted.** Every system's dev score falls
+  roughly in line with its `aug` share: A8 > PA12 > F20 > ALL32, and
+  hom4_aug > mix4 > hom4_plain. Mixing adds little beyond that: `mix4_PAGE`
+  sits +0.09 above the straight line from `hom4_plain` to `hom4_aug` at 1/4
+  `aug`. Without `aug`, mixing gives nothing (`mix4_PGE+P` 95.95 vs
+  `hom4_plain` 95.94).
+- **`A8` is the strongest dev system yet:** 97.05 / 92.48 / 94.10. That is
+  +0.90 AUC over `relu8` [+0.75, +1.04], ToyConveyor 89.26 (+2.9) and
+  ToyCar 98.54 (+1.7). Pump reaches 96.00, still 0.25 short of the paper.
+- **This is exactly the dev-selection trap `../lit-arms` found.** `aug`'s dev
+  edge on ToyCar reverses on eval in all 8 seeds. Averaging cancels noise,
+  not a systematic flip. Stage B tests whether `A8`'s lead survives.
+
+## Addendum: stage B (eval) predictions, written after stage A and before any eval score
+
+Reference, E2′[`relu8`] on eval (`../confirm-seeds`): AUC 96.75, pAUC 92.18,
+mean **94.46**; ToyCar 97.55, ToyConveyor 86.63, pump 98.54. Single-model S1′
+eval means: `plain` 93.41, `aug` 93.82 (8 seeds), `gate` 93.77, `eca` 94.06.
+Going from 1 to 4 models under E2′ added about +0.7 to the eval mean on N4.
+
+- **B1, `A8` (the dev pick).** Eval mean in [94.2, 95.0], central 94.6.
+  Against `relu8` that is +0.15 central, with a paired 95% interval that
+  includes 0. **D2 fails** (confidence moderate, about 65%). `A8`'s eval
+  ToyCar is below `relu8`'s by 1 to 2.5. Its ToyConveyor is above by 1.5 to 3.
+- **B2 (Q1, sharpened).** `mix4_PAGE` − `hom4_aug` on eval mean is in
+  [−0.1, +0.4], central +0.15. **D1 fails at n=4** (it needs +0.20 over the
+  better of the two homogeneous families; a coin flip, leaning fail).
+  `mix8_PAGE` − `hom8_aug` is in [−0.1, +0.4], central +0.15. That gives D1 overall
+  "fails" or "size-dependent".
+- **B3 (Q2).** Every `aug`-containing system has lower eval ToyCar AUC than
+  `P4`. The gap grows with the `aug` share: `A8` loses most, `mix4`/`mix8`
+  about 1/4 as much.
+- **B4.** On eval ToyCar, the mixed families beat `hom4_aug`/`hom8_aug` by
+  +0.8 to +1.8. On eval ToyConveyor, they are within ±0.6 of the `aug`
+  families.
+- **B5 (secondary, D3).** On eval, the ranking reverses from dev. `F20` or
+  `ALL32` has the highest eval mean among the fixed systems; `A8` does not.
+- **B6.** The `old` family stays where `../confirm-seeds` put it: `hom4_old`
+  eval mean within 0.15 of N4's 94.34.
 
 ## What this cannot answer
 

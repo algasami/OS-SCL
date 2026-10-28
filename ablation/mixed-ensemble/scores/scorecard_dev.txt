@@ -1,0 +1,27 @@
+DEV ONLY. E2′ = sum of members' S1′. AUC/pAUC/mAUC x100; mean = mean(AUC, pAUC). Paper (one model, dev): AUC 95.71 pAUC 90.23 mAUC 91.23; eval mean 93.22.
+
+system     n     AUC   pAUC   mAUC   mean |     fan    pump  slider  ToyCar ToyConv   valve
+P4         4   95.94  90.83  91.35  93.39 |   98.50   94.89   99.78   96.74   85.77   99.96
+A8         8   97.05  92.48  94.10  94.77 |   98.82   96.00   99.74   98.54   89.26   99.95
+PA12      12   96.84  92.12  93.45  94.48 |   98.76   95.66   99.76   98.16   88.72   99.97
+F20       20   96.64  91.83  92.91  94.24 |   98.65   95.52   99.77   97.88   88.07   99.98
+ALL32     32   96.54  91.67  92.57  94.10 |   98.59   95.55   99.79   97.61   87.70   99.98
+N4         4   96.05  90.94  91.34  93.49 |   98.17   95.33   99.76   96.74   86.33   99.97
+relu8      8   96.16  91.12  91.52  93.64 |   98.52   95.45   99.77   96.83   86.40   99.98
+
+Families: mean over combos [5%, 95%]; per machine = mean AUC over combos
+hom4_plain  n=4  combos=1    AUC  95.94 [95.94, 95.94]  mean  93.39 [93.39, 93.39] | fan 98.50 pump 94.89 slider 99.78 ToyCar 96.74 ToyConv 85.77 valve 99.96
+hom4_aug    n=4  combos=70   AUC  96.93 [96.84, 97.02]  mean  94.62 [94.52, 94.72] | fan 98.74 pump 95.88 slider 99.74 ToyCar 98.48 ToyConv 88.82 valve 99.92
+hom4_old    n=4  combos=70   AUC  96.03 [95.90, 96.15]  mean  93.50 [93.37, 93.62] | fan 98.44 pump 95.36 slider 99.76 ToyCar 96.78 ToyConv 85.87 valve 99.97
+mix4_PAGE   n=4  combos=512  AUC  96.28 [96.14, 96.42]  mean  93.82 [93.68, 93.96] | fan 98.44 pump 95.25 slider 99.77 ToyCar 97.54 ToyConv 86.74 valve 99.96
+mix4_PGE+P  n=4  combos=96   AUC  95.95 [95.82, 96.06]  mean  93.42 [93.31, 93.53] | fan 98.37 pump 94.99 slider 99.78 ToyCar 96.91 ToyConv 85.67 valve 99.96
+hom8_aug    n=8  combos=1    AUC  97.05 [97.05, 97.05]  mean  94.77 [94.77, 94.77] | fan 98.82 pump 96.00 slider 99.74 ToyCar 98.54 ToyConv 89.26 valve 99.95
+hom8_old    n=8  combos=1    AUC  96.16 [96.16, 96.16]  mean  93.64 [93.64, 93.64] | fan 98.52 pump 95.45 slider 99.77 ToyCar 96.83 ToyConv 86.40 valve 99.98
+mix8_PAGE   n=8  combos=1000 AUC  96.41 [96.32, 96.49]  mean  93.96 [93.88, 94.05] | fan 98.55 pump 95.33 slider 99.78 ToyCar 97.60 ToyConv 87.23 valve 99.97
+
+Paired clip-bootstrap (2000), candidate − E2′[relu8]: mean [2.5%, 97.5%]
+P4     AUC -0.22 [-0.32, -0.11]  pAUC -0.29 [-0.48, -0.10]  mAUC -0.17 [-0.53, +0.18]  mean -0.25 [-0.38, -0.13]
+A8     AUC +0.90 [+0.75, +1.04]  pAUC +1.36 [+1.08, +1.65]  mAUC +2.60 [+2.15, +3.06]  mean +1.13 [+0.94, +1.31]
+PA12   AUC +0.68 [+0.56, +0.79]  pAUC +1.00 [+0.77, +1.24]  mAUC +1.94 [+1.56, +2.31]  mean +0.84 [+0.69, +0.99]
+F20    AUC +0.49 [+0.39, +0.58]  pAUC +0.71 [+0.52, +0.90]  mAUC +1.40 [+1.09, +1.71]  mean +0.60 [+0.48, +0.72]
+ALL32  AUC +0.38 [+0.31, +0.45]  pAUC +0.54 [+0.42, +0.67]  mAUC +1.06 [+0.83, +1.28]  mean +0.46 [+0.38, +0.54]
