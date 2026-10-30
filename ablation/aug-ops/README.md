@@ -1,7 +1,14 @@
 # aug-ops: which waveform-augmentation op costs ToyCar id_05?
 
-> **Status: pre-registered 2026-10-28; stage 1 training.** Predictions and
-> decision rules below were written before any 300-epoch run of this ablation.
+> **Status: DONE 2026-10-31. D0: no arm passes D1, so stage 2 does not run.**
+> E2′[A8] stays the best ensemble and `aug` stays as it is.
+> - No single op causes the id_05 loss. Dropping the shift recovers the most:
+>   id_05 85.11 against `aug`'s 81.33 and the 86.0 bar.
+> - Noise carries `aug`'s ToyConveyor gain.
+> - Unplanned: `ao_nogain` beats the paper's three dev numbers on 4/4 seeds
+>   under R0 (dev AUC 95.96–96.49). It is post hoc, see "Not planned".
+>
+> Predictions and decision rules below were written before any 300-epoch run.
 
 ## Why this exists
 
@@ -125,10 +132,115 @@ R0, 4-seed means. Reference values: `la_aug` and `fr_f1`, seeds 2040–2043.
   - Projection: eval 94.95–95.05 (A8 94.78); dev ≈ 94.5–94.7.
   - Report single models under R0 and S1′ against the paper, as before.
 
-## Results
+## Results (2026-10-31)
 
-*(empty)*
+All 12 runs finished. One segfault (`ao_nogain_s2040`, rc 139) resumed from
+`state_last.pth`. No cached item needed recomputing and no step was skipped.
+R0, 4-seed means, seeds 2040–2043. Δ is seed-paired against `la_aug`, with se in
+brackets. Full table: `scores/summary.txt`.
+
+| | `fr_f1` | `la_aug` | `ao_nonoise` | `ao_noshift` | `ao_nogain` |
+|---|---|---|---|---|---|
+| dev AUC | 94.90 | 95.73 | 95.12 −0.61 (0.07) | 95.70 −0.04 (0.25) | **96.17 +0.44 (0.15)** |
+| dev pAUC | 89.58 | 90.85 | 89.91 | 90.53 | 91.16 |
+| eval AUC | 95.25 | 95.45 | 95.06 −0.38 (0.27) | 95.50 +0.05 (0.30) | 95.17 −0.27 (0.25) |
+| eval pAUC | 90.24 | 91.20 | 91.00 | 90.80 | 90.90 |
+| **eval ToyCar id_05** | 88.66 | 81.33 | 82.32 +1.00 (2.30) | **85.11 +3.79 (2.49)** | 81.60 +0.27 (0.76) |
+| eval ToyCar id_06 | 98.99 | 98.89 | 99.52 | 97.79 −1.10 (0.44) | 98.60 |
+| dev ToyCar id_01 | 84.94 | 92.09 | 89.01 −3.08 | 89.02 −3.07 | 91.69 −0.40 |
+| dev ToyConveyor | 82.14 | 84.10 | 81.67 | 84.75 | 85.96 |
+| eval ToyConveyor | 80.81 | 83.38 | **80.42** | 83.50 | 83.18 |
+
+Per-seed eval id_05:
+
+- `ao_noshift`: 85.07, 81.35, 86.39, 87.64
+- `ao_nonoise`: 80.51, 80.13, 84.04, 84.62
+- `ao_nogain`: 82.20, 82.98, 79.97, 81.25
+
+### D1: no candidate
+
+| arm | id_05 ≥ 86.0 | eval AUC ≥ 95.45 | dev AUC ≥ 95.30 | |
+|---|---|---|---|---|
+| `ao_nonoise` | 82.32 no | 95.06 no | 95.12 no | out |
+| `ao_noshift` | **85.11 no** | 95.50 ok | 95.70 ok | out |
+| `ao_nogain` | 81.60 no | 95.17 no | 96.17 ok | out |
+
+**D0 applies:** stop. E2′[A8] stays the best ensemble, and stage 2 (fresh seeds
+2060–2067) is not run.
+
+`ao_noshift` misses only (a), by 0.9. Two of its four seeds clear 86. Even so, it
+would not be worth an ensemble:
+
+- Its eval AUC ties `aug` (+0.05 ± 0.30), and its eval pAUC is 0.39 lower.
+- It pays for part of the id_05 repair on id_06 (−1.10 ± 0.44).
+
+So the id_05 repair does not carry through to the overall score that A8′ would
+need to win on.
+
+### What each op does
+
+- **Shift is the largest share of the id_05 loss, but not all of it.**
+  Dropping it recovers 3.8 of 7.3 points, and also gives back 3.1 of `aug`'s
+  7.2-point dev id_01 gain. That supports the mirror: one invariance, two IDs.
+- **Noise carries the ToyConveyor gain.** Without noise, eval ToyConveyor is
+  80.42, at `fr_f1`'s level (80.81), against `aug`'s 83.38. Noise also costs id_05
+  about 1 point.
+- **Gain does nothing to id_05** (+0.27 ± 0.76). Dropping it *raises* dev
+  (+0.44 ± 0.15) and lowers eval (−0.27 ± 0.25).
+- The three leave-one-out recoveries (+1.0, +3.8, +0.3) sum to 5.1 of 7.3. The
+  rest is either an interaction or noise: these deltas carry se ≈ 2.4.
+
+### Predictions, checked as written
+
+| | prediction | result | verdict |
+|---|---|---|---|
+| P1 | exactly one arm reaches id_05 ≥ 86; central call noise | none does; shift recovers most (85.11), noise least of the two (82.32) | **fails**, and the central call is wrong |
+| P2 | `ao_nogain` within ±0.3 of `aug` on dev AUC and ±2.5 on id_05 | id_05 +0.27 holds; dev +0.44 (se 0.15) | **fails** on dev |
+| P3 | the repairing arm gives back ≥ half of the dev id_01 gain (id_01 ≤ 88.5) | no arm repairs; best repairer `ao_noshift` at 89.02 gives back 43% | **fails narrowly** (direction holds) |
+| P4 | `ao_nonoise` eval ToyConveyor ≤ 82.1 | 80.42 | **holds** |
+| P5 | the repairing arm's eval AUC ≥ 95.65 | `ao_noshift` 95.50 | **fails** |
+
+### Not planned: `ao_nogain` against the paper (post hoc)
+
+Under R0, the paper's own scoring rule, `ao_nogain` clears all three of the
+paper's dev numbers on every seed:
+
+| seed | dev AUC | dev pAUC | dev mAUC |
+|---|---|---|---|
+| 2040 | 95.99 | 90.32 | 92.12 |
+| 2041 | 96.25 | 91.43 | 92.91 |
+| 2042 | 95.96 | 91.35 | 91.57 |
+| 2043 | 96.49 | 91.54 | 93.79 |
+| paper | 95.71 | 90.23 | 91.23 |
+
+`aug` cleared dev AUC on 1 of these 4 seeds and on 2 of its 4 fresh ones
+(2044–2047), with a 4-seed mean of 95.73, level with the paper. No earlier recipe
+cleared all three dev numbers on every seed under R0.
+
+**This is not a claim.**
+
+- P2 expected `ao_nogain` to be a no-op. It is the best of three arms on dev,
+  so some winner's curse is expected.
+- Its eval mean(AUC, pAUC) under R0 is 93.04, below the paper's 93.22.
+
+It needs fresh seeds before it means anything.
+
+## What next
+
+1. **Replicate `ao_nogain` on 4 fresh seeds** (about 1 day). This is the open
+   single-network route to the paper's dev numbers. It needs its own
+   pre-registration with a shrunk central estimate, since it was picked post
+   hoc.
+2. **ToyCar id_05** stays open. Shift explains about half. A smaller shift
+   range, or a linear rather than circular shift (no splice), are the obvious
+   variants. Any of them can only be judged on eval, so they would need fresh
+   seeds again.
+3. A8′ from `ao_noshift` is not worth training (D1 discussion above).
 
 ## Figures
 
-*(empty)*
+| file | shows |
+|---|---|
+| `plots/fig1_toycar.png` | Eval ToyCar id_05 and dev ToyCar id_01 per arm, seeds and means, with the D1 bar. No shift repairs most, short of 86 |
+| `plots/fig2_machines.png` | Per-machine Δ AUC vs plain, dev and eval. Noise carries ToyConveyor; every arm still loses eval ToyCar |
+| `plots/fig3_d1.png` | Dev vs eval AUC per seed and arm, with D1's bars. No shift is in the region but misses id_05 |
