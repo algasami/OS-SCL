@@ -1,6 +1,8 @@
 # aug-ops: which waveform-augmentation op costs ToyCar id_05?
 
-> **Status: DONE 2026-10-31. D0: no arm passes D1, so stage 2 does not run.**
+> **Status: stage 1 DONE 2026-10-31 (D0). The `ao_nogain` replication on seeds 2044–2047 is
+> pre-registered and training** (see "Replication of `ao_nogain`").
+> **Stage 1: no arm passes D1, so stage 2 does not run.**
 > E2′[A8] stays the best ensemble and `aug` stays as it is.
 > - No single op causes the id_05 loss. Dropping the shift recovers the most:
 >   id_05 85.11 against `aug`'s 81.33 and the 86.0 bar.
@@ -224,6 +226,50 @@ cleared all three dev numbers on every seed under R0.
 - Its eval mean(AUC, pAUC) under R0 is 93.04, below the paper's 93.22.
 
 It needs fresh seeds before it means anything.
+
+## Replication of `ao_nogain` (pre-registered 2026-10-31, before any run)
+
+The user asked for this follow-up. It is post hoc: `ao_nogain` was the best of
+three arms on dev, and P2 predicted it would do nothing. So these predictions
+shrink its stage-1 gain.
+
+- **Runs:** `ao_nogain` on seeds **2044–2047**, the same recipe as stage 1.
+  These seeds are new to `ao_nogain`. `la_aug` already has 300-epoch runs on
+  them from `../lit-arms` D2, so every new run has a seed-paired `aug` partner.
+  Seeds 2060–2067, reserved for stage 2, stay unused because D0 applied.
+- **Command:** `AO_ARMS=nogain AO_SEEDS="2044 2045 2046 2047" bash ablation/aug-ops/run.sh train`
+- **Cost:** 4 runs on 3 GPUs, about 1 day.
+- **`la_aug` on 2044–2047, R0** (reference):
+  - dev AUC 95.80, pAUC 90.60, mAUC 91.80
+  - eval AUC 95.22, pAUC 90.71, mean 92.97
+
+Predictions (R0 unless stated; 4-seed means over 2044–2047):
+
+- **R1, the paper on dev.** All three dev means exceed the paper's 95.71 /
+  90.23 / 91.23. Projection: dev AUC ≈ 96.05 (`aug`'s 95.80 plus a shrunk
+  +0.25), pAUC ≈ 90.9, mAUC ≈ 92.2. About 70% likely.
+- **R2, versus `aug`.** The seed-paired dev AUC Δ against `la_aug` is ≥ +0.20.
+  Central +0.25, against stage 1's +0.44. About 55% likely.
+- **R3, eval.** Eval mean(AUC, pAUC) stays below the paper's 93.22 (central
+  93.0). The paired eval AUC Δ against `la_aug` is ≤ 0 (central −0.2).
+- **R4, under S1′** (secondary, reported, no decision attached). The
+  4-seed means beat all three paper dev numbers and the eval 93.22 (central
+  eval ≈ 93.6).
+- **R5.** Eval ToyCar id_05 stays ≤ 84; gain was not the culprit in stage 1.
+
+Decision rules:
+
+- **C1, the single-network claim.** One network beats the paper's dev numbers
+  under R0 if both hold:
+  - R1 holds;
+  - over all 8 seeds (2040–2047), the dev AUC mean − 1.96·se > 95.71.
+
+  Report per-seed counts alongside.
+- **C2.** If C1 and R2 both hold, `--wave_aug_ops noise,shift` replaces full
+  `aug` as the single-model recipe. An ensemble of these models against A8
+  would be its own pre-registered ablation, not part of this one.
+- **Otherwise,** record the stage-1 dev gain as selection luck and leave `aug`
+  unchanged.
 
 ## What next
 

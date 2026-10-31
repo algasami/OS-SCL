@@ -4,7 +4,8 @@
 #   bash ablation/aug-ops/run.sh train     # 3 leave-one-out arms x seeds 2040-2043, 3 GPUs
 #   bash ablation/aug-ops/run.sh score     # eval.py dev+eval CSVs, probe, wall, curves -> scores/
 #   bash ablation/aug-ops/run.sh plots     # make_plots.py -> plots/, summary -> scores/summary.txt
-#   AO_ARMS=<arm> AO_SEEDS="2060 ... 2067" bash ablation/aug-ops/run.sh train   # stage 2, after D1
+#   AO_ARMS=<arm> AO_SEEDS="2060 ... 2067" bash ablation/aug-ops/run.sh train   # stage 2, after D1 (not run: D0)
+#   AO_ARMS=nogain AO_SEEDS="2044 2045 2046 2047" bash ablation/aug-ops/run.sh train   # ao_nogain replication
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 D=ablation/aug-ops
