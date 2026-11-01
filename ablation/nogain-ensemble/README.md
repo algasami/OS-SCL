@@ -1,6 +1,8 @@
 # nogain-ensemble — does an ensemble of `ao_nogain` models beat E2′[A8]?
 
-> **Status: PRE-REGISTERED 2026-11-01.** Nothing has been scored yet.
+> **Status: STAGE A DONE 2026-11-01 (dev); eval predictions committed, stage B not run.**
+> - All eight dev predictions hold. G8 is the dev pick: 97.19 / 92.76 / 94.12,
+>   mean 94.97, +0.20 [+0.10, +0.31] over A8.
 >
 > CPU only. Every member was already trained and dumped.
 
@@ -153,6 +155,79 @@ The full set comes in the addendum after stage A. These are fixed now:
 - **D3, secondary (no claims).** Every fixed system is reported on eval, per
   machine and per ToyCar ID. Choosing among them on eval would be test-set
   selection.
+
+## Stage A results (dev only, 2026-11-01)
+
+`scores/scorecard_dev.txt`, `systems_dev.csv`, `perid_dev.csv`,
+`combos_dev.csv` and `bootstrap_dev.json`. Eval was not computed.
+
+```
+dev, E2′     n    AUC    pAUC   mAUC   mean  |  pump  ToyCar  ToyConv   Δ mean vs A8 [paired 95%]
+G8 (pick)    8   97.19  92.76  94.12  94.97  |  96.13  98.37   89.88    +0.20 [+0.10, +0.31]
+GA16        16   97.17  92.68  94.18  94.93  |  96.08  98.48   89.79    +0.16 [+0.10, +0.21]
+F20g        20   96.69  91.95  92.91  94.32  |  95.55  97.78   88.32    −0.45 [−0.57, −0.33]
+A8 (bar)     8   97.05  92.48  94.10  94.77  |  96.00  98.54   89.26
+F20         20   96.64  91.83  92.91  94.24  |  95.52  97.88   88.07    −0.53 [−0.64, −0.42]
+relu8        8   96.16  91.12  91.52  93.64  |  95.45  96.83   86.40
+paper, one model 95.71  90.23  91.23         |  96.25  96.55   83.56
+
+4-member families over the 70 seed subsets: mean [5%, 95%]
+hom4_nogain      AUC 97.07 [96.96, 97.18]   mean 94.83 [94.67, 94.99]
+hom4_aug         AUC 96.93 [96.84, 97.02]   mean 94.62 [94.52, 94.72]
+paired4 (G − A)  AUC +0.14 [+0.02, +0.28]   mean +0.20 [+0.03, +0.38]   nogain ahead in 97% of subsets
+```
+
+| | prediction | observed | verdict |
+|---|---|---|---|
+| P0 | A8, F20, relu8 and `hom4_aug` reproduce `../mixed-ensemble` to 0.01 | 97.05 / 92.48 / 94.10, 96.64, 96.16; 96.93 / 94.62 | holds |
+| P1 | G8 dev AUC in [97.05, 97.45], mean in [94.85, 95.25] | 97.19, 94.97 | holds (both a little below central) |
+| P2 | G8 ≥ A8 on AUC, pAUC and mAUC | +0.14, +0.28, +0.02 | holds; mAUC by 0.02 [−0.22, +0.33] |
+| P3 | GA16 dev mean strictly between A8 and G8 | 94.93 (94.77 – 94.97) | holds, nearer G8 than the midpoint |
+| P4 | F20g 0.3–0.7 below G8 | −0.65 | holds |
+| P5 | the dev pick is G8 | G8 | holds. GA16 is within 0.05 (−0.04), so the tie rule picks G8 (smaller n) |
+| P6 | `paired4` mean Δ in [+0.10, +0.40], ≥ 85% of subsets positive | +0.20, 97% | holds |
+| P7 | G8 ToyConveyor ≥ A8 + 0.5; the gain is mostly ToyConveyor | +0.62; next largest fan +0.22 | holds |
+
+What dev shows:
+
+- **The single-model dev edge survives ensembling, shrunk.** Single models:
+  +0.27 on dev mean. 8-member E2′: +0.20, with a paired-bootstrap interval
+  clear of 0. Every 4-member subset but two of 70 favours `nogain`.
+- **mAUC does not move.** +0.02 for G8 and +0.04 for `paired4`, both with
+  intervals across 0. The gain is AUC and pAUC.
+- **ToyConveyor carries it** (+0.62). ToyCar goes slightly the other way
+  (−0.17). Dev ToyCar id_01 is 93.44 for G8 against A8's 94.35. That is
+  the same direction as single `ao_nogain` models (−0.40 on id_01 in
+  `../aug-ops`), a little of `aug`'s dev ToyCar gain given back.
+- **Mixing behaves as for `aug`.** F20g sits 0.65 below G8, just as F20 sat
+  0.53 below A8: plain, gate and eca dilute the augmented models on dev.
+
+## Addendum: stage B (eval) predictions, written after stage A and before any eval score
+
+References on eval (`../mixed-ensemble`):
+
+- A8: mean **94.78**; ToyCar 96.00, ToyConveyor 88.97, pump 98.40.
+- F20: mean 94.96.
+
+Single-model S1′ eval means are `ao_nogain` 93.88 and `la_aug` 93.82 (+0.06).
+On dev, the ensemble kept about 3/4 of the single-model edge (+0.20 of +0.27).
+
+- **B1, G8 (the dev pick).** G8 − A8 on eval mean is in [−0.20, +0.30],
+  central +0.05. The paired 95% interval includes 0, so **D1 fails**. About
+  75%. (This sharpens Q1; the interval width on dev was ±0.10, and eval is
+  noisier.)
+- **B2, D2.** Eval `paired4` mean Δ is in [−0.15, +0.20], central +0.04,
+  with 35–75% of subsets positive. So D2 reads **"tie"**. About 70%.
+- **B3 (Q2).** G8's eval ToyCar AUC is within ±0.6 of A8's 96.00, and eval
+  ToyCar id_05 is below 85 for both. G8 gave back 0.9 of dev id_01. If the
+  dev id_01 / eval id_05 mirror from `../aug-ops` holds, G8's id_05 is above
+  A8's, but by less than 2 points.
+- **B4.** G8's eval ToyConveyor is within ±0.8 of A8's 88.97. The +0.62 on dev
+  does not carry over: single `ao_nogain` models were −0.19 there on eval.
+- **B5 (Q3).** F20g's eval mean is at least G8's and within ±0.15 of F20's
+  94.96. Mixing repairs eval ToyCar here as it did for F20: F20g eval ToyCar
+  ≥ 97.3.
+- **B6.** GA16's eval mean is within 0.10 of the mean of G8's and A8's.
 
 ## What this cannot answer
 
