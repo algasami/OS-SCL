@@ -1,16 +1,21 @@
 # aug-ops: which waveform-augmentation op costs ToyCar id_05?
 
-> **Status: stage 1 DONE 2026-10-31 (D0). The `ao_nogain` replication on seeds 2044–2047 is
-> pre-registered and training** (see "Replication of `ao_nogain`").
-> **Stage 1: no arm passes D1, so stage 2 does not run.**
-> E2′[A8] stays the best ensemble and `aug` stays as it is.
-> - No single op causes the id_05 loss. Dropping the shift recovers the most:
->   id_05 85.11 against `aug`'s 81.33 and the 86.0 bar.
-> - Noise carries `aug`'s ToyConveyor gain.
-> - Unplanned: `ao_nogain` beats the paper's three dev numbers on 4/4 seeds
->   under R0 (dev AUC 95.96–96.49). It is post hoc, see "Not planned".
->
-> Predictions and decision rules below were written before any 300-epoch run.
+> **Status: DONE 2026-11-01.**
+> - **Stage 1, D0.** No leave-one-out arm repairs eval ToyCar id_05. Dropping
+>   the shift recovers the most (85.11, bar 86). Noise carries `aug`'s
+>   ToyConveyor gain. E2′[A8] stays the best ensemble.
+> - **Replication: C1 and C2 hold.** `ao_nogain` (`--wave_aug_ops
+>   noise,shift`) on fresh seeds 2044–2047 beats all three of the paper's dev
+>   numbers under R0 on every seed: 4-seed means 96.02 / 91.00 / 91.64 against
+>   95.71 / 90.23 / 91.23.
+>   - Over all 8 seeds, dev AUC is 96.10, with mean − 1.96·se = 95.94 > 95.71.
+>   - **This is the first single network here that beats the paper's dev
+>     numbers under the paper's own scoring rule.**
+>   - It replaces full `aug` as the single-model recipe (C2). R2, the dev gain
+>     over `aug`, holds by point estimate only: +0.22, se 0.21.
+>   - Eval ties `aug`. Under R0 it is 93.14 over 8 seeds against the paper's
+>     93.22. Under S1′, eval mean is 93.88 over 8 seeds and above the paper on
+>     7 of 8.
 
 ## Why this exists
 
@@ -227,6 +232,8 @@ cleared all three dev numbers on every seed under R0.
 
 It needs fresh seeds before it means anything.
 
+**[2026-11-01] Replicated on fresh seeds 2044–2047. C1 and C2 hold; see "Replication results" below.**
+
 ## Replication of `ao_nogain` (pre-registered 2026-10-31, before any run)
 
 The user asked for this follow-up. It is post hoc: `ao_nogain` was the best of
@@ -271,12 +278,78 @@ Decision rules:
 - **Otherwise,** record the stage-1 dev gain as selection luck and leave `aug`
   unchanged.
 
+### Replication results (2026-11-01)
+
+All 4 runs finished. One segfault (`ao_nogain_s2045`, rc 139) resumed from
+`state_last.pth`. No cached item was recomputed and no step was skipped.
+S1′ uses `score_s1p.py`: the ensemble-backend rule, unchanged, on dumps from
+`../ensemble-backend/extract.py`. The `la_aug` dumps are `../lit-arms`'. Both
+checks pass:
+
+- S0 recomputed from the dumps matches eval.py's per-ID AUCs to within 2.5e-4.
+- The replayed 5% split matches each run's best validation loss to within
+  1.3e-5.
+
+Outputs: `scores/s1p.csv` and `scores/s1p_check.json`.
+
+| R0 | dev AUC | dev pAUC | dev mAUC | eval AUC | eval mean(AUC, pAUC) |
+|---|---|---|---|---|---|
+| `ao_nogain` 2044–2047 | **96.02** (96.04 96.07 95.73 96.24) | **91.00** | **91.64** | 95.43 | 93.23 |
+| `la_aug` 2044–2047 | 95.80 | 90.60 | 91.80 | 95.22 | 92.97 |
+| `ao_nogain`, 8 seeds | 96.10 | 91.08 | 92.12 | 95.30 | 93.14 |
+| `la_aug`, 8 seeds | 95.77 | 90.73 | 91.76 | 95.34 | 93.14 |
+| paper | 95.71 | 90.23 | 91.23 | — | 93.22 |
+
+| S1′ | dev AUC | dev pAUC | dev mAUC | eval AUC | eval mean |
+|---|---|---|---|---|---|
+| `ao_nogain` 2044–2047 | 96.39 | 91.54 | 92.68 | 96.33 | **94.04** |
+| `la_aug` 2044–2047 | 96.22 | 91.13 | 92.63 | 96.02 | 93.68 |
+| `ao_nogain` 2040–2043 | 96.47 | 91.62 | 92.96 | 96.05 | 93.73 |
+| `la_aug` 2040–2043 | 96.26 | 91.31 | 92.70 | 96.21 | 93.96 |
+
+Seeds of `ao_nogain` above the paper, out of 8:
+
+| scoring | dev AUC | dev pAUC | dev mAUC | eval mean |
+|---|---|---|---|---|
+| R0 | 8 | 8 | 8 | 4 |
+| S1′ | 8 | 8 | 8 | 7 |
+
+Paired deltas, `ao_nogain` − `la_aug`, on the fresh seeds:
+
+| | per seed | mean |
+|---|---|---|
+| R0 dev AUC | +0.35, +0.65, −0.34, +0.22 | +0.22 |
+| R0 eval mean | +0.86, +0.03, +0.31, −0.14 | +0.27 |
+| S1′ dev AUC | | +0.17 |
+| S1′ eval mean | | +0.35 |
+
+On stage 1's seeds the eval sign was reversed: −0.29 under R0, −0.23 under
+S1′. Over 8 seeds, eval is a tie.
+
+Eval ToyCar id_05 is 83.00, 81.60, 85.34, 81.71 (mean 82.91). Gain was not the
+culprit, as stage 1 said.
+
+| | prediction | result | verdict |
+|---|---|---|---|
+| R1 | all three dev means above the paper (projection 96.05 / 90.9 / 92.2) | 96.02 / 91.00 / 91.64 | **holds** |
+| R2 | paired dev AUC Δ vs `la_aug` ≥ +0.20 (central +0.25) | +0.22 (se 0.21) | **holds**, by point estimate only |
+| R3 | eval mean stays below 93.22 (central 93.0); paired eval AUC Δ ≤ 0 | 93.23; Δ +0.21 | **fails**: eval came out level, not below |
+| R4 | under S1′, beats all three dev numbers and eval 93.22 | 96.39 / 91.54 / 92.68; eval 94.04 | **holds** |
+| R5 | eval id_05 ≤ 84 | 82.91 | **holds** |
+
+**C1 holds:** R1 holds, and the pooled 8-seed dev AUC is 96.10 with mean −
+1.96·se = 95.94 > 95.71. **C2 holds:** C1 plus R2. So
+`--wave_aug 1 --wave_aug_ops noise,shift` replaces full `aug` as the
+single-model recipe. R2's margin is thin (+0.22 against a +0.20 bar, se 0.21).
+Over 8 seeds the dev gain over `aug` is +0.33, but stage 1's half of that was
+the selection, so the fresh +0.22 is the honest number.
+
 ## What next
 
-1. **Replicate `ao_nogain` on 4 fresh seeds** (about 1 day). This is the open
-   single-network route to the paper's dev numbers. It needs its own
-   pre-registration with a shrunk central estimate, since it was picked post
-   hoc.
+1. ~~Replicate `ao_nogain` on 4 fresh seeds.~~ **Done:** C1 and C2 hold
+   (above). The next step is an ensemble of the 8 `ao_nogain` models built
+   exactly like A8 (G8). It needs no training. Per C2, it gets its own
+   pre-registration before it is scored.
 2. **ToyCar id_05** stays open. Shift explains about half. A smaller shift
    range, or a linear rather than circular shift (no splice), are the obvious
    variants. Any of them can only be judged on eval, so they would need fresh
@@ -290,3 +363,4 @@ Decision rules:
 | `plots/fig1_toycar.png` | Eval ToyCar id_05 and dev ToyCar id_01 per arm, seeds and means, with the D1 bar. No shift repairs most, short of 86 |
 | `plots/fig2_machines.png` | Per-machine Δ AUC vs plain, dev and eval. Noise carries ToyConveyor; every arm still loses eval ToyCar |
 | `plots/fig3_d1.png` | Dev vs eval AUC per seed and arm, with D1's bars. No shift is in the region but misses id_05 |
+| `plots/fig4_replication.png` | `ao_nogain` vs `aug` on 8 seeds (stage 1 and fresh), dev AUC / pAUC / mAUC and eval mean, with the paper's numbers and S1′ means. All 4 fresh seeds clear the paper's 3 dev numbers; eval ties `aug` |

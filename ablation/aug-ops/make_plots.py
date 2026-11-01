@@ -235,9 +235,122 @@ def fig3_d1(T):
     print('wrote plots/fig3_d1.png')
 
 
+# ------------------------------------------------- replication of ao_nogain (seeds 2044-2047)
+PAPER_DEV = {'AUC': 95.71, 'pAUC': 90.23, 'mAUC': 91.23}
+PAPER_EVAL_MEAN = 93.22
+REP = [2044, 2045, 2046, 2047]
+
+
+def overall(arm, seeds, ds):
+    """{metric: array over seeds} of overall R0 numbers, or None if a run is missing."""
+    runs = [load(arm, s, ds) for s in seeds]
+    if any(r is None for r in runs):
+        return None
+    return {k: np.array([r[('ALL', 'ALL', k)] for r in runs]) for k in ('AUC', 'pAUC', 'mAUC')}
+
+
+def s1p():
+    """{(run, rule, ds): {metric: %}} from scores/s1p.csv (already in %), or None."""
+    p = os.path.join(HERE, 'scores', 's1p.csv')
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding='UTF-8') as f:
+        return {(r['run'], r['rule'], r['dataset']): {k: float(r[k]) for k in ('AUC', 'pAUC', 'mAUC',
+                                                                                      'mean_AUC_pAUC')}
+                for r in csv.DictReader(f)}
+
+
+def summary_rep():
+    ng = {ds: overall('ao_nogain', REP, ds) for ds in ('dev', 'eval')}
+    ag = {ds: overall('la_aug', REP, ds) for ds in ('dev', 'eval')}
+    ng1 = overall('ao_nogain', SEEDS, 'dev')
+    if not all(ng.values()) or not all(ag.values()) or ng1 is None:
+        print('skip summary_rep: needs ao_nogain and la_aug on seeds 2044-2047')
+        return
+    print('\n== Replication: ao_nogain on fresh seeds 2044-2047, R0 (paired la_aug on the same seeds)')
+    for k in ('AUC', 'pAUC', 'mAUC'):
+        print(f'  dev {k:5s} nogain ' + ' '.join(f'{x:6.2f}' for x in ng['dev'][k]) +
+              f'  mean {ng["dev"][k].mean():6.2f} | aug {ag["dev"][k].mean():6.2f} | paper {PAPER_DEV[k]:.2f}'
+              f' -> {"above" if ng["dev"][k].mean() > PAPER_DEV[k] else "below"}')
+    d = ng['dev']['AUC'] - ag['dev']['AUC']
+    print('  R2 paired dev AUC Δ vs la_aug: ' + ' '.join(f'{x:+.2f}' for x in d) +
+          f'  mean {d.mean():+.2f} (se {d.std(ddof=1) / 2:.2f}) -> {"holds" if d.mean() >= 0.20 else "fails"}')
+    em = (ng['eval']['AUC'] + ng['eval']['pAUC']) / 2
+    ea = (ag['eval']['AUC'] + ag['eval']['pAUC']) / 2
+    de = ng['eval']['AUC'] - ag['eval']['AUC']
+    print('  eval mean(AUC,pAUC) nogain ' + ' '.join(f'{x:6.2f}' for x in em) +
+          f'  mean {em.mean():6.2f} | aug {ea.mean():6.2f} | paper {PAPER_EVAL_MEAN}')
+    print('  paired eval AUC Δ vs la_aug: ' + ' '.join(f'{x:+.2f}' for x in de) + f'  mean {de.mean():+.2f}')
+    p8 = np.concatenate([ng1['AUC'], ng['dev']['AUC']])
+    lo = p8.mean() - 1.96 * p8.std(ddof=1) / np.sqrt(len(p8))
+    print(f'  C1 pooled 8 seeds dev AUC {p8.mean():.2f}, mean − 1.96·se = {lo:.2f} vs 95.71 -> '
+          f'{"holds" if lo > 95.71 else "fails"}')
+    i5 = load('ao_nogain', REP[0], 'eval') and np.array(
+        [load('ao_nogain', s, 'eval')[('ToyCar', 'id_05', 'AUC')] for s in REP])
+    print('  R5 eval ToyCar id_05: ' + ' '.join(f'{x:6.2f}' for x in i5) + f'  mean {i5.mean():.2f}')
+
+
+def fig4_replication():
+    seeds8 = SEEDS + REP
+    ng = {ds: overall('ao_nogain', seeds8, ds) for ds in ('dev', 'eval')}
+    ag = {ds: overall('la_aug', seeds8, ds) for ds in ('dev', 'eval')}
+    if not all(ng.values()) or not all(ag.values()):
+        print('skip fig4_replication')
+        return
+    S = s1p()
+    panels = [('dev', 'AUC'), ('dev', 'pAUC'), ('dev', 'mAUC'), ('eval', 'mean')]
+    fig, axes = plt.subplots(1, 4, figsize=(11.5, 3.6))
+    green, grey = ARMS[4][2], ARMS[1][2]
+    for ax, (ds, k) in zip(axes, panels):
+        def vals(d):
+            return (d[ds]['AUC'] + d[ds]['pAUC']) / 2 if k == 'mean' else d[ds][k]
+        for x, (d, c, lab) in enumerate([(ag, grey, 'aug'), (ng, green, 'no gain')]):
+            v = vals(d)
+            ax.scatter(np.full(4, x) - 0.1, v[:4], s=18, color=c, alpha=0.45, edgecolor='none', zorder=2)
+            ax.scatter(np.full(4, x) + 0.1, v[4:], s=18, color=c, alpha=0.95, edgecolor='none', zorder=2,
+                       marker='D')
+            ax.plot([x - 0.25, x + 0.25], [v.mean()] * 2, color=c, lw=2.2, zorder=3)
+            ax.annotate(f'{v.mean():.2f}', (x + 0.27, v.mean()), va='center', fontsize=7.5, color=INK)
+        if S is not None:
+            for x, arm in ((0, 'la_aug'), (1, 'ao_nogain')):
+                kk = 'mean_AUC_pAUC' if k == 'mean' else k
+                v = np.array([S[(f'SCLTFSTgramMFN_{arm}_s{s}', 'S1p', ds)][kk] for s in seeds8])
+                ax.scatter([x + 0.38], [v.mean()], s=34, facecolor=SURFACE, edgecolor=green if x else grey,
+                           lw=1.3, zorder=3, marker='o')
+        ref = PAPER_EVAL_MEAN if k == 'mean' else PAPER_DEV[k]
+        ax.axhline(ref, color=MUTED, lw=0.9, ls=(0, (4, 3)))
+        lo, hi = ax.get_ylim()
+        lo, hi = min(lo, ref), max(hi, ref)
+        ax.set_ylim(lo - 0.08 * (hi - lo), hi + 0.04 * (hi - lo))
+        ax.annotate(f'paper {ref:.2f}', (1.72, ref), va='bottom', ha='right', fontsize=7.5, color=INK_2)
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(['aug', 'no gain'])
+        ax.set_xlim(-0.5, 1.75)
+        ax.grid(axis='y')
+        ax.set_title(f'{ds} {"mean(AUC, pAUC)" if k == "mean" else k}', loc='left', fontsize=9.5)
+    axes[0].set_ylabel('% (R0 unless marked)')
+    n = sum(int((ng['dev'][k][4:] > PAPER_DEV[k]).all()) for k in PAPER_DEV)
+    head = ('Replicated: "no gain" clears the paper\'s dev AUC, pAUC and mAUC on all 4 fresh seeds (R0)'
+            if n == 3 else f'"no gain" clears the paper on all 4 fresh seeds for only {n} of 3 dev metrics (R0)')
+    em = {a: ((d['eval']['AUC'] + d['eval']['pAUC']) / 2).mean() for a, d in (('aug', ag), ('ng', ng))}
+    dd = em['ng'] - em['aug']
+    verb = 'ties' if abs(dd) < 0.1 else ('beats' if dd > 0 else 'trails')
+    fig.suptitle(f'{head}; on eval it {verb} aug ({em["ng"]:.2f} vs {em["aug"]:.2f}, 8 seeds)', x=0.02,
+                 ha='left', fontsize=10.5)
+    fig.text(0.02, -0.05, 'Circles (faded) = seeds 2040–2043 (stage 1); diamonds = fresh seeds 2044–2047; '
+             'bar = 8-seed mean (R0). Hollow circle = 8-seed mean under S1′. Dashed = paper.',
+             fontsize=7.5, color=INK_2)
+    fig.tight_layout()
+    fig.savefig(os.path.join(PLOTS, 'fig4_replication.png'), dpi=170, bbox_inches='tight')
+    plt.close(fig)
+    print('wrote plots/fig4_replication.png')
+
+
 if __name__ == '__main__':
     T = table()
     summary(T)
+    summary_rep()
     fig1_toycar(T)
     fig2_machines(T)
     fig3_d1(T)
+    fig4_replication()

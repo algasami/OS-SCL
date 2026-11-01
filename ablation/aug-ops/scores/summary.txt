@@ -39,6 +39,17 @@ D1 (README): eval id_05 ≥ 86.0, eval AUC ≥ 95.45, dev AUC ≥ 95.3
   ao_noshift  id_05  85.11 no | eval  95.50 ok | dev  95.70 ok -> out
   ao_nogain   id_05  81.60 no | eval  95.17 no | dev  96.17 ok -> out
   D1 pick: none (D0)
+
+== Replication: ao_nogain on fresh seeds 2044-2047, R0 (paired la_aug on the same seeds)
+  dev AUC   nogain  96.04  96.07  95.73  96.24  mean  96.02 | aug  95.80 | paper 95.71 -> above
+  dev pAUC  nogain  91.15  91.18  90.36  91.33  mean  91.00 | aug  90.60 | paper 90.23 -> above
+  dev mAUC  nogain  91.77  91.29  91.39  92.10  mean  91.64 | aug  91.80 | paper 91.23 -> above
+  R2 paired dev AUC Δ vs la_aug: +0.35 +0.65 -0.34 +0.22  mean +0.22 (se 0.21) -> holds
+  eval mean(AUC,pAUC) nogain  93.81  92.47  93.16  93.48  mean  93.23 | aug  92.97 | paper 93.22
+  paired eval AUC Δ vs la_aug: +0.68 -0.03 +0.50 -0.32  mean +0.21
+  C1 pooled 8 seeds dev AUC 96.10, mean − 1.96·se = 95.94 vs 95.71 -> holds
+  R5 eval ToyCar id_05:  83.00  81.60  85.34  81.71  mean 82.91
 wrote plots/fig1_toycar.png
 wrote plots/fig2_machines.png
 wrote plots/fig3_d1.png
+wrote plots/fig4_replication.png
