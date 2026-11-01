@@ -120,7 +120,8 @@ def fig1_ladder():
     parts = [f'{ds} {s[ds]["G8"]["mean_AUC_pAUC"] - s[ds]["A8"]["mean_AUC_pAUC"]:+.2f}' for ds in dss]
     if 'eval' in dss and b['eval']:
         lo, hi = b['eval']['G8']['mean_AUC_pAUC'][1:]
-        parts[-1] += f' [{lo:+.2f}, {hi:+.2f}]'
+        parts[-1] += f' [{lo:+.2f}, {hi:+.2f}]' + (' — interval includes 0, D1 fails' if lo <= 0 else
+                                                    ' — interval above 0')
     fig.suptitle('G8 − A8 on mean(AUC, pAUC): ' + ', '.join(parts), x=0.02, ha='left', fontsize=10.5)
     fig.text(0.02, -0.03, 'Dashed = E2′[A8], the bar. Brackets: paired clip-bootstrap 95% vs A8 (2000 resamples). '
              'Green = nogain only, blue = aug only, orange = mixed, grey = references.',
