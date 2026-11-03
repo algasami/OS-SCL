@@ -154,3 +154,9 @@ What the pilot shows (per shift and machine: `scores/pilot_shift.csv`, figure 1)
 ## Results
 
 *(stage A pending)*
+
+## Figures
+
+| file | shows |
+|---|---|
+| `plots/fig1_pilot_shift.png` | Pilot: R0 rise on normal held-out clips per circular shift, per machine and model type. Past the training range (grey), ToyCar rises ~60 sd at half a clip; fan, pump and slider stay flat. Inside ±1%, the splice alone costs nothing |
