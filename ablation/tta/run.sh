@@ -4,7 +4,7 @@
 #   bash ablation/tta/run.sh pilot      # held-out training clips, 16 shifts, 5 runs; then pilot.py
 #   bash ablation/tta/run.sh extractA   # ao_nogain x8: train bank + dev clips, 9 shifts
 #   bash ablation/tta/run.sh dev        # stage A scoring (CPU)
-#   bash ablation/tta/run.sh extractB   # only after gate A passes and the eval addendum is committed
+#   bash ablation/tta/run.sh extractB   # only after gate A passes and the eval addendum is committed; then rerun `dev` (adds A8)
 #   bash ablation/tta/run.sh eval       # stage B scoring (CPU)
 #   bash ablation/tta/run.sh plots
 set -uo pipefail
@@ -15,6 +15,7 @@ BPY=/home/f74134118/anaconda3/bin/python
 GPU=${TTA_GPU:-1}
 EMB=$D/results/emb
 SH9=0,0.01,-0.01,0.03,-0.03,0.055,-0.055,0.08,-0.08
+SH3=0,0.01,-0.01   # stage B: only the scheme that passed gate A (small)
 SH16=0,0.01,-0.01,0.03,-0.03,0.055,-0.055,0.08,-0.08,0.125,0.25,0.375,0.5,0.625,0.75,0.875
 NG=""; AUG=""; for s in 2040 2041 2042 2043 2044 2045 2046 2047; do
     NG="$NG SCLTFSTgramMFN_ao_nogain_s$s"; AUG="$AUG SCLTFSTgramMFN_la_aug_s$s"; done
@@ -32,8 +33,8 @@ pilot)    lock
               SCLTFSTgramMFN_la_aug_s2040 SCLTFSTgramMFN_fr_f1_s2040 SCLTFSTgramMFN_fr_f1_s2041
           $BPY $D/pilot.py $EMB ;;
 extractA) lock; ext --split train --shifts $SH9 --runs $NG; ext --split dev --shifts $SH9 --runs $NG ;;
-extractB) lock; ext --split eval --shifts $SH9 --runs $NG
-          for sp in train dev eval; do ext --split $sp --shifts $SH9 --runs $AUG; done ;;
+extractB) lock; ext --split eval --shifts $SH3 --runs $NG
+          for sp in train dev eval; do ext --split $sp --shifts $SH3 --runs $AUG; done ;;
 dev|eval) $BPY $D/score.py "$1" | tee $D/results/score_$1.log ;;
 plots)    $BPY $D/make_plots.py ;;
 *) echo "unknown stage"; exit 1 ;;

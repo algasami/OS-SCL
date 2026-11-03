@@ -136,10 +136,13 @@ def fig_stage(ds, fname):
     ax.grid(axis='y')
     for v, (c, lab) in SCHEME.items():
         ax.plot([], [], 'o', color=c, label=lab)
-    ax.legend(loc='lower left', fontsize=8)
-    tm = boot.get('mean single nogain S1p: Tm−T0', {}).get('mean_AUC_pAUC', [0])[0]
-    ax.set_title(f'{ds}: shift TTA vs none, ao_nogain ×8 (dots = seeds; bars = paired 95% bootstrap). '
-                 f'match on S1′: {tm:+.2f}', loc='left', fontsize=10, color=INK)
+    ax.legend(loc='upper left', fontsize=8)
+    g = lambda n: boot.get(n, {}).get('mean_AUC_pAUC', [np.nan])[0]   # noqa: E731
+    ax.set_title(f'{ds}: small (±1%) TTA gains on every seed (R0 {g("mean single nogain S0: Ts−T0"):+.2f}, '
+                 f'S1′ {g("mean single nogain S1p: Ts−T0"):+.2f}, E2′[G8] {g("G8 E2′: Ts−T0"):+.2f});\n'
+                 f'match (±3–8%) loses on R0 ({g("mean single nogain S0: Tm−T0"):+.2f}) and on E2′[G8] '
+                 f'({g("G8 E2′: Tm−T0"):+.2f}). Dots = seeds; bars = paired 95% clip bootstrap',
+                 loc='left', fontsize=9.5, color=INK)
     fig.tight_layout()
     save(fig, fname)
 
@@ -163,8 +166,11 @@ def fig_machines(ds, fname):
         ax.set_xticklabels(MACH, fontsize=8)
         ax.set_title(f'single model, {"R0" if rule == "S0" else "S1′"}', loc='left', fontsize=10, color=INK)
         ax.grid(axis='y')
-    axes[0].set_ylabel(f'Δ {ds} AUC vs no TTA (points, 8-seed mean ± se)')
+        ax.set_axisbelow(True)
+    axes[0].set_ylabel(f'Δ {ds} AUC vs no TTA\n(points, 8-seed mean ± se)')
     axes[0].legend(loc='lower left', fontsize=8)
+    fig.suptitle(f'{ds}, per machine: small TTA gains most on ToyConveyor; match costs ToyCar under R0',
+                 x=0.01, ha='left', fontsize=10.5, color=INK)
     fig.tight_layout()
     save(fig, fname)
 

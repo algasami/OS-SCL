@@ -1,8 +1,16 @@
 # TTA: does averaging over time-shifted copies of each clip help?
 
-> **Status: pre-registered 2026-11-03; stage A (dev) running.** The pilot (held-out
-> training clips only) is done and fixed the scheme. Nothing below *Results* has
-> seen a test clip.
+> **Status: stage A (dev) done 2026-11-03; stage B (eval) running.**
+> - **Gate A:** `match` (±3–8%, the primary scheme) fails. It is +0.07 on single-model
+>   S1′, but E2′[G8] goes −0.02. `small` (±1%, the secondary) passes: +0.11 S1′ on 8/8
+>   seeds, +0.09 R0 on 8/8, E2′[G8] +0.06. By the pre-registered rule, `small` goes to
+>   stage B.
+> - **Pilot (training clips only):** shifting a clip past the training range makes normal
+>   ToyCar look anomalous (~60 sd at half a clip). The splice itself costs nothing, so the
+>   ToyCar models key on absolute time position.
+> - **P0 fails by the letter** on dev-clip R0 (2.4e-4 against 1e-4). Every difference is in
+>   the last, differently sized batch; see Stage A.
+> - The eval predictions (addendum) were committed before any eval clip was extracted.
 
 ## Why this exists
 
@@ -153,10 +161,122 @@ What the pilot shows (per shift and machine: `scores/pilot_shift.csv`, figure 1)
 
 ## Results
 
-*(stage A pending)*
+### Stage A (dev, 2026-11-03)
+
+8 `ao_nogain` models; `scores/scorecard_dev.txt`, `dev_runs.csv`, `dev_systems.csv`,
+`dev_perid.csv`, `dev_bootstrap.json` and `dev_check.json`. No eval clip had been extracted.
+
+**Reproduction (P0).**
+- T0 training-bank R0 and embeddings equal the original dumps bit for bit (max |Δ| 0).
+- T0 S0 per-ID AUC matches eval.py to ≤ 1.4e-4 (bar 2.5e-4).
+- T0 S1′ overall matches `../aug-ops/scores/s1p.csv` to ≤ 5e-5 (bar 0.01).
+- **Dev-clip R0 differs from the original dump by up to 2.4e-4, against a bar of 1e-4.**
+  - All of it sits in the 20 clips of the final batch, on every seed. Every other clip is
+    bit-identical.
+  - There that batch held 20 clips; the original pass's final dev batch held the same 20
+    plus 12 eval clips. So it is GPU float noise from a different batch size (relative
+    ≤ 7e-4).
+  - T0, Tm and Ts are computed from the same batch, so it cannot favour one version.
+  - P0 fails by the letter. It was meant to catch a broken pipeline, and nothing else
+    points to one, so the run was not stopped.
+
+```
+dev, ao_nogain ×8      AUC    pAUC   mAUC   mean  | Δ mean   seeds>0  paired 95% (mean)
+S0  (R0)   T0         96.10  91.08  92.12  93.59
+           Tm match   96.05  91.01  91.97  93.53  | −0.06    0/8     [−0.11, −0.01]
+           Ts small   96.18  91.19  92.26  93.68  | +0.09    8/8     [+0.06, +0.12]
+S1′        T0         96.43  91.58  92.82  94.00
+           Tm match   96.47  91.67  92.95  94.07  | +0.07    8/8     [−0.03, +0.19]
+           Ts small   96.52  91.72  93.01  94.12  | +0.11    8/8     [+0.02, +0.24]
+E2′[G8]    T0         97.19  92.76  94.12  94.97
+           Tm match   97.13  92.77  94.02  94.95  | −0.02            [−0.13, +0.12]
+           Ts small   97.21  92.86  94.17  95.04  | +0.06            [−0.04, +0.20]
+paper                 95.71  90.23  91.23
+```
+
+Δ AUC by machine, single-model 8-seed means (fan / pump / slider / ToyCar / ToyConveyor / valve):
+
+| | fan | pump | slider | ToyCar | ToyConveyor | valve |
+|---|---|---|---|---|---|---|
+| R0, `match` | +0.08 | +0.10 | +0.00 | **−0.49** | −0.02 | +0.05 |
+| R0, `small` | +0.05 | +0.07 | −0.00 | +0.05 | **+0.30** | +0.04 |
+| S1′, `match` | +0.01 | +0.05 | +0.08 | +0.00 | +0.11 | +0.03 |
+| S1′, `small` | −0.00 | +0.05 | +0.05 | +0.12 | **+0.28** | +0.02 |
+
+**Gate A.**
+
+| scheme | single S1′ dev Δ > 0, ≥ 6/8 seeds | E2′[G8] dev Δ ≥ 0 | |
+|---|---|---|---|
+| `match` (primary) | +0.07, 8/8: ok | −0.02: **no** | fails |
+| `small` (secondary) | +0.11, 8/8: ok | +0.06: ok | **passes**; goes to stage B because `match` failed |
+
+**Predictions, checked as written.**
+
+| | prediction | observed | verdict |
+|---|---|---|---|
+| P0 | reproduction bars | all hold except dev-clip R0 2.4e-4 > 1e-4 (last batch only) | fails by the letter; explained above |
+| P1 | `match` S1′ Δ in [−0.30, +0.15], central −0.05; ≤ 4/8 seeds positive | +0.07; 8/8 | interval holds; **seed count fails** |
+| P2 | `match` R0 Δ in [−0.30, +0.15], central −0.05 | −0.06 | holds |
+| P3 | `match`: ToyCar most negative; fan, pump, slider within ±0.10 | R0 ToyCar −0.49 (S1′ +0.00, lowest); pump +0.098 | holds |
+| P4 | `small` \|Δ\| ≤ 0.05 under S0 and S1′ | +0.09, +0.11 | **fails**: `small` does twice the bound |
+| P5 | E2′[G8] `match` Δ in [−0.25, +0.10], central −0.05 | −0.02 | holds |
+
+**What dev shows.**
+- **`match` behaves as the pilot said.** Under R0, the ±3–8% copies cost ToyCar 0.49 AUC,
+  the machine whose normal clips the pilot saw rise ~1 sd at ±8%. S1′ hides it, probably
+  because its per-ID z-scoring absorbs a rise that is uniform within an ID. On G8 nothing is left.
+- **`small` is a consistent, small gain:** positive on 8/8 seeds under both rules, with
+  the R0 interval clear of 0. It is mostly ToyConveyor (+0.28 to +0.30), the most
+  seed-noisy machine. P4's reasoning was wrong.
+  - The pilot's rho of 0.06 measured *how much* of the normal-score spread is positional
+    noise.
+  - It did not measure whether that noise lands on the clips that matter: the normal clips
+    in the upper tail, which set AUC and pAUC.
+  - An unverified reading: a ±1% roll moves the clip by 1,600 samples. That is about 3 mel
+    frames, plus a 1/8-hop change in where the STFT frames fall. Averaging such copies
+    smooths frame-grid jitter rather than event position.
+- Ensembling keeps about half of it (+0.06 on G8, interval across 0). The pattern matches
+  every earlier variance-reduction step here.
+
+## Addendum: stage B (eval) predictions, written 2026-11-03 after stage A, before any eval clip is extracted
+
+Stage B runs `small` only (gate A). Extraction is restricted to its 3 shifts (0, ±1%):
+- eval clips for the 8 `ao_nogain` models;
+- train, dev and eval for `la_aug` s2040–2047, so A8 can be scored with and without TTA.
+
+`dev` is then rerun to add A8's dev Δ. The existing dev numbers are unchanged, because
+the bootstrap draws the same resamples.
+
+Eval references, unshifted:
+- `ao_nogain` 8-seed S1′ eval mean 93.88 (R0 93.14);
+- E2′[G8] 94.87;
+- E2′[A8] 94.78.
+
+Every earlier dev gain here shrank on eval, usually by about half or more (`aug`, `nogain`,
+G8). ToyConveyor gains were the ones that carried over (`../nogain-ensemble`).
+
+- **B1, single S1′ (D1).** Eval Δ mean(AUC, pAUC) in [−0.10, +0.25], central +0.06.
+  Positive on ≥ 5 of 8 seeds. The paired lower bound is > 0 with about 40% probability, so
+  the central call is that **D1 fails**.
+- **B2, single R0.** Eval Δ in [−0.05, +0.20], central +0.06, positive on ≥ 6 of 8 seeds.
+  R0's dev interval was narrow (±0.03), so the lower bound clears 0 with about 55%
+  probability. No decision is attached.
+- **B3, where.** ToyConveyor has the largest eval Δ AUC of the six machines under S1′. Eval
+  ToyCar id_05 moves by < 1.0 AUC.
+- **B4, A8 (D2).**
+  - E2′[A8] dev Δ ≥ 0, central +0.05.
+  - Eval Δ in [−0.10, +0.20], central +0.04, interval including 0, so **D2 fails**. About
+    65%.
+- **B5, G8.** E2′[G8] eval Δ in [−0.10, +0.20], central +0.04.
+
+### Stage B results
+
+*(pending)*
 
 ## Figures
 
 | file | shows |
 |---|---|
 | `plots/fig1_pilot_shift.png` | Pilot: R0 rise on normal held-out clips per circular shift, per machine and model type. Past the training range (grey), ToyCar rises ~60 sd at half a clip; fan, pump and slider stay flat. Inside ±1%, the splice alone costs nothing |
+| `plots/fig2_dev_delta.png` | Stage A: per-seed and bootstrap Δ dev mean(AUC, pAUC), single models (R0, S1′) and E2′[G8], for `match` and `small`. `small` gains on every seed; `match` loses under R0 and on G8 |
+| `plots/fig3_dev_machines.png` | Stage A: Δ dev AUC per machine. `small`'s gain is mostly ToyConveyor; `match` costs ToyCar 0.49 under R0 |

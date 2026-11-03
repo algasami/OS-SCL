@@ -68,6 +68,8 @@ def versions(r, ds, meta_te_n):
     out = {}
     sh = [round(float(x), 4) for x in tr['shifts']]
     for v, keep in VERSIONS.items():
+        if not all(round(x, 4) in sh for x in keep):
+            continue            # stage B extracts only the scheme that passed gate A
         cols = [sh.index(round(x, 4)) for x in keep]
 
         def red(a):
@@ -162,7 +164,7 @@ def main():
         for g, mem in groups.items():
             t0 = {k: np.mean([R[(r, 'T0', rule)]['overall'][k] for r in mem]) for k in KEYS}
             lines.append(f'{rule:4s} {g:7s} n={len(mem)}  T0 ' + ' '.join(f'{t0[k]:6.2f}' for k in KEYS))
-            for v in TV:
+            for v in [v for v in TV if all((r, v, rule) in R for r in mem)]:
                 t = {k: np.mean([R[(r, v, rule)]['overall'][k] for r in mem]) for k in KEYS}
                 pos = sum(R[(r, v, rule)]['overall']['mean_AUC_pAUC'] > R[(r, 'T0', rule)]['overall']['mean_AUC_pAUC']
                           for r in mem)
@@ -174,7 +176,7 @@ def main():
 
     # ---- ensembles (E2′) -----------------------------------------------------------------------
     ens = {f'{e}_{v}': sum(S[(r, v, 'S1p')] for r in mem) for e, mem in ENSEMBLES.items()
-           if all(r in runs for r in mem) for v in VERSIONS}
+           if all(r in runs for r in mem) for v in VERSIONS if all((r, v, 'S1p') in S for r in mem)}
     ER = {k: ev(v) for k, v in ens.items()}
     with open(os.path.join(out, f'{ds}_systems.csv'), 'w', newline='') as f, \
             open(os.path.join(out, f'{ds}_perid.csv'), 'w', newline='') as g:
@@ -198,8 +200,8 @@ def main():
     for v in TV:
         if f'G8_{v}' in ens and 'A8_T0' in ens:
             comps[f'G8_{v} − A8_T0'] = (f'G8_{v}', 'A8_T0')
-    single = {f'mean single {g} {rule}: {v}−T0': (g, rule, v) for g in ('nogain',) if g in groups
-              for rule in ('S0', 'S1p') for v in TV}
+    single = {f'mean single {g} {rule}: {v}−T0': (g, rule, v) for g in ('nogain', 'aug') if g in groups
+              for rule in ('S0', 'S1p') for v in TV if all((r, v, rule) in S for r in groups[g])}
     diffs = {n: {k: [] for k in KEYS} for n in list(comps) + list(single)}
     for _ in range(N_BOOT):
         idx = ev.resample(rng)
