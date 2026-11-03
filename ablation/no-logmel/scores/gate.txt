@@ -1,0 +1,3 @@
+G f5: 2 probe lines,  skipped steps, 5.4M ckpt, eval.py: Average AUC: 0.48626,  Average pAUC: 0.49815 ,Average mAUC: 0.46770
+G f6: 2 probe lines,  skipped steps, 4.4M ckpt, eval.py: Average AUC: 0.50461,  Average pAUC: 0.50083 ,Average mAUC: 0.45863
+G f7: 2 probe lines, 0 skipped steps, 4.6M ckpt, eval.py: Average AUC: 0.47537,  Average pAUC: 0.49711 ,Average mAUC: 0.46008

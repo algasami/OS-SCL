@@ -68,6 +68,9 @@ def parse_arguments():
     parser.add_argument('--eca', type=int, choices=[0, 1], help='1 = ECA after each bottleneck depthwise conv')
     parser.add_argument('--wave_aug', type=int, choices=[0, 1],
                         help='1 = waveform noise/shift/gain augmentation before mixup (Sensors 26:3214)')
+    parser.add_argument('--wave_aug_ops', type=str,
+                        help="Comma-separated subset of noise,shift,gain that --wave_aug applies "
+                             "(ablation/aug-ops). Default: all three")
     parser.add_argument('--state_snapshots', type=str,
                         help="Comma-separated epochs at which to save the full training state (state_e<N>.pth)")
     parser.add_argument('--resume_state', type=str,
@@ -81,6 +84,10 @@ def parse_arguments():
     parser.add_argument('--kd_teacher_dir', type=str, help="Directory holding the teachers (default check_points)")
     parser.add_argument('--kd_beta', type=float, help="Weight of the KD term (default 1.0)")
     parser.add_argument('--kd_tau', type=float, help="KD temperature on 30*cos (default 2.0)")
+    parser.add_argument('--m_warmup', type=str,
+                        help="START,END epochs (ablation/margin-warmup): the student's ArcFace margin is 0 "
+                             "before START, ramps linearly per step to --m at END, then stays at --m. "
+                             "The EMA net (validation, probe, model.pth) always uses --m. Off by default")
 
     return parser.parse_args()
 

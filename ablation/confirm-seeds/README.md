@@ -1,5 +1,11 @@
 # Confirm seeds — fresh paper-model checkpoints for confirmation
 
+> **[2026-10-28, `../mixed-ensemble`] The best reported ensemble is now
+> E2′[A8]:** the same E2′ rule over 8 `aug` models from `../lit-arms`. It beats
+> E2′[relu8] on eval mean by +0.31 [+0.07, +0.55] and on all three dev numbers
+> (dev 97.05 / 92.48 / 94.10, eval mean 94.78). The E2′ rule and every number
+> below stand as written. E2′[N4] is no longer the top system.
+
 > **Status: done (2026-10-16), 4 fresh seeds, dev and eval.** **D1: S1′ adopted**
 > as the single-model rule (beats R0 on 4/4 fresh seeds on both sets; eval
 > +0.65 [+0.53, +0.78]). One model under S1′ beats the paper's eval number by

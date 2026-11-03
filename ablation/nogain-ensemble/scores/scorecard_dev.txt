@@ -1,0 +1,31 @@
+DEV ONLY. E2′ = sum of members' S1′. AUC/pAUC/mAUC x100; mean = mean(AUC, pAUC). Paper (one model): dev AUC 95.71 pAUC 90.23 mAUC 91.23; eval mean 93.22.
+
+system    n     AUC   pAUC   mAUC   mean |     fan    pump  slider  ToyCar ToyConv   valve
+G8        8   97.19  92.76  94.12  94.97 |   99.04   96.13   99.73   98.37   89.88   99.96
+GA16     16   97.17  92.68  94.18  94.93 |   98.98   96.08   99.74   98.48   89.79   99.96
+F20g     20   96.69  91.95  92.91  94.32 |   98.76   95.55   99.77   97.78   88.32   99.98
+A8        8   97.05  92.48  94.10  94.77 |   98.82   96.00   99.74   98.54   89.26   99.95
+F20      20   96.64  91.83  92.91  94.24 |   98.65   95.52   99.77   97.88   88.07   99.98
+relu8     8   96.16  91.12  91.52  93.64 |   98.52   95.45   99.77   96.83   86.40   99.98
+
+ToyCar per ID (AUC):
+G8      id_01 93.44  id_02 99.14  id_03 99.80  id_04 100.00
+GA16    id_01 93.94  id_02 99.21  id_03 99.79  id_04 100.00
+F20g    id_01 91.39  id_02 99.21  id_03 99.84  id_04 100.00
+A8      id_01 94.35  id_02 99.22  id_03 99.75  id_04 100.00
+F20     id_01 91.89  id_02 99.23  id_03 99.83  id_04 100.00
+relu8   id_01 88.10  id_02 98.94  id_03 99.83  id_04 100.00
+
+Families over all 70 four-seed subsets of 2040-2047: mean [5%, 95%]. paired = nogain(subset) − aug(same subset).
+hom4_nogain combos=70  AUC +97.07 [+96.96, +97.18]  pAUC +92.58 [+92.33, +92.80]  mAUC +93.92 [+93.61, +94.26]  mean +94.83 [+94.67, +94.99] | fan +98.97 pump +96.03 slider +99.73 ToyCar +98.32 ToyConv +89.46 valve +99.94
+hom4_aug    combos=70  AUC +96.93 [+96.84, +97.02]  pAUC +92.31 [+92.16, +92.44]  mAUC +93.88 [+93.64, +94.12]  mean +94.62 [+94.52, +94.72] | fan +98.74 pump +95.88 slider +99.74 ToyCar +98.48 ToyConv +88.82 valve +99.92
+paired4     combos=70  AUC  +0.14 [+0.02, +0.28]  pAUC  +0.26 [+0.03, +0.49]  mAUC  +0.04 [-0.27, +0.31]  mean  +0.20 [+0.03, +0.38] | fan +0.23 pump +0.15 slider -0.01 ToyCar -0.17 ToyConv +0.63 valve +0.02
+paired4: nogain ahead on mean(AUC, pAUC) in 97% of subsets
+
+Paired clip-bootstrap (2000), system − E2′[A8]: mean [2.5%, 97.5%]
+G8     AUC +0.13 [+0.05, +0.22]  pAUC +0.27 [+0.12, +0.43]  mAUC +0.05 [-0.22, +0.33]  mean +0.20 [+0.10, +0.31]
+GA16   AUC +0.12 [+0.08, +0.16]  pAUC +0.20 [+0.10, +0.29]  mAUC +0.10 [-0.05, +0.26]  mean +0.16 [+0.10, +0.21]
+F20g   AUC -0.36 [-0.46, -0.26]  pAUC -0.54 [-0.72, -0.35]  mAUC -1.18 [-1.47, -0.87]  mean -0.45 [-0.57, -0.33]
+F20    AUC -0.41 [-0.49, -0.33]  pAUC -0.65 [-0.82, -0.47]  mAUC -1.19 [-1.45, -0.93]  mean -0.53 [-0.64, -0.42]
+
+Dev pick (highest dev mean; a tie within 0.05 goes to the smaller n): G8

@@ -1,0 +1,29 @@
+EVAL ONLY. E2′ = sum of members' S1′. AUC/pAUC/mAUC x100; mean = mean(AUC, pAUC). Paper (one model): dev AUC 95.71 pAUC 90.23 mAUC 91.23; eval mean 93.22.
+
+system    n     AUC   pAUC   mAUC   mean |     fan    pump  slider  ToyCar ToyConv   valve
+G8        8   96.96  92.77  93.35  94.87 |   99.64   98.31   99.77   95.96   89.69   98.40
+GA16     16   96.97  92.78  93.39  94.87 |   99.68   98.37   99.75   96.03   89.49   98.46
+F20g     20   97.15  92.89  94.30  95.02 |   99.57   98.58   99.64   97.68   88.49   98.91
+A8        8   96.88  92.67  93.26  94.78 |   99.71   98.40   99.72   96.00   88.97   98.49
+F20      20   97.09  92.83  94.25  94.96 |   99.60   98.59   99.61   97.68   88.16   98.92
+relu8     8   96.75  92.18  93.62  94.46 |   99.40   98.54   99.45   97.55   86.63   98.91
+
+ToyCar per ID (AUC):
+G8      id_05 86.83  id_06 99.37  id_07 99.92
+GA16    id_05 86.96  id_06 99.47  id_07 99.92
+F20g    id_05 92.28  id_06 99.57  id_07 100.00
+A8      id_05 86.81  id_06 99.53  id_07 99.91
+F20     id_05 92.21  id_06 99.61  id_07 100.00
+relu8   id_05 91.59  id_06 99.52  id_07 100.00
+
+Families over all 70 four-seed subsets of 2040-2047: mean [5%, 95%]. paired = nogain(subset) − aug(same subset).
+hom4_nogain combos=70  AUC +96.85 [+96.64, +97.04]  pAUC +92.58 [+92.17, +92.97]  mAUC +93.14 [+92.80, +93.45]  mean +94.71 [+94.41, +95.00] | fan +99.61 pump +98.27 slider +99.74 ToyCar +95.83 ToyConv +89.35 valve +98.27
+hom4_aug    combos=70  AUC +96.76 [+96.51, +97.00]  pAUC +92.49 [+92.15, +92.85]  mAUC +93.05 [+92.55, +93.50]  mean +94.63 [+94.32, +94.93] | fan +99.67 pump +98.38 slider +99.70 ToyCar +95.87 ToyConv +88.61 valve +98.34
+paired4     combos=70  AUC  +0.08 [-0.07, +0.25]  pAUC  +0.09 [-0.20, +0.38]  mAUC  +0.09 [-0.34, +0.52]  mean  +0.09 [-0.12, +0.31] | fan -0.06 pump -0.11 slider +0.04 ToyCar -0.04 ToyConv +0.74 valve -0.07
+paired4: nogain ahead on mean(AUC, pAUC) in 73% of subsets
+
+Paired clip-bootstrap (2000), system − E2′[A8]: mean [2.5%, 97.5%]
+G8     AUC +0.08 [-0.01, +0.18]  pAUC +0.10 [-0.12, +0.32]  mAUC +0.09 [-0.19, +0.37]  mean +0.09 [-0.05, +0.23]
+GA16   AUC +0.09 [+0.04, +0.14]  pAUC +0.11 [-0.01, +0.22]  mAUC +0.14 [-0.01, +0.28]  mean +0.10 [+0.02, +0.17]
+F20g   AUC +0.27 [+0.15, +0.39]  pAUC +0.22 [-0.04, +0.48]  mAUC +1.02 [+0.64, +1.40]  mean +0.24 [+0.07, +0.41]
+F20    AUC +0.21 [+0.11, +0.32]  pAUC +0.16 [-0.08, +0.39]  mAUC +0.97 [+0.61, +1.33]  mean +0.19 [+0.03, +0.34]

@@ -1,0 +1,19 @@
+{
+    "m": 0.4,
+    "gpu_num": 2,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "la_eca_s2042",
+    "seed": 2042,
+    "num_workers": 8,
+    "amp": "fp16",
+    "cudnn_bench": 1,
+    "lean": 1,
+    "cache_dir": "data/cache",
+    "probe_every": 5,
+    "eca": 1,
+    "state_every": 10,
+    "model_name": "SCLTFSTgramMFN_la_eca_s2042"
+}

@@ -1,0 +1,17 @@
+{
+    "m": 0.4,
+    "gpu_num": 0,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 4,
+    "ht": "basic",
+    "desc": "fr_f4_s2040",
+    "seed": 2040,
+    "num_workers": 8,
+    "amp": "fp16",
+    "cudnn_bench": 1,
+    "lean": 1,
+    "cache_dir": "data/cache",
+    "probe_every": 5,
+    "model_name": "SCLTFSTgramMFN_fr_f4_s2040"
+}

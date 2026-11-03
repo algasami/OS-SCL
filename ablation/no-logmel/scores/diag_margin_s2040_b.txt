@@ -1,0 +1,5 @@
+# diag_margin.py rerun 2026-10-20 03:45 (DEV=cpu, same 1024 clips). nl_f5 and nl_f7 finished (300 epochs);
+# nl_f6 mid-run, best-EMA checkpoint at epoch ~250 (probe dev AUC 86.0).
+SCLTFSTgramMFN_nl_f6_s2040       acc(no margin) 0.999  acc(margin 0.4) 0.000  cos tgt -0.741 max-other -0.860  emb cos same-ID +0.998 diff-ID +0.885
+SCLTFSTgramMFN_nl_f5_s2040       acc(no margin) 1.000  acc(margin 0.4) 0.999  cos tgt +0.996 max-other +0.758  emb cos same-ID +0.997 diff-ID +0.764
+SCLTFSTgramMFN_nl_f7_s2040       acc(no margin) 0.873  acc(margin 0.4) 0.000  cos tgt -0.834 max-other -0.887  emb cos same-ID +0.998 diff-ID +0.920

@@ -1,0 +1,8 @@
+# diag_margin.py on the best-EMA checkpoints of the seed-2040 runs, mid-training (2026-10-19 22:30).
+# 1024 random training clips (rng 0). Checkpoint epochs: nl_f5 151, nl_f6 110, nl_f7 158; fr_* finished (300).
+# acc(no margin) = argmax of cos; acc(margin) = cos(theta_tgt + m) > max other cos; emb cos = mean pairwise.
+SCLTFSTgramMFN_nl_f5_s2040       acc(no margin) 0.461  acc(margin 0.4) 0.135  cos tgt +0.885 max-other +0.859  emb cos same-ID +0.984 diff-ID +0.905
+SCLTFSTgramMFN_nl_f6_s2040       acc(no margin) 0.022  acc(margin 0.4) 0.000  cos tgt -0.906 max-other -0.849  emb cos same-ID +1.000 diff-ID +0.998
+SCLTFSTgramMFN_nl_f7_s2040       acc(no margin) 0.873  acc(margin 0.4) 0.000  cos tgt -0.834 max-other -0.887  emb cos same-ID +0.998 diff-ID +0.920
+SCLTFSTgramMFN_fr_f1_s2040       acc(no margin) 1.000  acc(margin 0.4) 0.999  cos tgt +0.996 max-other +0.734  emb cos same-ID +0.995 diff-ID +0.732
+SCLTFSTgramMFN_fr_f4_s2040       acc(no margin) 0.999  acc(margin 0.4) 0.999  cos tgt +0.996 max-other +0.735  emb cos same-ID +0.995 diff-ID +0.732
