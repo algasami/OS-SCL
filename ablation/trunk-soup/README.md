@@ -1,9 +1,9 @@
 # Trunk soup: one network with an ensemble's stability
 
-> **Status: designed 2026-10-17; code and smoke test done; nothing trained.**
-> Phase 2 of the plan. It runs after `../lit-arms`, on the best single-model
-> recipe at that point. That base is fixed in a dated addendum below **before**
-> any trunk is trained.
+> **Status: TRAINING since 2026-11-03.** The base is `ao_nogain`
+> (`../aug-ops` C2), fixed in the addendum below before any trunk was
+> trained, and smoke-tested on that base. Trunks T1 and T2 are on GPUs 0 and
+> 2; 8 forks follow from epoch 150.
 
 ## Why this exists
 
@@ -95,7 +95,87 @@ non-fork member.
 
 ## Addendum: base recipe (to be fixed before the first trunk)
 
-*(empty: waiting for `../lit-arms`)*
+*Written 2026-11-03, before any trunk was trained. The design, P1–P5 and
+D1–D3 above are unchanged; this fixes the base recipe and turns P1–P5 into
+numbers for the new base.*
+
+**Base recipe: `ao_nogain`**, the single-model recipe since `../aug-ops` C2.
+
+- Flags: `TS_FUSSION=1`, `TS_FLAGS="--wave_aug 1 --wave_aug_ops noise,shift"`,
+  on top of `run_one.sh`'s fast-recipe base (`--amp fp16 --cudnn_bench 1
+  --lean 1 --cache_dir data/cache --probe_every 5 --num_workers 8`, 300
+  epochs).
+- This is the exact recipe of `ao_nogain_s2040–2047`, so those 8 runs are
+  the **independent baseline**. No new independent seeds are trained.
+- Launch: `TS_FUSSION=1 TS_FLAGS="--wave_aug 1 --wave_aug_ops noise,shift"
+  GPUS="0 2 1" bash ablation/trunk-soup/run.sh train`. The GPU order puts
+  the two 300-epoch trunks on the fast cards (GPU 1 is PCIe x1, CLAUDE.md).
+
+**Fork point stays at epoch 150.** The probe logs of the 8 `ao_nogain`
+runs show the EMA net still learning there:
+
+| epoch | 99 | 124 | 149 | 174 | 199 | 224 | 249 | 299 |
+|---|---|---|---|---|---|---|---|---|
+| dev AUC, probe mean over 8 | 69.3 | 84.6 | 91.1 | 93.5 | 95.3 | 96.0 | 96.1 | 96.1 |
+| dev ToyConveyor, sd across seeds | 3.00 | 3.57 | 1.80 | 0.84 | 0.69 | 0.59 | 0.62 | 0.67 |
+
+So forks have half of training, including the whole climb from 91 to 96,
+in which to diverge. Within one run, ToyConveyor's probe moves by an sd of
+0.27–0.77 over epochs 200–299, so late training still varies. D3's fallback
+(a fork point at 225) stays as written.
+
+**Smoke test on this base (2026-11-03, GPU 1).** A 2-epoch trunk
+(`--state_snapshots 1`) was forked twice for 1 epoch:
+
+- Both forks print `resume check | valid loss 19.15265 vs trunk 19.15265 | ok`.
+- Their `config.json` carries `wave_aug_ops: noise,shift`.
+- The forks differ (max |Δw| 0.155), and the soup is their exact element-wise
+  mean.
+- The smoke checkpoints were deleted, so `run.sh score` cannot pick them up.
+
+**Reference numbers.** Independent `ao_nogain`, 8 seeds, R0, mean (sd across
+seeds):
+
+| | dev AUC | eval AUC | eval mean(AUC, pAUC) | eval ToyConveyor |
+|---|---|---|---|---|
+| independent `ao_nogain` | 96.10 (0.23) | 95.30 (0.48) | 93.14 (0.60) | 83.62 (2.07) |
+| paper | 95.71 | — | 93.22 | — |
+
+Independent ensembles, E2′ = Σ S1′ (`../nogain-ensemble`):
+
+- A single model under S1′ scores dev AUC 96.43.
+- `hom4_nogain` scores 97.07, a gain of **+0.64** from 4 independent members.
+- G8 scores 97.19.
+
+**Scoring.**
+
+- Primary: R0 via `run.sh score`.
+- Secondary: S1′, E1 and E2′. These use `../ensemble-backend/extract.py`
+  dumps and `../aug-ops/score_s1p.py`'s rule, both unchanged.
+- E1 (sum of per-ID z-scored R0) over a trunk's forks is the "fork ensemble"
+  in P3. E2′ over the forks is the one in P2.
+
+**Power.** D1 compares the mean of 2 soups with the mean of 8 independent
+runs. If soups vary like single seeds, that difference has se ≈ 0.18 dev and
+≈ 0.38 eval. So D1's +0.20 dev bar is about 1.1 se: only a large gain passes
+it on 2 trunks. That is why D2 adds trunks 3–4. P1 is paired within a trunk,
+so it is the better-powered test of the mechanism.
+
+**Predictions, made numeric** (R0 dev AUC unless stated):
+
+- **P1.** soup4(T) − mean fork of T lies in [+0.10, +0.40] for both trunks,
+  central +0.20. On eval, soup4 − mean fork ≥ 0 for both trunks.
+- **P2.** E2′ over T's 4 forks, minus the mean fork under S1′, is ≤ +0.38
+  (60% of +0.64) on both trunks. Central +0.25.
+- **P3.** |soup4(T) under R0 − E1 over T's forks| ≤ 0.25 on dev, for both
+  trunks.
+- **P4.** In soup4 − mean fork, ToyConveyor has the largest per-machine Δ on
+  eval. Dev ToyConveyor is already tight (sd 0.48), so P4 is judged on eval.
+- **P5.** Mean soup4 over the 2 trunks, minus the independent mean, lies in
+  [+0.10, +0.40], central +0.20, i.e. dev AUC ≈ 96.30.
+- **P6 (new).** Mean soup4 eval mean(AUC, pAUC) under R0 is ≥ the paper's
+  93.22. Central 93.40, about 55%. The independent runs sit at 93.14, with 4
+  of 8 seeds above.
 
 ## Results
 
