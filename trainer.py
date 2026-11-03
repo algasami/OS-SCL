@@ -329,6 +329,6 @@ class Trainer:
 
 def teacher_cos(net, wavs, mels):
     """Margin-free cosines to the 41 class centres; net.forward's path without the margin."""
-    _, feature = net.mobilefacenet(net.branch_input(wavs, mels, train=wavs.shape[0] > 1))
+    feature = net.embed(wavs, mels, train=wavs.shape[0] > 1)
     feature = F.normalize(net.head(feature), dim=1)
     return F.linear(feature, F.normalize(net.arcface.weight))
