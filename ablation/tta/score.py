@@ -63,18 +63,20 @@ def versions(r, ds, meta_te_n):
     tr = dict(np.load(os.path.join(EMB, 'train', f'{r}.npz')))
     te = dict(np.load(os.path.join(EMB, ds, f'{r}.npz')))
     finite(tr, r), finite(te, r)
-    assert list(tr['shifts']) == list(te['shifts']) and tr['shifts'][0] == 0
+    assert tr['shifts'][0] == 0 and te['shifts'][0] == 0
     o = dict(np.load(orig_path(r)))
     out = {}
-    sh = [round(float(x), 4) for x in tr['shifts']]
+    # the train bank may hold more shifts than the test dump (stage B extracts only `small`);
+    # columns are picked by shift value in each array separately
+    sh = {id(tr): [round(float(x), 4) for x in tr['shifts']], id(te): [round(float(x), 4) for x in te['shifts']]}
     for v, keep in VERSIONS.items():
-        if not all(round(x, 4) in sh for x in keep):
+        if not all(round(x, 4) in s_ for s_ in sh.values() for x in keep):
             continue            # stage B extracts only the scheme that passed gate A
-        cols = [sh.index(round(x, 4)) for x in keep]
 
         def red(a):
             if v == 'T0':
                 return a['ce'][:, 0], a['pre'][:, 0]
+            cols = [sh[id(a)].index(round(x, 4)) for x in keep]
             p = a['pre'][:, cols] / np.linalg.norm(a['pre'][:, cols], axis=2, keepdims=True)
             return a['ce'][:, cols].mean(1), p.mean(1)
         trc, trp = red(tr)

@@ -1,16 +1,23 @@
 # TTA: does averaging over time-shifted copies of each clip help?
 
-> **Status: stage A (dev) done 2026-11-03; stage B (eval) running.**
-> - **Gate A:** `match` (±3–8%, the primary scheme) fails. It is +0.07 on single-model
->   S1′, but E2′[G8] goes −0.02. `small` (±1%, the secondary) passes: +0.11 S1′ on 8/8
->   seeds, +0.09 R0 on 8/8, E2′[G8] +0.06. By the pre-registered rule, `small` goes to
->   stage B.
+> **Status: DONE 2026-11-03.**
+> - **D1 passes: TTA joins the single-model rule.** Averaging over shifts of 0 and ±1%
+>   (`small`, K=3) lifts one `ao_nogain` network under S1′ on eval by +0.05
+>   [+0.01, +0.09], after +0.11 on dev (8/8 seeds).
+>   - Under R0 it is +0.11 on eval and +0.09 on dev, 8/8 seeds on both, with every
+>     interval clear of 0. It holds for `la_aug` too.
+>   - One network now scores dev 96.52 / 91.72 / 93.01 and eval mean 93.93 under S1′ᵀ.
+>     Under R0ᵀ it scores dev 96.18 / 91.19 / 92.26 and eval mean 93.24, against the
+>     paper's 95.71 / 90.23 / 91.23 / 93.22.
+> - **D2 fails: ensembles don't gain.** E2′[A8] moves −0.01 [−0.07, +0.04] on eval and
+>   E2′[G8] −0.05 [−0.10, −0.00]. E2′[A8] without TTA stays the reported best ensemble.
+> - **`match` (±3–8%, the primary scheme) failed gate A.** It costs ToyCar 0.49 under R0,
+>   and E2′[G8] −0.02 on dev. Eval was never scored under `match`.
 > - **Pilot (training clips only):** shifting a clip past the training range makes normal
->   ToyCar look anomalous (~60 sd at half a clip). The splice itself costs nothing, so the
->   ToyCar models key on absolute time position.
-> - **P0 fails by the letter** on dev-clip R0 (2.4e-4 against 1e-4). Every difference is in
->   the last, differently sized batch; see Stage A.
-> - The eval predictions (addendum) were committed before any eval clip was extracted.
+>   ToyCar look anomalous (~60 sd at half a clip), while a ±1% splice costs nothing. The
+>   ToyCar models key on absolute time position, not on the splice click.
+> - P0 fails by the letter on test-clip R0 (≤ 5.5e-4). Every difference sits in the last,
+>   differently sized batch; the training bank is bit-identical.
 
 ## Why this exists
 
@@ -156,7 +163,7 @@ What the pilot shows (per shift and machine: `scores/pilot_shift.csv`, figure 1)
 | `pilot.py` | the pilot statistics and scheme pick (held-out training clips only) |
 | `score.py` | T0 / Tm / Ts under S0, S1′ and E2′, bootstrap, scorecard; one split per call |
 | `run.sh` | stages: `pilot`, `extractA`, `dev`, `extractB`, `eval`, `plots` |
-| `scores/` | committed record: `pilot*.csv`, then `<ds>_runs.csv`, `<ds>_systems.csv`, `<ds>_perid.csv`, `<ds>_bootstrap.json`, `<ds>_check.json`, `scorecard_<ds>.txt` |
+| `scores/` | committed record: `pilot*.csv`, then `<ds>_runs.csv`, `<ds>_systems.csv`, `<ds>_perid.csv`, `<ds>_bootstrap.json`, `<ds>_check.json`, `scorecard_<ds>.txt`, `toycar_ids.csv` (single-model ToyCar per ID, T0 and Ts) |
 | `results/` | dumps (`emb/`, ~2 GB) and logs: gitignored scratch |
 
 ## Results
@@ -269,9 +276,110 @@ G8). ToyConveyor gains were the ones that carried over (`../nogain-ensemble`).
     65%.
 - **B5, G8.** E2′[G8] eval Δ in [−0.10, +0.20], central +0.04.
 
-### Stage B results
+### Stage B results (eval, 2026-11-03)
 
-*(pending)*
+Eval clips were extracted only after the addendum was committed (`100f055`), and only
+under `small`'s 3 shifts. `scores/scorecard_eval.txt`, `eval_*.csv`, `eval_bootstrap.json`,
+`eval_check.json`; per-ID ToyCar for single models is in `scores/toycar_ids.csv`.
+
+- **Reproduction.**
+  - T0 S0 per-ID AUC matches eval.py to ≤ 1.9e-4 on eval. On dev it is ≤ 2.5e-4 once
+    `la_aug` is included.
+  - T0 R0 differs from the original dumps only in the final batch of each split: 20 dev
+    clips and 31 eval clips, ≤ 5.5e-4. The original pass batched those clips at a
+    different size. Training banks are bit-identical for all 16 models.
+- **The `dev` rerun** (which adds A8 and the `la_aug` single models) reproduces every stage
+  A number and interval exactly.
+
+```
+eval                    AUC    pAUC   mAUC   mean  | Δ mean   seeds>0  paired 95% (mean)
+ao_nogain ×8, R0   T0  95.30  90.97  90.33  93.13
+                   Ts  95.38  91.10  90.42  93.24  | +0.11    8/8     [+0.07, +0.15]
+ao_nogain ×8, S1′  T0  96.19  91.57  91.96  93.88
+                   Ts  96.24  91.61  92.12  93.93  | +0.05    5/8     [+0.01, +0.09]
+la_aug ×8, R0      Ts − T0                           | +0.13    8/8     [+0.09, +0.17]
+la_aug ×8, S1′     Ts − T0                           | +0.06    7/8     [+0.01, +0.10]
+E2′[G8]            T0  96.96  92.77  93.35  94.87
+                   Ts  96.94  92.69  93.34  94.81  | −0.05             [−0.10, −0.00]
+E2′[A8] (bar)      T0  96.88  92.67  93.26  94.78
+                   Ts  96.90  92.63  93.33  94.76  | −0.01             [−0.07, +0.04]
+paper (one model)                             93.22
+```
+
+On dev, A8's Δ is +0.05 [−0.06, +0.17], and the `la_aug` single models gain +0.11 under
+both rules on 8/8 seeds.
+
+Eval Δ AUC by machine, `ao_nogain` single models:
+
+| | fan | pump | slider | ToyCar | ToyConveyor | valve |
+|---|---|---|---|---|---|---|
+| R0 | +0.01 | +0.02 | +0.05 | +0.04 | +0.19 | +0.18 |
+| S1′ | +0.01 | +0.02 | +0.02 | +0.15 | +0.17 | −0.04 |
+
+Eval ToyCar id_05 (`ao_nogain`): R0 82.26 → 82.25, S1′ 85.10 → 85.50; G8 86.83 → 87.05.
+
+`ao_nogain` seeds above the paper, out of 8. Dev is 8/8 on all three numbers in every
+cell.
+
+| eval mean > 93.22 | T0 | Ts |
+|---|---|---|
+| R0 | 4 | 5 |
+| S1′ | 7 | 7 |
+
+### Decisions
+
+- **D1, adopt TTA in the single-model rule: passes.** Gate A held for `small`, and the
+  8-seed mean S1′ eval Δ is +0.05 [+0.01, +0.09].
+  - So the single-model rule becomes **S1′ᵀ**: S1′ computed on the average of each clip's
+    0 / ±1% copies, with the training bank built the same way.
+  - The margin is thin: the lower bound is +0.01, and 3 of 8 seeds are slightly negative
+    (−0.01 to −0.04).
+  - R0ᵀ is the cleaner effect: +0.11 on eval, +0.09 on dev, 8/8 on both sets and both
+    member types. R0ᵀ is not the paper's rule, so it can't stand in for R0 in a comparison
+    with the paper.
+- **D2, adopt TTA for the reported ensemble: fails.** E2′[A8] eval Δ −0.01 [−0.07, +0.04].
+  E2′[A8] stays as it is. On G8, TTA costs a little on eval (−0.05, upper bound −0.00).
+
+### Predictions, checked as written
+
+| | prediction | observed | verdict |
+|---|---|---|---|
+| B1 | single S1′ eval Δ in [−0.10, +0.25], central +0.06, ≥ 5/8 positive; lower bound > 0 at ~40%, so D1 fails | +0.05, 5/8, [+0.01, +0.09] | interval and seeds hold; **the central call (D1 fails) is wrong**: D1 passes |
+| B2 | single R0 eval Δ in [−0.05, +0.20], central +0.06, ≥ 6/8 | +0.11, 8/8, [+0.07, +0.15] | holds |
+| B3 | S1′: ToyConveyor the largest eval Δ; ToyCar id_05 moves < 1.0 | ToyConveyor +0.17 vs ToyCar +0.15; id_05 +0.40 (S1′), −0.01 (R0) | holds (ToyConveyor narrowly) |
+| B4 | A8 dev Δ ≥ 0 (central +0.05); eval Δ in [−0.10, +0.20], central +0.04, interval includes 0, so D2 fails | dev +0.05; eval −0.01 [−0.07, +0.04] | holds |
+| B5 | G8 eval Δ in [−0.10, +0.20], central +0.04 | −0.05 [−0.10, −0.00] | holds by the interval; the sign is wrong |
+
+### What this shows
+
+- **TTA and ensembling remove the same thing.** Single models gain on both sets: R0 by
+  about +0.1, S1′ by about +0.05 on eval. Summed over 8 members, nothing is left (A8 −0.01)
+  or a little is lost (G8 −0.05).
+  - The ±1% copies average out per-model, per-clip jitter, which is exactly what an
+    ensemble of independently trained models already averages.
+  - This matches `../trunk-soup`'s premise from the other side: per-network noise is what
+    ensembles buy, and here it can be bought for one network at 3× inference cost.
+- **Where it helps:** ToyConveyor on both sets; valve on eval under R0. Fan, pump and slider
+  move by ≤ 0.05. Pump, the machine furthest below the paper, is untouched (+0.02).
+- **ToyCar id_05 is untouched,** consistent with the pilot's reading. Tolerance to shifts
+  is not what costs id_05; temporal position is. Small averaging changes neither.
+- **The pilot's selection rule picked the wrong scheme.** It chose `match` by how much
+  normal-score spread there was to average away, and `match` failed. `small`, with a tenth
+  of the spread, passed.
+  - Its penalty guard was right in spirit: the shift-induced rise on ToyCar is the cost.
+  - Its variance measure was not the right proxy for AUC.
+
+## What next
+
+1. **Report single models under S1′ᵀ** (and R0ᵀ alongside R0) from here on. It costs 3
+   forward passes per clip, and the same for the training bank.
+2. **Don't use TTA for ensembles.** E2′ stays on unshifted copies.
+3. **The ToyCar time-position finding** bears on `../aug-ops`' open id_05 item (and the
+   proposed click-free shift). The models react to where ToyCar events sit in the clip, not
+   to the splice. An arm that removes position information on ToyCar (e.g. a
+   position-invariant pooling in place of `linear7`) would test that more directly than a
+   splice-free shift. Any such test can only be judged on eval (dev can't see id_05), so it
+   needs fresh seeds and a pre-registration.
 
 ## Figures
 
@@ -280,3 +388,5 @@ G8). ToyConveyor gains were the ones that carried over (`../nogain-ensemble`).
 | `plots/fig1_pilot_shift.png` | Pilot: R0 rise on normal held-out clips per circular shift, per machine and model type. Past the training range (grey), ToyCar rises ~60 sd at half a clip; fan, pump and slider stay flat. Inside ±1%, the splice alone costs nothing |
 | `plots/fig2_dev_delta.png` | Stage A: per-seed and bootstrap Δ dev mean(AUC, pAUC), single models (R0, S1′) and E2′[G8], for `match` and `small`. `small` gains on every seed; `match` loses under R0 and on G8 |
 | `plots/fig3_dev_machines.png` | Stage A: Δ dev AUC per machine. `small`'s gain is mostly ToyConveyor; `match` costs ToyCar 0.49 under R0 |
+| `plots/fig4_eval_delta.png` | Stage B: per-seed and bootstrap Δ eval mean(AUC, pAUC) for `small`. Single models gain (R0 +0.11 8/8, S1′ +0.05 5/8); E2′[G8] −0.05 and E2′[A8] −0.01 don't |
+| `plots/fig5_eval_machines.png` | Stage B: Δ eval AUC per machine for `small`. ToyConveyor and valve (R0) and ToyCar (S1′) gain; every machine ≥ −0.05 |

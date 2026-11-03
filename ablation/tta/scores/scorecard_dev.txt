@@ -1,24 +1,35 @@
 DEV ONLY. T0 = no TTA; Tm = mean over shifts [0.0, 0.03, -0.03, 0.055, -0.055, 0.08, -0.08]; Ts = mean over shifts [0.0, 0.01, -0.01]. AUC/pAUC/mAUC x100; mean = mean(AUC, pAUC).
 Paper: dev AUC 95.71 pAUC 90.23 mAUC 91.23; eval mean 93.22.
-Reproduction: max |T0 R0 − original dump| train 0.00e+00, test 2.44e-04; max |T0 S0 − eval.py| per-ID AUC 1.37e-04
+Reproduction: max |T0 R0 − original dump| train 0.00e+00, test 5.10e-04; max |T0 S0 − eval.py| per-ID AUC 2.47e-04
 
 Single models, group means (AUC pAUC mAUC mean); Δ = version − T0 (seeds with Δ mean(AUC,pAUC) > 0)
 S0   nogain  n=8  T0  96.10  91.08  92.12  93.59
                    Tm  96.05  91.01  91.97  93.53  | Δ -0.05 -0.07 -0.14 -0.06  (0/8)  | Δ AUC by machine: fan +0.08 pump +0.10 slider +0.00 ToyCar -0.49 ToyConv -0.02 valve +0.05
                    Ts  96.18  91.19  92.26  93.68  | Δ +0.09 +0.10 +0.15 +0.10  (8/8)  | Δ AUC by machine: fan +0.05 pump +0.07 slider -0.00 ToyCar +0.05 ToyConv +0.30 valve +0.04
+S0   aug     n=8  T0  95.77  90.73  91.76  93.25
+                   Ts  95.87  90.84  91.88  93.36  | Δ +0.11 +0.11 +0.12 +0.11  (8/8)  | Δ AUC by machine: fan +0.04 pump +0.08 slider -0.00 ToyCar +0.07 ToyConv +0.42 valve +0.03
 S1p  nogain  n=8  T0  96.43  91.58  92.82  94.00
                    Tm  96.47  91.67  92.95  94.07  | Δ +0.05 +0.09 +0.13 +0.07  (8/8)  | Δ AUC by machine: fan +0.01 pump +0.05 slider +0.08 ToyCar +0.00 ToyConv +0.11 valve +0.03
                    Ts  96.52  91.72  93.01  94.12  | Δ +0.09 +0.14 +0.20 +0.11  (8/8)  | Δ AUC by machine: fan -0.00 pump +0.05 slider +0.05 ToyCar +0.12 ToyConv +0.28 valve +0.02
+S1p  aug     n=8  T0  96.24  91.22  92.66  93.73
+                   Ts  96.32  91.35  92.80  93.84  | Δ +0.09 +0.12 +0.14 +0.11  (8/8)  | Δ AUC by machine: fan -0.01 pump +0.02 slider +0.03 ToyCar +0.11 ToyConv +0.34 valve +0.02
 
 E2′ ensembles (sum of members' S1′): AUC pAUC mAUC mean | per-machine AUC
 G8_T0     97.19  92.76  94.12  94.97 | fan  99.04 pump  96.13 slider  99.73 ToyCar  98.37 ToyConv  89.88 valve  99.96
 G8_Tm     97.13  92.77  94.02  94.95 | fan  99.03 pump  96.09 slider  99.82 ToyCar  98.28 ToyConv  89.61 valve  99.97
 G8_Ts     97.21  92.86  94.17  95.04 | fan  99.02 pump  96.12 slider  99.79 ToyCar  98.44 ToyConv  89.93 valve  99.97
+A8_T0     97.05  92.48  94.10  94.77 | fan  98.82 pump  96.00 slider  99.74 ToyCar  98.54 ToyConv  89.26 valve  99.95
+A8_Ts     97.08  92.55  94.14  94.81 | fan  98.78 pump  95.97 slider  99.78 ToyCar  98.61 ToyConv  89.41 valve  99.96
 
 Paired clip-bootstrap (2000, seed 0): mean [2.5%, 97.5%]
 G8 E2′: Tm−T0                  AUC -0.05 [-0.10, +0.00]  pAUC +0.01 [-0.17, +0.25]  mAUC -0.10 [-0.21, +0.02]  mean -0.02 [-0.13, +0.12]
 G8 E2′: Ts−T0                  AUC +0.03 [-0.02, +0.07]  pAUC +0.10 [-0.08, +0.33]  mAUC +0.05 [-0.04, +0.14]  mean +0.06 [-0.04, +0.20]
+A8 E2′: Ts−T0                  AUC +0.03 [-0.01, +0.08]  pAUC +0.06 [-0.11, +0.27]  mAUC +0.05 [-0.04, +0.13]  mean +0.05 [-0.06, +0.17]
+G8_Tm − A8_T0                  AUC +0.08 [-0.01, +0.17]  pAUC +0.29 [+0.06, +0.53]  mAUC -0.05 [-0.32, +0.24]  mean +0.19 [+0.04, +0.34]
+G8_Ts − A8_T0                  AUC +0.16 [+0.07, +0.25]  pAUC +0.38 [+0.15, +0.62]  mAUC +0.10 [-0.17, +0.39]  mean +0.27 [+0.12, +0.42]
 mean single nogain S0: Tm−T0   AUC -0.05 [-0.09, -0.01]  pAUC -0.07 [-0.15, -0.00]  mAUC -0.14 [-0.26, -0.01]  mean -0.06 [-0.11, -0.01]
 mean single nogain S0: Ts−T0   AUC +0.09 [+0.06, +0.11]  pAUC +0.10 [+0.05, +0.15]  mAUC +0.15 [+0.07, +0.23]  mean +0.09 [+0.06, +0.12]
 mean single nogain S1p: Tm−T0  AUC +0.05 [+0.00, +0.10]  pAUC +0.09 [-0.08, +0.30]  mAUC +0.13 [+0.03, +0.24]  mean +0.07 [-0.03, +0.19]
 mean single nogain S1p: Ts−T0  AUC +0.09 [+0.05, +0.13]  pAUC +0.14 [-0.02, +0.34]  mAUC +0.20 [+0.12, +0.27]  mean +0.11 [+0.02, +0.24]
+mean single aug S0: Ts−T0      AUC +0.11 [+0.08, +0.13]  pAUC +0.11 [+0.07, +0.15]  mAUC +0.13 [+0.05, +0.21]  mean +0.11 [+0.08, +0.14]
+mean single aug S1p: Ts−T0     AUC +0.09 [+0.05, +0.13]  pAUC +0.12 [-0.01, +0.31]  mAUC +0.14 [+0.07, +0.22]  mean +0.11 [+0.02, +0.22]

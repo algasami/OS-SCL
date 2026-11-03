@@ -111,7 +111,8 @@ def fig_stage(ds, fname):
     E = {x['system']: float(x['mean_AUC_pAUC']) for x in sysr if x['scope'] == 'overall'}
     runs = sorted({k[0] for k in R if '_ao_nogain_' in k[0]})
     fig, ax = plt.subplots(figsize=(8.2, 3.8))
-    cols = [('S0', 'Tm'), ('S0', 'Ts'), ('S1p', 'Tm'), ('S1p', 'Ts')]
+    cols = [(rule, v) for rule, v in (('S0', 'Tm'), ('S0', 'Ts'), ('S1p', 'Tm'), ('S1p', 'Ts'))
+            if all((r, v, rule) in R for r in runs)]   # eval holds only the scheme that passed gate A
     labels = []
     for i, (rule, v) in enumerate(cols):
         c = SCHEME[v][0]
@@ -134,15 +135,19 @@ def fig_stage(ds, fname):
     ax.set_xticklabels(labels, fontsize=8)
     ax.set_ylabel(f'Δ {ds} mean(AUC, pAUC) vs no TTA (points)')
     ax.grid(axis='y')
+    shown = {v for _, v in cols} | {'Ts'}
     for v, (c, lab) in SCHEME.items():
-        ax.plot([], [], 'o', color=c, label=lab)
-    ax.legend(loc='upper left', fontsize=8)
+        if v in shown:
+            ax.plot([], [], 'o', color=c, label=lab)
+    ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0), fontsize=8)
     g = lambda n: boot.get(n, {}).get('mean_AUC_pAUC', [np.nan])[0]   # noqa: E731
-    ax.set_title(f'{ds}: small (±1%) TTA gains on every seed (R0 {g("mean single nogain S0: Ts−T0"):+.2f}, '
-                 f'S1′ {g("mean single nogain S1p: Ts−T0"):+.2f}, E2′[G8] {g("G8 E2′: Ts−T0"):+.2f});\n'
-                 f'match (±3–8%) loses on R0 ({g("mean single nogain S0: Tm−T0"):+.2f}) and on E2′[G8] '
-                 f'({g("G8 E2′: Tm−T0"):+.2f}). Dots = seeds; bars = paired 95% clip bootstrap',
-                 loc='left', fontsize=9.5, color=INK)
+    npos = lambda rule, v: sum(R[(r, v, rule)]['mean'] > R[(r, 'T0', rule)]['mean'] for r in runs)  # noqa: E731
+    line2 = (f'match (±3–8%): R0 {g("mean single nogain S0: Tm−T0"):+.2f}, E2′[G8] {g("G8 E2′: Tm−T0"):+.2f}. '
+             if ('S0', 'Tm') in cols else 'match not run on eval (failed gate A). ')
+    ens = ', '.join(f'E2′[{e}] {g(f"{e} E2′: Ts−T0"):+.2f}' for e in ('G8', 'A8') if f'{e} E2′: Ts−T0' in boot)
+    ax.set_title(f'{ds}, small (±1%) TTA: single R0 {g("mean single nogain S0: Ts−T0"):+.2f} ({npos("S0", "Ts")}/8 seeds), '
+                 f'S1′ {g("mean single nogain S1p: Ts−T0"):+.2f} ({npos("S1p", "Ts")}/8); {ens}\n'
+                 + line2 + 'Dots = seeds; bars = paired 95% clip bootstrap', loc='left', fontsize=9.5, color=INK)
     fig.tight_layout()
     save(fig, fname)
 
@@ -156,7 +161,9 @@ def fig_machines(ds, fname):
     x = np.arange(len(MACH))
     for ax, rule in zip(axes, ('S0', 'S1p')):
         for j, v in enumerate(('Tm', 'Ts')):
-            d = [[100 * 0 + R[(r, v, rule)][m] - R[(r, 'T0', rule)][m] for r in runs] for m in MACH]
+            if not all((r, v, rule) in R for r in runs):
+                continue
+            d = [[R[(r, v, rule)][m] - R[(r, 'T0', rule)][m] for r in runs] for m in MACH]
             mu = [np.mean(z) for z in d]
             se = [np.std(z, ddof=1) / np.sqrt(len(z)) for z in d]
             ax.bar(x + (j - 0.5) * 0.36, mu, 0.34, yerr=se, color=SCHEME[v][0], label=SCHEME[v][1],
@@ -169,7 +176,9 @@ def fig_machines(ds, fname):
         ax.set_axisbelow(True)
     axes[0].set_ylabel(f'Δ {ds} AUC vs no TTA\n(points, 8-seed mean ± se)')
     axes[0].legend(loc='lower left', fontsize=8)
-    fig.suptitle(f'{ds}, per machine: small TTA gains most on ToyConveyor; match costs ToyCar under R0',
+    sub = {'dev': 'small TTA gains most on ToyConveyor; match costs ToyCar under R0',
+           'eval': 'small TTA gains on ToyConveyor, valve (R0) and ToyCar (S1′); every machine ≥ −0.05'}[ds]
+    fig.suptitle(f'{ds}, per machine: {sub}',
                  x=0.01, ha='left', fontsize=10.5, color=INK)
     fig.tight_layout()
     save(fig, fname)
