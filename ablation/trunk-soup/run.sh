@@ -4,6 +4,7 @@
 #   bash ablation/trunk-soup/run.sh train   # trunks T1, T2 + 4 forks each (forks wait for state_e150)
 #   bash ablation/trunk-soup/run.sh soup    # soup.py per trunk (4 forks; 5 with the trunk itself)
 #   bash ablation/trunk-soup/run.sh score   # eval.py dev+eval CSVs, probe/wall/config -> scores/
+#   bash ablation/trunk-soup/run.sh report  # extract.py dumps, score_ts.py (P1-P6, D1), make_plots.py
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 D=ablation/trunk-soup
@@ -12,7 +13,7 @@ TRUNKS=${TS_TRUNKS:-"2050 2051"}
 FORKS="1 2 3 4"
 mkdir -p $D/results $D/scores
 
-case ${1:?usage: run.sh train|soup|score} in
+case ${1:?usage: run.sh train|soup|score|report} in
 train)
     echo "=== train start $(date) | fussion=${TS_FUSSION:?} flags=${TS_FLAGS-} ==="
     { for t in $TRUNKS; do echo "trunk $t"; done
@@ -40,5 +41,12 @@ score)
         done
     done
     $PY ablation/distill_curves.py trunk-soup ;;
+report)
+    # needs `run.sh score` first (configs in scores/); dumps go to results/emb (scratch)
+    runs=$(cd check_points && ls -d SCLTFSTgramMFN_ts_* | tr '\n' ' ')
+    $PY ablation/ensemble-backend/extract.py --gpu "${TS_SCORE_GPU:-0}" --repo "$PWD" --out $D/results/emb \
+        --runs $runs > $D/results/extract.log 2>&1 || { echo "FAIL extract"; exit 1; }
+    $PY $D/score_ts.py $D/results/emb || exit 1
+    /home/f74134118/anaconda3/bin/python $D/make_plots.py ;;
 *) echo "unknown stage"; exit 1 ;;
 esac

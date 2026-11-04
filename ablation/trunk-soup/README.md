@@ -1,9 +1,20 @@
 # Trunk soup: one network with an ensemble's stability
 
-> **Status: TRAINING since 2026-11-03.** The base is `ao_nogain`
-> (`../aug-ops` C2), fixed in the addendum below before any trunk was
-> trained, and smoke-tested on that base. Trunks T1 and T2 are on GPUs 0 and
-> 2; 8 forks follow from epoch 150.
+> **Status: DONE 2026-11-04. D1 fails; the soup recipe is not adopted.**
+> - **Weight averaging works.** The soup of 4 forks is the 4-fork score
+>   ensemble in one network: under S1′ it is −0.01 and +0.00 dev AUC from it.
+>   The forks stay in one basin.
+> - **There is little to average.** The 4-fork ensemble gains only +0.11
+>   over its mean fork, against +0.64 for 4 independent seeds (P2: 17–18%).
+>   Most seed variance is fixed before epoch 150. So the soup is +0.06 / +0.11
+>   dev over its own forks (P1 fails) and +0.05 over the independent seeds
+>   (D1 needs +0.20).
+> - **Both trunks drew lucky eval seeds.** Every network from them scores
+>   +0.5 to +0.9 eval AUC over the independent mean. The code and recipe are
+>   identical, so this is seed luck, not the soup. Within-trunk eval gains
+>   are +0.08 and 0.00.
+> - Base `ao_nogain` (`../aug-ops` C2), fixed in the addendum before any
+>   trunk was trained. 10 runs, no crashes.
 
 ## Why this exists
 
@@ -177,10 +188,120 @@ so it is the better-powered test of the mechanism.
   93.22. Central 93.40, about 55%. The independent runs sit at 93.14, with 4
   of 8 seeds above.
 
-## Results
+## Results (2026-11-04)
 
-*(empty)*
+All 10 runs finished without a crash or retry. Trunks took 11.2–11.4 h on
+GPUs 0 and 2. Forks took 5.7 h on GPUs 0 and 2, and 6.9 h on GPU 1. Every
+fork printed `resume check ... ok` against its trunk's epoch-150 validation
+loss. `run.sh soup` built soup4 (the 4 forks) and soup5 (the 4 forks plus the
+trunk's own second half) per trunk.
+
+**Scoring:**
+
+- `run.sh score` produced the R0 CSVs with `eval.py`.
+- `score_ts.py` scores the `../ensemble-backend/extract.py` dumps
+  (`results/emb`, scratch) with ensemble-backend's rules, imported unchanged.
+- Its S0 matches `eval.py`'s per-ID AUCs to 0.019 points.
+- Full output: `scores/summary.txt`, `systems.csv`, `machines.csv` and
+  `check.json`.
+
+R0, AUC (dev | eval):
+
+| | trunk s2050 | trunk s2051 |
+|---|---|---|
+| forks 1–4 | 96.20 95.90 95.90 95.91 \| 96.24 95.86 96.06 95.89 | 96.04 96.19 96.12 96.25 \| 95.66 96.08 95.72 95.92 |
+| mean fork | 95.98 \| 96.01 | 96.15 \| 95.84 |
+| **soup4 (one network)** | **96.04 \| 96.10** | **96.26 \| 95.84** |
+| soup5 | 96.03 \| 96.13 | 96.30 \| 95.87 |
+| trunk, own second half | 96.02 \| 96.25 | 96.32 \| 95.99 |
+| E1′ over 4 forks (4 networks) | 96.13 \| 96.05 | 96.33 \| 95.97 |
+| independent `ao_nogain`, 8 seeds | 96.10 \| 95.30 | |
+
+S1′ (dev AUC | eval mean(AUC, pAUC)):
+
+| | s2050 | s2051 |
+|---|---|---|
+| mean fork | 96.38 \| 94.50 | 96.53 \| 94.54 |
+| soup4 | 96.47 \| 94.65 | 96.65 \| 94.61 |
+| E2′ over 4 forks | 96.49 \| 94.63 | 96.65 \| 94.63 |
+| independent: one model 96.43 \| 93.88; 4 seeds (`hom4_nogain`) 97.07 \| 94.71 | | |
+
+### Predictions, checked as written
+
+| | prediction | result | verdict |
+|---|---|---|---|
+| P1 | soup4 − mean fork in [+0.10, +0.40] dev, ≥ 0 eval, both trunks | dev +0.06 / +0.11; eval +0.08 / −0.00 | **fails** (s2050 dev below the range) |
+| P2 | E2′(4 forks) − mean fork under S1′ ≤ +0.38 (60% of the independent +0.64) | +0.11 / +0.11 (17% / 18%) | **holds**, far inside the bound |
+| P3 | \|soup4 R0 − E1(4 forks)\| ≤ 0.25 dev | +0.27 / +0.09 | **fails by the letter**; see below |
+| P4 | ToyConveyor has the largest soup4 − mean fork gain on eval | s2050: ToyCar +0.23 > ToyConveyor +0.19; s2051: ToyConveyor −0.22 | **fails** |
+| P5 | mean soup4 − independent mean dev AUC in [+0.10, +0.40] | 96.15 − 96.10 = +0.05 | **fails** |
+| P6 | mean soup4 eval mean(AUC, pAUC) ≥ 93.22 | 93.98 | holds, but only through trunk luck (below) |
+
+**P3 is a letter-only failure, and it goes the other way from what D3
+guards against.**
+
+- `score_ts.py` took P3's "E1" to be `../ensemble-backend`'s E1, with
+  held-out z-statistics. `../confirm-seeds` replaced that rule because
+  held-out statistics mis-scale IDs.
+- Here it scores *below* the mean fork on s2050 (95.77 vs 95.98). So the
+  +0.27 is the soup sitting **above** a weak ensemble.
+- With training-part statistics (E1′) the gaps are −0.09 / −0.07. Under S1′
+  the soup equals the E2′ fork ensemble: −0.01 / +0.00.
+- Linear connectivity from epoch 150 holds by every reasonable reading.
+
+### Decisions
+
+- **D1 fails.** The dev gain is +0.05 against the ≥ +0.20 bar, and P3
+  fails by the letter. **The soup recipe is not adopted.** `ao_nogain`
+  stays the single-model recipe.
+  - The eval AUC gain over the independent seeds, +0.67, meets D1's eval
+    half. It is not a soup effect, though: the trunks' own second halves
+    score the same, and within-trunk gains are +0.08 and 0.00.
+- **D2 is not run.** It only applies after D1.
+- **D3 is not triggered.** D3 targets the soup "far below its fork
+  ensemble", i.e. forks that left the basin. The soup is at or above every
+  fork ensemble here. A later fork point (225) would also make forks *more*
+  alike, which is the opposite of what is missing. (`score_ts.py` first
+  printed "D3 trigger: yes" from P3's letter. It was corrected to test the
+  pre-registered direction before this write-up.)
+
+### What this shows
+
+- **Seed variance is set early.** Two forks of one trunk differ from each
+  other far less than two independent seeds:
+  - the fork ensemble gain is +0.11, against +0.64 for independent seeds;
+  - forks track their trunk on dev AUC after epoch 150 (fig3), and spread by
+    ~1.5 points only on dev ToyConveyor.
+
+  So the ensemble's stability comes from the init and the first half of
+  training, not from late data order or mixup draws.
+- **The trunk seed dominates.** All 10 networks from s2050 and s2051 sit
+  +0.5 to +0.9 eval AUC above the independent mean.
+  - The recipe and code are identical (the configs differ only in seed and
+    `--state_snapshots`, and saving a snapshot draws no random numbers).
+  - s2051's trunk (95.99) sits at the top of the independent seeds' range,
+    and s2050's (96.25) is above its maximum of 96.01.
+  - Comparisons against the independent baseline on eval are therefore
+    confounded at n=2. The within-trunk numbers (P1, P2) are the clean ones.
+- **A single soup under S1′ beats every paper number:** dev 96.47–96.65 /
+  91.67–92.04 / 92.80–93.36, eval mean 94.61–94.65. So do its forks, so this
+  is not a claim for the soup.
+
+### What next
+
+- An **earlier fork point** (e.g. epoch 50–100) is the only version of this
+  idea left. Forks would have more room to differ, at the risk of leaving
+  the basin (the EMA probe sits at 69 dev AUC at epoch 99). Not
+  recommended: the independent-seed ensemble already gets the diversity, and
+  the single-network goal is met by `ao_nogain`.
+- Seed luck at the level seen here (two trunks both near the top on eval) is
+  a reminder that n=2 comparisons against a different seed pool are
+  unreliable, even for eval.
 
 ## Figures
 
-*(empty)*
+| file | shows |
+|---|---|
+| `plots/fig1_soup_vs_forks.png` | R0 dev and eval AUC per trunk: forks, mean fork, soup4/soup5, the trunk's own second half and the E1′ fork ensemble, beside the 8 independent seeds. The soup matches the fork ensemble, both sit barely above the mean fork, and both trunks sit high on eval |
+| `plots/fig2_machines.png` | soup4 − mean fork per machine, dev and eval. Gains are ≤ 0.5 everywhere; ToyConveyor leads on dev but not on eval (P4 fails) |
+| `plots/fig3_probe_curves.png` | Probe dev AUC and dev ToyConveyor per epoch for each trunk and its forks. Forks track the trunk after epoch 150 and spread only on ToyConveyor |
