@@ -1,8 +1,10 @@
 # Spectrum branch: does a whole-clip |FFT| embedding close the pump gap?
 
-> **Status: pre-registered 2026-11-03; nothing trained.** Code, flag-off
-> equality check, smoke run and bench are done (below). Launch with
-> `bash ablation/spectrum-branch/run.sh train` once trunk-soup frees the GPUs.
+> **Status: pre-registered 2026-11-03; queued 2026-11-04.** Code, flag-off
+> equality check, smoke run and bench are done (below). Stage 1 starts
+> automatically when trunk-soup's training queue ends
+> (`results/launch_after_soup.log`). Capacity control: see the addendum under
+> Confounds.
 
 ## Why this exists
 
@@ -239,6 +241,25 @@ Reference values (`ao_nogain`, 2040–2043):
 - **Linear magnitude.** The branch follows Wilkinghoff in using raw |FFT|
   with no log. Strong tonal peaks dominate the first conv. A log-magnitude
   variant is the obvious second arm if the branch is unused (P7 < 0.05).
+
+### Addendum 2026-11-04: capacity control (user decision, before any run)
+
+- **Stage 1 runs without a control,** as designed: 4 runs of `sb_spec`.
+- **If D1 passes,** stage 2 trains a capacity control **alongside** `sb_spec`
+  on the same fresh seeds, 2044–2047. That is 8 runs.
+- **The control is `sb_melres`.** It is the identical SpecNet branch, the
+  same 1.57 M parameters and the same fusion. Its input is the |FFT| reduced
+  to mel resolution: the 128-band mel filterbank applied to |FFT|, then
+  spread back over the same 0–8 kHz bins. So it gets the extra parameters and
+  only information the Log-Mel channel already carries. Only the frequency
+  resolution differs from `sb_spec`.
+  - This replaces the "deeper MobileFaceNet" suggested under Confounds,
+    because it changes one thing instead of two.
+  - It is implemented only if D1 passes.
+- **C-spec, the "spectrum, not capacity" claim.** On the fresh seeds, the
+  seed-paired dev pump Δ of `sb_spec` − `sb_melres` must be ≥ +0.25. Without
+  that, a D2 pass is reported as "the branch helps", not "the spectrum
+  helps". D2's adoption rule is unchanged.
 
 ## Files
 
