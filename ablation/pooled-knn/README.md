@@ -1,7 +1,8 @@
 # Pooled kNN — does kNN on the pooled pre-`linear7` feature map add to S1′?
 
-> **Status: pre-registered 2026-11-05.** Design, candidates, selection protocol,
-> predictions and decision rules below are fixed before any new score exists.
+> **Status: stage A done 2026-11-05 — C1 (S1′ + zGmean) chosen on seeds 2040–2043 dev;
+> confirmation pending.** Design, candidates, protocol, predictions and decision rules
+> were committed at 77f2598, before any new score existed.
 
 ## Why this exists
 
@@ -192,6 +193,25 @@ as in `../tta`; k = 0 uses the CPU mel). The bank and every z-statistic stay
 - **Not tested here: composition with TTA.** `../tta` adopted S1′ᵀ (±1% TTA,
   +0.05 eval). This ablation compares against plain S1′, the rule its candidates
   extend. If D1 passes, S1′ᵀ + the new term is the next thing to confirm.
+
+## Stage A — selection (2026-11-05, before any confirm-seed or eval score under a new rule)
+
+Scored by `score.py select` (`scores/scorecard_select.txt`, `select.json`,
+`select_metrics.csv`, `p0_select.json`). Eval clips were not extracted yet.
+
+- **P0 passes.** S0 per-ID dev AUC matches eval.py to 1.4e-4 (all 8 seeds). The
+  new R0 is bit-identical to the `../aug-ops` dumps on training clips, ≤ 2.4e-4 on
+  test clips (the last, differently sized batch, as in `../tta`). S1′ recomputed
+  matches `s1p.csv` to < 1e-4. `gmean` / `gmax` rebuilt from the fp16 band arrays
+  give per-ID AUC within 2.0e-4 of the fp32 vectors.
+- **Chosen: C1 = S1′ + zGmean** (global time-mean pooled kNN), selection-seed dev
+  Amean Δ **+0.130** (per seed +0.21, +0.10, +0.08, +0.14). C4 (per-band
+  time-mean) is a close second at +0.123. Every max-pooled candidate is negative
+  (C2 −0.33, C5 −0.28) and drags the mixtures (C3, C6) below zero.
+- Standalone (4 seeds, dev AUC): zGmean 93.40, zBmean 94.43, zGmax 89.33,
+  zBmax 90.18, against zK′ 95.54 and R0 96.17.
+
+Stage B (eval extraction, confirm seeds, ToyCar rolls) runs after this commit.
 
 ## Files
 
