@@ -1,0 +1,69 @@
+{
+  "s0_vs_evalpy_max_abs_id_auc": {
+    "SCLTFSTgramMFN_ts_trunk_s2050": {
+      "dev": 0.008594594594597993,
+      "eval": 0.006070422535202624
+    },
+    "SCLTFSTgramMFN_ts_trunk_s2051": {
+      "dev": 0.005843749999996817,
+      "eval": 0.014239436619703838
+    },
+    "SCLTFSTgramMFN_ts_fork_s2050_f1": {
+      "dev": 0.008918918918922714,
+      "eval": 0.018690140845066594
+    },
+    "SCLTFSTgramMFN_ts_fork_s2050_f2": {
+      "dev": 0.0074195804195795745,
+      "eval": 0.003509433962264552
+    },
+    "SCLTFSTgramMFN_ts_fork_s2050_f3": {
+      "dev": 0.00881981981981994,
+      "eval": 0.0159718309859187
+    },
+    "SCLTFSTgramMFN_ts_fork_s2050_f4": {
+      "dev": 0.009162162162155596,
+      "eval": 0.010183098591539874
+    },
+    "SCLTFSTgramMFN_ts_fork_s2051_f1": {
+      "dev": 0.008612612612623138,
+      "eval": 0.008548672566362825
+    },
+    "SCLTFSTgramMFN_ts_fork_s2051_f2": {
+      "dev": 0.009054054054047356,
+      "eval": 0.013126760563366702
+    },
+    "SCLTFSTgramMFN_ts_fork_s2051_f3": {
+      "dev": 0.005000000000023874,
+      "eval": 0.008884955752208157
+    },
+    "SCLTFSTgramMFN_ts_fork_s2051_f4": {
+      "dev": 0.00750000000000739,
+      "eval": 0.007408450704218694
+    },
+    "SCLTFSTgramMFN_ts_soup4_s2050": {
+      "dev": 0.006986013986022499,
+      "eval": 0.010830985915504243
+    },
+    "SCLTFSTgramMFN_ts_soup4_s2051": {
+      "dev": 0.00918918918920042,
+      "eval": 0.005915492957754509
+    },
+    "SCLTFSTgramMFN_ts_soup5_s2050": {
+      "dev": 0.009297297297294449,
+      "eval": 0.005499999999983629
+    },
+    "SCLTFSTgramMFN_ts_soup5_s2051": {
+      "dev": 0.006615384615386688,
+      "eval": 0.005211267605631065
+    }
+  },
+  "verdict": {
+    "P1": false,
+    "P2": true,
+    "P3": false,
+    "P4": false,
+    "P5": false,
+    "P6": true
+  },
+  "D1": false
+}

@@ -1,0 +1,28 @@
+{
+    "m": 0.4,
+    "gpu_num": 0,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "ts_soup4_s2051",
+    "seed": 2051,
+    "num_workers": 8,
+    "amp": "fp16",
+    "cudnn_bench": 1,
+    "lean": 1,
+    "cache_dir": "data/cache",
+    "probe_every": 5,
+    "wave_aug": 1,
+    "wave_aug_ops": "noise,shift",
+    "resume_state": "check_points/SCLTFSTgramMFN_ts_trunk_s2051/state_e150.pth",
+    "fork_seed": 1,
+    "state_every": 10,
+    "model_name": "SCLTFSTgramMFN_ts_soup4_s2051",
+    "soup_of": [
+        "SCLTFSTgramMFN_ts_fork_s2051_f1",
+        "SCLTFSTgramMFN_ts_fork_s2051_f2",
+        "SCLTFSTgramMFN_ts_fork_s2051_f3",
+        "SCLTFSTgramMFN_ts_fork_s2051_f4"
+    ]
+}
