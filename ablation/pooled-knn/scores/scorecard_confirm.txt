@@ -1,0 +1,33 @@
+P0  dev: S0 max |per-ID AUC - eval.py| 1.37e-04 (< 5e-4: True); max |S1p - s1p.csv| 0.0000
+P0  eval: S0 max |per-ID AUC - eval.py| 1.85e-04 (< 5e-4: True); max |S1p - s1p.csv| 0.0000
+chosen C1 = S1′ + zGmean
+selection dev (2040-43)  Δ AUC +0.100 pAUC +0.160 mAUC +0.362 Amean +0.130
+confirm dev (2044-47)    Δ AUC +0.145 pAUC +0.229 mAUC +0.435 Amean +0.187 | 95% CI AUC [+0.080, +0.216] pAUC [+0.148, +0.310] Amean [+0.126, +0.252] | per seed Amean +0.245 +0.142 +0.211 +0.150
+eval (8 seeds)           Δ AUC +0.237 pAUC +0.176 mAUC +0.580 Amean +0.207 | 95% CI Amean [+0.138, +0.277] | per seed Amean +0.093 +0.249 +0.145 +0.241 +0.297 +0.164 +0.274 +0.190
+dev (8 seeds)            Δ AUC +0.122 pAUC +0.195 mAUC +0.399 Amean +0.158
+per machine Δ AUC dev (8 seeds): fan -0.04 pump -0.03 slider +0.01 ToyCar +0.42 ToyConveyor +0.31 valve +0.06
+per machine Δ AUC eval (8 seeds): fan -0.02 pump +0.05 slider -0.00 ToyCar +0.77 ToyConveyor +0.98 valve -0.35
+eval ToyCar id_05 Δ AUC (8 seeds) +2.49
+ensemble G8 dev: E2′ 97.19/92.76/94.97 -> ΣC1 97.14/92.83/94.98; Δ Amean +0.012 CI [-0.055, +0.082]
+ensemble G8 eval: E2′ 96.96/92.77/94.87 -> ΣC1 97.04/92.85/94.95; Δ Amean +0.077 CI [-0.010, +0.169]
+absolute, seed means AUC / pAUC / mAUC / Amean:
+    S0_dev8                 96.10  91.08  92.12  93.59
+    S0_dev_conf             96.02  91.00  91.64  93.51
+    S0_eval8                95.30  90.97  90.33  93.13
+    S0_eval_conf            95.43  91.04  90.56  93.23
+    S1p_dev8                96.43  91.58  92.82  94.00
+    S1p_dev_conf            96.39  91.54  92.68  93.96
+    S1p_eval8               96.19  91.57  91.96  93.88
+    S1p_eval_conf           96.33  91.74  92.14  94.04
+    C1_dev8                 96.55  91.78  93.22  94.16
+    C1_dev_conf             96.53  91.77  93.11  94.15
+    C1_eval8                96.42  91.75  92.54  94.09
+    C1_eval_conf            96.57  91.97  92.79  94.27
+other candidates (descriptive): confirm-dev Δ Amean | eval8 Δ Amean
+    C1 Gmean  +0.187 | +0.207
+    C2 Gmax   -0.172 | -0.161
+    C3 Gmm    +0.043 | +0.073
+    C4 Bmean  +0.145 | +0.136
+    C5 Bmax   -0.182 | -0.267
+    C6 All    +0.030 | +0.022
+D1: {"selection_dAmean_pos": true, "confirm_dev_AUC_lb_pos": true, "confirm_dev_Amean_lb_pos": true, "eval8_dAmean_ge_-0.05": true, "adopt": true}

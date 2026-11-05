@@ -1,8 +1,27 @@
 # Pooled kNN — does kNN on the pooled pre-`linear7` feature map add to S1′?
 
-> **Status: stage A done 2026-11-05 — C1 (S1′ + zGmean) chosen on seeds 2040–2043 dev;
-> confirmation pending.** Design, candidates, protocol, predictions and decision rules
-> were committed at 77f2598, before any new score existed.
+> **Status: DONE 2026-11-05. D1 passes: C1 = S1′ + zGmean replaces S1′ as the
+> single-model rule.**
+> - **C1** adds the z-scored 1-NN cosine distance of the *global time-mean* of the
+>   pre-`linear7` map (512-d) to S1′. It was chosen on seeds 2040–2043 dev (+0.13 Amean).
+> - **Confirm dev (seeds 2044–2047):** +0.15 AUC, +0.23 pAUC, **+0.19 Amean**
+>   [+0.13, +0.25], 4/4 seeds positive.
+> - **Eval (8 seeds):** +0.24 AUC, +0.18 pAUC, **+0.21 Amean** [+0.14, +0.28], 8/8 seeds
+>   positive.
+> - **Where the gain comes from:** ToyCar (+0.42 dev, +0.77 eval; eval id_05 +2.49) and
+>   ToyConveyor (+0.31, +0.98). Eval valve loses 0.35 (id_05 −0.51, 0/8 seeds).
+> - **One `ao_nogain` net under C1** scores dev 96.55 / 91.78 / 93.22 (Amean 94.16) and
+>   eval Amean 94.09 (8-seed means). S1′ gives 94.00 / 93.88 and S1′ᵀ 94.12 / 93.93.
+> - **Every max-pooled term hurts** (C2 −0.33, C5 −0.28 on selection dev). BEAM's
+>   mean + max fusion (C3) and its full back-end (C6) land near zero.
+> - **Ensemble (secondary):** Σ C1 over G8 against E2′[G8] is +0.01 dev and +0.08 eval
+>   Amean, and both CIs include 0.
+> - **Diagnostic:** time-mean pooling makes ToyCar scores roll-invariant (0.13 / 0.20 sd
+>   at the farthest rolls, against S1′'s 27 / 44 sd). Time-max only *reduces* the effect
+>   (1.3 / 2.5 sd). So the time mean of the map before `linear7` carries no absolute position of its
+>   own: it enters at `linear7`.
+> - Pre-registered at 77f2598; selection committed at ed089e8 before any confirm-seed or
+>   eval score under a new rule.
 
 ## Why this exists
 
@@ -213,13 +232,174 @@ Scored by `score.py select` (`scores/scorecard_select.txt`, `select.json`,
 
 Stage B (eval extraction, confirm seeds, ToyCar rolls) runs after this commit.
 
+## Results (2026-11-05)
+
+Full output: `scores/scorecard_select.txt`, `scorecard_confirm.txt`,
+`scorecard_diag.txt`. Machine-readable files: `confirm.json` (Δs, CIs, D1), `diag.json`,
+`*_metrics.csv` (every run × rule × machine) and `confirm_perid.csv`.
+
+### Prediction check
+
+| prediction | outcome | held? |
+|---|---|---|
+| P0 reproduction | S0 vs eval.py per-ID ≤ 1.9e-4 (dev and eval); R0 bit-identical on train, ≤ 2.4e-4 on test; S1′ vs `s1p.csv` < 1e-4; fp16 bands → global ≤ 2.0e-4 per-ID AUC | **yes** |
+| P1 zGmean within ±1.5 of zK′ (dev AUC) | 93.40 vs 95.54 (−2.14) | **no** |
+| P1 zGmax 1–4 below zGmean | 89.33, i.e. 4.07 below | **no** (just) |
+| P1 per-band within ±1 of global | mean +1.03, max +0.85 | **no** (mean, just) |
+| P2 best selection Δ +0.10 [−0.05, +0.35] | +0.130 (C1) | **yes** |
+| P2 some candidate > 0 (75%) | C1 and C4 | **yes** |
+| P2 winner C3/C6 (50%), C1 (25%) | C1. C3 −0.06, C6 −0.05 | C1 branch |
+| P3 confirm dev Δ AUC +0.05 [−0.15, +0.25] | +0.145 | **yes** |
+| P3 Δ pAUC +0.10 [−0.20, +0.40] | +0.229 | **yes** |
+| P3 Δ Amean +0.07 [−0.15, +0.30] | +0.187 | **yes** (above central) |
+| P3 winner's curse: confirm < selection (70%) | +0.187 > +0.130 | **no** |
+| P4 eval Δ Amean +0.05 [−0.25, +0.30]; ≥ −0.05 (60%) | +0.207 | **yes** |
+| P5 ToyCar largest dev Δ AUC (40%) | ToyCar +0.42 is the largest | **yes** |
+| P5 ToyConveyor \|Δ\| ≤ 0.5 dev (60%) | +0.31 | **yes** |
+| P5 fan, slider, valve \|Δ\| ≤ 0.15 dev | −0.04, +0.01, +0.06 | **yes** |
+| P5 eval ToyCar id_05 Δ > 0 (55%) | +2.49, 8/8 seeds | **yes** |
+| P6 ensemble eval Δ 0.00 [−0.20, +0.15] | +0.077 [−0.010, +0.169] | **yes** |
+| P7 S1′ headline ≥ 10 sd | 27.1 dev, 44.1 eval | **yes** |
+| P7 zGmax ≤ 25% of S1′; central 2 [0.3, 10] | 1.34 (5%) dev, 2.51 (6%) eval | **yes** |
+| P7 verdict *reduces* (55%) | *reduces* on both sets | **yes** |
+| P7 zGmean within ×2 of zGmax | 0.13 / 0.20 sd: 10× below zGmax; *removes* | **no** |
+| P7 S1′ ToyCar AUC −≥5 at far rolls; zGmax moves ≤ 2 | S1′ 98.0 → 54.1 dev; zGmax 85.8 → 79.6 (−6.2) | half: S1′ yes, zGmax **no** |
+
+### D1: adopt
+
+| condition | value | pass |
+|---|---|---|
+| selection dev Δ Amean > 0 | +0.130 | yes |
+| confirm dev Δ AUC, 95% lower bound > 0 | +0.145 [+0.080, +0.216] | yes |
+| confirm dev Δ Amean, 95% lower bound > 0 | +0.187 [+0.126, +0.252] | yes |
+| eval 8-seed Δ Amean ≥ −0.05 | +0.207 [+0.138, +0.277] | yes |
+
+**C1 replaces S1′ as the single-model rule.** Every confirm-dev seed is positive
+(+0.25, +0.14, +0.21, +0.15 Amean), and so is every eval seed (+0.09 to +0.30). mAUC
+moves +0.4 to +0.6 but is not read (a single-model mAUC delta under 2 points).
+
+8-seed means, AUC / pAUC / mAUC / Amean (paper: dev 95.71 / 90.23 / 91.23, eval Amean 93.22):
+
+```
+            dev                           eval Amean
+R0     96.10  91.08  92.12  93.59           93.13
+S1′    96.43  91.58  92.82  94.00           93.88
+C1     96.55  91.78  93.22  94.16           94.09
+```
+
+`../tta`'s S1′ᵀ (±1% TTA on S1′) gave dev 96.52 / 91.72 / 93.01 and eval Amean 93.93.
+C1 is above it on every cell, without TTA. **C1 + TTA was not tested.** TTA averages
+the pre-head embedding and R0; how it should treat the pooled map is an open design
+choice. That is the next confirmation, not something to assume.
+
+### What else the data shows
+
+- **The time-mean pooled view adds what neither existing term has.** On its own it
+  is 2.1 AUC below K′ and 2.8 below R0. Added as a third z-term it still gains on 12
+  of 12 confirm cells (4 dev seeds, 8 eval seeds). Per-band time-mean (C4) behaves
+  almost the same: +0.12 selection, +0.15 confirm dev, +0.14 eval. Keeping the 8
+  frequency rows apart adds nothing over the global mean.
+- **Max pooling is the wrong half of BEAM here.** Time-max kNN alone is about 4 AUC
+  below time-mean (global and per-band), and every rule containing it is below the mean-only rule. On BEATs, BEAM
+  found the two complementary. On this post-PReLU map, the max over 160 positions
+  looks dominated by edge and splice cells (see the diagnostic).
+- **Per machine (8 seeds, Δ AUC, dev / eval):** ToyCar +0.42 / +0.77,
+  ToyConveyor +0.31 / +0.98, valve +0.06 / −0.35, and fan, pump and slider all within
+  ±0.05.
+  - The ToyCar gain is concentrated in the weakest IDs: dev id_01 +1.64 (8/8 seeds)
+    and eval id_05 +2.49 (85.1 → 87.6, 8/8).
+  - On ToyConveyor, eval id_05 gains +1.23 and id_06 +1.43, both 8/8.
+  - The eval valve loss is id_05 (−0.51, 0/8 seeds). It is the one consistent
+    per-ID loss.
+- **Ensemble.** Σ C1 over the 8 `ao_nogain` seeds against E2′[G8]: dev 94.97 → 94.98,
+  eval 94.87 → 94.95 Amean. Both CIs include 0. As with TTA, most of what a second
+  view adds to one network, the ensemble already has. No ensemble rule changes here.
+
+### Diagnostic: ToyCar under circular rolls
+
+Every ToyCar test clip is rolled by k/8 of the clip. The bank and all z-statistics stay
+unrolled. Penalty = rise of normal clips' score, in sd of the unrolled score; 8-seed
+means; headline = mean over k = 3, 4, 5.
+
+| score | dev headline | eval headline | dev AUC k=0 → k=4 | eval AUC k=0 → k=4 |
+|---|---|---|---|---|
+| S1′ | 27.1 sd | 44.1 sd | 98.0 → 54.1 | 95.2 → 70.4 |
+| zR0′ | 26.2 | 49.7 | 97.5 → 55.6 | 94.1 → 69.8 |
+| zK′ (128-d embedding) | 23.8 | 25.1 | 98.0 → 54.0 | 95.2 → 71.6 |
+| **zGmean (time-mean)** | **0.13** | **0.20** | 95.0 → 94.5 | 95.3 → 94.8 |
+| zGmax (time-max) | 1.34 | 2.51 | 85.8 → 79.9 | 90.6 → 78.1 |
+| C1 | 24.4 | 35.6 | 98.4 → 56.1 | 96.0 → 71.6 |
+
+- **The pre-`linear7` map is roll-equivariant.** Its time mean barely moves when the
+  clip is rolled half way: 0.13 sd, against 27 sd for S1′. Everything after
+  `mobilefacenet.conv2` is `linear7`, a 1×1 conv and the head. Of those, only
+  `linear7`, the learned (8, 20) per-position weighting, depends on position. So
+  **ToyCar's absolute-time dependence enters at `linear7`**, and both R0 and K′
+  inherit it. It does not come from Tgram's per-frame `LayerNorm` affine, the
+  zero-padding or the splice; those would show up in the pooled map.
+- **Max pooling only reduces it.** The verdict is *reduces* on both sets (1.3 and
+  2.5 sd), and zGmax's ToyCar AUC drops 6–13 points under a roll. A max over 160
+  cells is sensitive to the few cells that a roll actually changes: the splice and
+  the cells that were at the clip edges. A mean over 20 time steps dilutes them.
+  So the brief's premise is backwards here: max pooling discards absolute position
+  less completely than mean pooling does.
+- **C1 is not position-invariant.** Its penalty is 24 / 36 sd, because S1′'s two
+  terms still carry the position weighting. C1 gains on ToyCar by adding a
+  position-free view next to them, not by removing the dependence.
+- **Position helps some ToyCar IDs and hurts others** (`scores/toycar_perid.csv`,
+  8-seed means, unrolled).
+  - At k = 0 the position-free zGmean scores 95.0 on dev ToyCar against S1′'s 98.0,
+    and 95.3 against 95.2 on eval.
+  - Per ID it splits. On dev id_03, position is what works: zGmean 88.6 against
+    S1′ 99.7.
+  - On the IDs where S1′ is weakest, the position-free score is the better one:
+    eval id_05 87.3 vs 85.1, and dev id_01 93.1 vs 92.5.
+  - C1 keeps both (id_03 99.6, id_05 87.6, id_01 94.1). This is consistent with
+    the recording position mattering only for some IDs, but that is not tested here.
+
+### Incidents (none changes a score)
+
+- **GPU sharing.** Between stage A and stage B, the `permix` runner started a
+  300-epoch training on GPU 1 and took its lock. Stage B (≈ 15 min, ≈ 1.4 GB) ran
+  next to it rather than waiting hours: `PK_NOLOCK=1` in `run.sh`. Extraction is
+  deterministic in eval mode, so sharing changes only wall-clock.
+- **Corrupt dumps on disk (faulty host RAM).** Three ToyCar roll dumps failed their
+  zip CRC on read (`np.load` checks it), although each had passed the in-RAM range
+  check before `np.savez`. They stayed bad after page-cache eviction, so the bytes on
+  disk were corrupt. A re-extraction wrote one bad file again.
+  - `extract.py` now saves through `save_verified`: write, fsync, evict from the page
+    cache, CRC-test from disk, and rewrite on failure.
+  - Every dump in `results/emb` passed `testzip` before the diag stage ran.
+  - The extractor also aborted (core dump) twice on startup, and the retry loop
+    reran it. Both are the hardware failure modes `CLAUDE.md` describes.
+
+## Figures
+
+`/home/f74134118/anaconda3/bin/python ablation/pooled-knn/make_plots.py` reads `scores/` only.
+
+| figure | shows |
+|---|---|
+| `plots/fig1_selection.png` | selection-seed dev Δ vs S1′ per candidate (dots = seeds), plus standalone dev AUC. C1 and C4 are positive; every max-pooled term is negative |
+| `plots/fig2_confirm.png` | C1 − S1′ on confirm dev and eval with paired 95% bootstrap and per-seed dots (AUC, pAUC, Amean), plus the G8 ensemble Δ, whose CIs include 0 |
+| `plots/fig3_per_machine.png` | C1 − S1′ AUC per machine, dev and eval: ToyCar and ToyConveyor gain, eval valve −0.35 |
+| `plots/fig4_toycar_roll.png` | ToyCar normal-clip penalty and AUC vs circular roll for S1′, zGmean, zGmax and C1. Time-mean is flat; S1′ rises 27–44 sd |
+
+## What this cannot answer
+
+- **One recipe.** Every number is `ao_nogain`. C1 is adopted as the rule to
+  pre-register for the next new checkpoints, not shown to transfer to other recipes.
+- **Not composed with TTA** (see D1 above), nor tried inside the A8 ensemble.
+- **Eval valve id_05** loses consistently (−0.51, 0/8). It is not understood.
+- **The `linear7` attribution rests on the roll test alone.** No intervention was run,
+  such as replacing `linear7` with a uniform mean and retraining.
+
 ## Files
 
 | file | what |
 |---|---|
-| `extract.py` | GPU: per-clip pooled pre-`linear7` features + R0 + pre-head embedding; `--split train/dev/eval`, `--rolls` for the diagnostic |
+| `extract.py` | GPU: per-clip pooled pre-`linear7` features + R0 + pre-head embedding; `--split train/dev/eval`, `--rolls` for the diagnostic; CRC-verified writes |
 | `score.py` | CPU: P0 checks, candidates, selection / confirm / diagnostic stages, bootstrap, scorecard |
-| `run.sh` | stages: `extractA`, `select`, `extractB`, `confirm`, `diag`, `plots`; resumable |
+| `run.sh` | stages: `extractA`, `select`, `extractB` (refuses until `select.json` is committed), `confirm`, `diag`, `toycar`, `plots`; resumable; `PK_NOLOCK=1` skips the GPU lock |
 | `make_plots.py` | figures from `scores/` only |
-| `scores/` | committed record |
+| `scores/` | committed record: `select*`, `confirm*`, `diag*`, `toycar_perid.csv`, `p0_*.json`, `scorecard_*.txt` |
 | `results/` | dumps (~9 GB) and logs: gitignored scratch |

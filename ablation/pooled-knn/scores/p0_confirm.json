@@ -1,0 +1,98 @@
+{
+  "SCLTFSTgramMFN_ao_nogain_s2040": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.00019693374633789062,
+    "test_max_abs_pre": 0.0005363225936889648,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 8.909909909904368e-05,
+    "dev_S1p_overall_vs_s1p_csv": 3.742523490757321e-05,
+    "eval_S0_max_abs_id_auc_diff": 0.00010887323943664651,
+    "eval_S1p_overall_vs_s1p_csv": 1.994793124993066e-05,
+    "S1p_vs_eb_max_abs": 5.684341886080802e-14
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2041": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.0005500316619873047,
+    "test_max_abs_pre": 0.0007347464561462402,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 7.089530927750776e-05,
+    "dev_S1p_overall_vs_s1p_csv": 4.752506856675609e-05,
+    "eval_S0_max_abs_id_auc_diff": 9.985915492960462e-05,
+    "eval_S1p_overall_vs_s1p_csv": 1.2714071218056233e-05,
+    "S1p_vs_eb_max_abs": 1.1368683772161603e-13
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2042": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.00024759769439697266,
+    "test_max_abs_pre": 0.0006008744239807129,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 8.657657657662465e-05,
+    "dev_S1p_overall_vs_s1p_csv": 3.0666173614690706e-05,
+    "eval_S0_max_abs_id_auc_diff": 0.00010028169014086874,
+    "eval_S1p_overall_vs_s1p_csv": 2.307444944449344e-06,
+    "S1p_vs_eb_max_abs": 5.684341886080802e-14
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2043": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.00034567713737487793,
+    "test_max_abs_pre": 0.0005816221237182617,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 7.342657342668257e-05,
+    "dev_S1p_overall_vs_s1p_csv": 4.0768306533323084e-05,
+    "eval_S0_max_abs_id_auc_diff": 0.00012500000000004174,
+    "eval_S1p_overall_vs_s1p_csv": 7.247842901847434e-06,
+    "S1p_vs_eb_max_abs": 1.1368683772161603e-13
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2044": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.00030350685119628906,
+    "test_max_abs_pre": 0.0006547942757606506,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 9.027027027019852e-05,
+    "dev_S1p_overall_vs_s1p_csv": 2.9354075792298318e-05,
+    "eval_S0_max_abs_id_auc_diff": 0.00014380281690129504,
+    "eval_S1p_overall_vs_s1p_csv": 3.5829240786711125e-05,
+    "S1p_vs_eb_max_abs": 1.1368683772161603e-13
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2045": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.0002612769603729248,
+    "test_max_abs_pre": 0.0006798505783081055,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 0.00013678321678312066,
+    "dev_S1p_overall_vs_s1p_csv": 3.205810543249754e-06,
+    "eval_S0_max_abs_id_auc_diff": 0.00012478873239429866,
+    "eval_S1p_overall_vs_s1p_csv": 4.02942286683583e-05,
+    "S1p_vs_eb_max_abs": 1.1368683772161603e-13
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2046": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.0002435445785522461,
+    "test_max_abs_pre": 0.0005491077899932861,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 7.999999999996898e-05,
+    "dev_S1p_overall_vs_s1p_csv": 2.510526920218581e-05,
+    "eval_S0_max_abs_id_auc_diff": 0.0001852112676057338,
+    "eval_S1p_overall_vs_s1p_csv": 4.7755294843909724e-05,
+    "S1p_vs_eb_max_abs": 5.684341886080802e-14
+  },
+  "SCLTFSTgramMFN_ao_nogain_s2047": {
+    "train_max_abs_ce": 0.0,
+    "train_max_abs_pre": 0.0,
+    "test_max_abs_ce": 0.00016176700592041016,
+    "test_max_abs_pre": 0.000583946704864502,
+    "valid_same": true,
+    "dev_S0_max_abs_id_auc_diff": 8.792792792799986e-05,
+    "dev_S1p_overall_vs_s1p_csv": 2.7526100581098945e-06,
+    "eval_S0_max_abs_id_auc_diff": 6.830985915495802e-05,
+    "eval_S1p_overall_vs_s1p_csv": 1.913133357334118e-05,
+    "S1p_vs_eb_max_abs": 1.1368683772161603e-13
+  }
+}

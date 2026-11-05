@@ -25,6 +25,8 @@ MACH = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 FEAT = {'C1': 'Gmean', 'C2': 'Gmax', 'C3': 'Gmm', 'C4': 'Bmean', 'C5': 'Bmax', 'C6': 'All'}
 LABEL = {'Gmean': 'global time-mean', 'Gmax': 'global time-max', 'Gmm': 'global mean+max',
          'Bmean': 'per-band time-mean', 'Bmax': 'per-band time-max', 'All': 'all four'}
+TICK = {'Gmean': 'global\nmean', 'Gmax': 'global\nmax', 'Gmm': 'global\nmean+max',
+        'Bmean': 'per-band\nmean', 'Bmax': 'per-band\nmax', 'All': 'all four'}
 # mean-pooled family blue, max-pooled orange, mixtures achromatic
 FCOL = {'Gmean': BLUE, 'Bmean': BLUE, 'Gmax': ORANGE, 'Bmax': ORANGE, 'Gmm': INK_2, 'All': INK_2}
 SEL, CONF = (2040, 2041, 2042, 2043), (2044, 2045, 2046, 2047)
@@ -66,7 +68,7 @@ def fig1():
     rows, sel = read('select_metrics.csv'), read('select.json')
     if not rows or not sel:
         return
-    fig, axes = plt.subplots(1, 2, figsize=(10, 3.6), gridspec_kw={'width_ratios': [1.25, 1]})
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.0), gridspec_kw={'width_ratios': [1.25, 1]})
     ax = axes[0]
     cands = list(FEAT)
     for j, c in enumerate(cands):
@@ -79,12 +81,15 @@ def fig1():
                 color=INK, fontweight='bold' if c == sel['chosen'] else 'normal')
     ax.axhline(0, color=MUTED, lw=0.8)
     ax.set_xticks(range(len(cands)))
-    ax.set_xticklabels([f'{c}\n{LABEL[FEAT[c]]}' for c in cands], fontsize=7.5)
+    ax.set_xticklabels([f'{c}\n{TICK[FEAT[c]]}' for c in cands], fontsize=7.5)
+    ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1] + 0.05)
     ax.set_ylabel('dev Amean − S1′ (points)')
     ax.grid(axis='y')
     ch = sel['chosen']
-    ax.set_title(f'Selection (seeds 2040–43, dev): {ch} ({LABEL[FEAT[ch]]}) has the largest mean Δ, '
-                 f'{sel["candidates"][ch]["d_Amean"]:+.2f}', loc='left', fontsize=9.5)
+    ax.set_title('Candidate rule − S1′ (dots = seeds, bar = mean)', loc='left', fontsize=9.5)
+    fig.suptitle(f'Selection on seeds 2040–43 dev: {ch} (S1′ + {LABEL[FEAT[ch]]} kNN) wins at '
+                 f'{sel["candidates"][ch]["d_Amean"]:+.2f} Amean; every max-pooled term loses',
+                 x=0.01, ha='left', fontsize=10)
     ax = axes[1]
     st = sel['standalone_dev_mean']
     names = ['S0', 'zKp', 'Gmean', 'Gmax', 'Gmm', 'Bmean', 'Bmax', 'All']
@@ -102,7 +107,7 @@ def fig1():
     lo = min(v) - 3
     ax.set_xlim(lo, 100)
     ax.set_xlabel('standalone dev AUC (4-seed mean)')
-    ax.set_title('Standalone scores', loc='left', fontsize=9.5)
+    ax.set_title('Standalone: each pooled kNN alone is 1–6 AUC below K′', loc='left', fontsize=9.5)
     fig.tight_layout()
     save(fig, 'fig1_selection.png')
 
@@ -163,9 +168,11 @@ def fig3():
     ax.legend(loc='upper left', ncol=2)
     ax.grid(axis='y')
     pm = c['per_machine_dAUC']
-    top = max(MACH, key=lambda m: pm['dev'][m] + pm['eval'][m])
-    ax.set_title(f'Per machine: {top} moves most (dev {pm["dev"][top]:+.2f}, eval {pm["eval"][top]:+.2f})',
-                 loc='left', fontsize=9.5)
+    gain = sorted(MACH, key=lambda m: -(pm['dev'][m] + pm['eval'][m]))[:2]
+    worst = min(MACH, key=lambda m: min(pm['dev'][m], pm['eval'][m]))
+    wd = min(pm['dev'][worst], pm['eval'][worst])
+    ax.set_title(f'The gain is {gain[0]} and {gain[1]} on both sets; {worst} loses {abs(wd):.2f} on '
+                 f'{"eval" if pm["eval"][worst] <= pm["dev"][worst] else "dev"}', loc='left', fontsize=9.5)
     fig.tight_layout()
     save(fig, 'fig3_per_machine.png')
 
@@ -190,14 +197,20 @@ def fig4():
         axes[0, j].axhline(1, color=MUTED, lw=0.8, ls=':')
         axes[0, j].axvspan(2.5, 5.5, color=GRID, alpha=0.5, lw=0)
         s1, g = d[ds]['S1p']['headline_penalty_sd'], d[ds]['Gmax']['headline_penalty_sd']
-        axes[0, j].set_title(f'{ds}: time-max {d[ds]["verdict_Gmax"]} the shift penalty '
-                             f'({g:.1f} vs S1′ {s1:.1f} sd at k=3–5)', loc='left', fontsize=9.5)
+        gm = d[ds]['Gmean']['headline_penalty_sd']
+        axes[0, j].set_title(f'{ds}: k=3–5 penalty S1′ {s1:.1f} sd, time-max {g:.1f}, time-mean {gm:.2f}',
+                             loc='left', fontsize=9.5)
+        if ch not in ('Gmean', 'Gmax'):
+            v = d[ds][ch]['penalty_by_k'][4]
+            axes[0, j].annotate(ch, (4, v), xytext=(4.25, v * 0.82), color=INK, fontsize=8)
         axes[1, j].set_xlabel('circular roll (k / 8 of the clip)')
         for a in axes[:, j]:
             a.grid(axis='y')
     axes[0, 0].set_ylabel('rise of normal ToyCar scores\n(sd of the unrolled score)')
     axes[1, 0].set_ylabel('ToyCar AUC, all clips rolled')
     axes[0, 0].legend(loc='upper left', fontsize=8)
+    fig.suptitle('ToyCar under circular rolls: the time-mean pooled map is roll-invariant; '
+                 'the position dependence enters at linear7', x=0.01, ha='left', fontsize=10)
     fig.tight_layout()
     save(fig, 'fig4_toycar_roll.png')
 

@@ -7,6 +7,7 @@
 #   bash ablation/pooled-knn/run.sh extractB   # only once scores/select.json is committed: eval clips + ToyCar rolls
 #   bash ablation/pooled-knn/run.sh confirm    # CPU: confirm seeds dev, eval x8, ensemble, bootstrap
 #   bash ablation/pooled-knn/run.sh diag       # CPU: ToyCar penalty / AUC vs roll
+#   bash ablation/pooled-knn/run.sh toycar     # CPU: ToyCar per-ID AUC of the standalone terms
 #   bash ablation/pooled-knn/run.sh plots
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -18,7 +19,10 @@ EMB=$D/results/emb
 RUNS=""; for s in 2040 2041 2042 2043 2044 2045 2046 2047; do RUNS="$RUNS SCLTFSTgramMFN_ao_nogain_s$s"; done
 mkdir -p $D/results $D/scores
 
-lock() { mkdir -p /tmp/os-scl-pknn-locks
+# PK_NOLOCK=1 shares the GPU with whatever holds its lock (a short extraction next to a training run;
+# used for extractB, see README) instead of waiting for it.
+lock() { [ "${PK_NOLOCK:-0}" = 1 ] && return 0
+         mkdir -p /tmp/os-scl-pknn-locks
          until ! ls -d /tmp/os-scl-*-locks/gpu$GPU >/dev/null 2>&1 && mkdir /tmp/os-scl-pknn-locks/gpu$GPU 2>/dev/null; do sleep 60; done
          trap 'rmdir /tmp/os-scl-pknn-locks/gpu$GPU 2>/dev/null' EXIT; }
 # smartlab1's faulty RAM crashes processes: retry (each finished run's dump is kept)
@@ -27,7 +31,7 @@ ext() { for t in 1 2 3; do
           echo "extract $* failed (try $t)" | tee -a $D/results/extract.log; done
         echo "FAIL extract $*"; exit 1; }
 
-case ${1:?usage: run.sh extractA|select|extractB|confirm|diag|plots} in
+case ${1:?usage: run.sh extractA|select|extractB|confirm|diag|toycar|plots} in
 extractA) lock; ext --split train --runs $RUNS; ext --split dev --runs $RUNS ;;
 select)   $BPY $D/score.py select $EMB | tee $D/results/score_select.log ;;
 extractB) git ls-files --error-unmatch $D/scores/select.json >/dev/null 2>&1 \
@@ -35,7 +39,7 @@ extractB) git ls-files --error-unmatch $D/scores/select.json >/dev/null 2>&1 \
           lock; ext --split eval --runs $RUNS
           ext --split dev --machine ToyCar --rolls 1,2,3,4,5,6,7 --group 4 --runs $RUNS
           ext --split eval --machine ToyCar --rolls 1,2,3,4,5,6,7 --group 4 --runs $RUNS ;;
-confirm|diag) $BPY $D/score.py $1 $EMB | tee $D/results/score_$1.log ;;
+confirm|diag|toycar) $BPY $D/score.py $1 $EMB | tee $D/results/score_$1.log ;;
 plots)    $BPY $D/make_plots.py ;;
 *) echo "unknown stage"; exit 1 ;;
 esac

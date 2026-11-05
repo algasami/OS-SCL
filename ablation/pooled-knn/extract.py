@@ -27,6 +27,7 @@ import importlib.util
 import json
 import os
 import sys
+import zipfile
 
 import numpy as np
 import torch
@@ -76,6 +77,25 @@ def check(a, r):
         lim = 1e3 if k == 'ce' else 1e4
         assert np.abs(v32).max() < lim, (r, k, float(np.abs(v32).max()))
     assert a['ce'].min() >= 0, r
+
+
+def save_verified(path, **arrays):
+    """np.savez, then fsync, drop the file from the page cache and CRC-test it from disk; rewrite on
+    failure. smartlab1 wrote corrupt dumps (bad CRC on disk) that passed the in-RAM range check."""
+    for t in range(4):
+        tmp = path[:-4] + '.tmp.npz'
+        np.savez(tmp, **arrays)
+        fd = os.open(tmp, os.O_RDONLY)
+        os.fsync(fd)
+        os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+        os.close(fd)
+        with zipfile.ZipFile(tmp) as z:
+            bad = z.testzip()
+        if bad is None:
+            os.replace(tmp, path)
+            return
+        print(f'CRC failure in {bad} of {path} (try {t}); rewriting', flush=True)
+    raise IOError(f'could not write {path}')
 
 
 def run_pass(nets, paths, labels, idx, device, ce, rolls, bs, desc):
@@ -155,7 +175,7 @@ def main():
             if args.split == 'train':
                 mask, vidx = ex.replay_valid(DATA, loaded[r][0]['seed'], len(tr_paths))
                 extra = dict(valid=mask, valid_order=vidx)
-            np.savez(os.path.join(od, f'{r}.npz'), idx=idx, rolls=np.array(rolls or [0]), **out[r], **extra)
+            save_verified(os.path.join(od, f'{r}.npz'), idx=idx, rolls=np.array(rolls or [0]), **out[r], **extra)
             print('wrote', sub, r, {k: v.shape for k, v in out[r].items()}, flush=True)
         del nets, loaded, out
         torch.cuda.empty_cache()

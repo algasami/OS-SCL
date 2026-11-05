@@ -4,6 +4,7 @@
     python ablation/pooled-knn/score.py select  ablation/pooled-knn/results/emb   # stage A
     python ablation/pooled-knn/score.py confirm ablation/pooled-knn/results/emb   # stage B
     python ablation/pooled-knn/score.py diag    ablation/pooled-knn/results/emb   # ToyCar rolls
+    python ablation/pooled-knn/score.py toycar  ablation/pooled-knn/results/emb   # ToyCar per-ID table
 
 Rules (README, *Scores* / *Candidate rules*), per checkpoint and machine ID, bank = the ID's
 training-part clips (the replayed 95%), every distance a 1-NN cosine distance on
@@ -451,7 +452,8 @@ def diag(ctx):
                 per_k.append(bank.score({k: rol[k][:, j] for k in ('ce', 'pre', 'gmean', 'gmax', 'bmean', 'bmax')}, lab))
             for nm in names:
                 s0 = per_k[0][nm]
-                for k, sc in zip(ks, per_k):
+                for k, o in zip(ks, per_k):
+                    sc = o[nm]
                     pen = []
                     for c in np.unique(lab):
                         n = (lab == c) & (y == 0)
@@ -489,7 +491,27 @@ def diag(ctx):
     open(os.path.join(SCORES, 'scorecard_diag.txt'), 'w').write(txt + '\n')
 
 
+# ---------------------------------------------------------------------------------------- toycar
+def toycar(ctx):
+    """ToyCar per-ID AUC, 8-seed mean, for the standalone terms and the rules (unrolled clips)."""
+    rules = ('S1p', 'zR0p', 'zKp', 'Gmean', 'Gmax', 'C1')
+    acc = {}
+    for s in ALL8:
+        S = ctx.run(s, ['dev', 'eval'])[0]
+        for ds in ('dev', 'eval'):
+            for rule in rules:
+                for i, a in ctx.ev[ds](S[rule])['ToyCar']['ids'].items():
+                    acc.setdefault((ds, i, rule), []).append(100 * a)
+    with open(os.path.join(SCORES, 'toycar_perid.csv'), 'w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['dataset', 'id', 'rule', 'AUC_mean8', 'AUC_min8', 'AUC_max8'])
+        for (ds, i, rule), v in sorted(acc.items()):
+            w.writerow([ds, i, rule, f'{np.mean(v):.3f}', f'{min(v):.3f}', f'{max(v):.3f}'])
+    for (ds, i, rule), v in sorted(acc.items()):
+        print(ds, i, rule, f'{np.mean(v):.2f}')
+
+
 if __name__ == '__main__':
     stage, emb = sys.argv[1], sys.argv[2]
     os.makedirs(SCORES, exist_ok=True)
-    {'select': select, 'confirm': confirm, 'diag': diag}[stage](Ctx(emb))
+    {'select': select, 'confirm': confirm, 'diag': diag, 'toycar': toycar}[stage](Ctx(emb))
