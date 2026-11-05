@@ -284,8 +284,9 @@ The paper's +1.6 dev AUC is shrunk hard, for three reasons:
 
 - Its baseline is 2 points below ours.
 - Against the *published* OS-SCL its gain is +0.18.
-- Wave augmentation already gives our net a perturbation pretext, and five
-  recent single-change ablations on this recipe were null or negative.
+- Wave augmentation already gives our net a perturbation pretext. Recent
+  changes on this recipe moved it by tenths at most: `../tta` +0.05 S1′ eval;
+  `../spectrum-branch` and `../trunk-soup` failed their gates.
 
 | | quantity | central | 80% interval |
 |---|---|---|---|
