@@ -96,7 +96,7 @@ def fig1_machines():
         ax.set_xticks(range(len(MACH)), MACH, rotation=20)
         ax.set_title(f'{ds} (n={len(pairs)} seed pairs)')
     axes[0].set_ylabel(f'AUC, {ARMS[1][1]} − ao_nogain (points)')
-    fig.suptitle('Per-machine change from adding the spectrum branch (dots: seeds, bar: mean)',
+    fig.suptitle('The spectrum branch lowers AUC on most machines; eval ToyCar −1.7 on 4/4 seeds (dots: seeds, bar: mean)',
                  x=0.01, ha='left', fontsize=10.5, fontweight='bold', y=1.03)
     save(fig, 'fig1_machines.png')
 
@@ -135,7 +135,7 @@ def fig2_pump():
         ax.set_title(f'{ds} pump AUC by ID')
     axes[0].set_ylabel('AUC (points)')
     axes[0].legend(loc='lower left', fontsize=8)
-    fig.suptitle('Pump: where the spectrum branch is meant to help', x=0.01, ha='left', fontsize=10.5,
+    fig.suptitle('Pump: the branch lifts dev id_02 by +2.9 (4/4 seeds) but costs id_00 and id_06, so pump overall drops', x=0.01, ha='left', fontsize=10.5,
                  fontweight='bold', y=1.03)
     save(fig, 'fig2_pump.png')
 
@@ -177,7 +177,7 @@ def fig3_probe():
         ax.set_title(title)
         ax.set_xlabel('epoch')
     axes[0].set_ylabel('EMA-net probe AUC (points), mean over seeds')
-    fig.suptitle('Training curves (dev-test probe; diagnostic, not used for selection)', x=0.01, ha='left',
+    fig.suptitle('The branch learns faster early but plateaus lower (dev-test probe; diagnostic, not used for selection)', x=0.01, ha='left',
                  fontsize=10.5, fontweight='bold', y=1.03)
     save(fig, 'fig3_probe.png')
 

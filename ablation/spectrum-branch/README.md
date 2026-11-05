@@ -1,10 +1,11 @@
 # Spectrum branch: does a whole-clip |FFT| embedding close the pump gap?
 
-> **Status: pre-registered 2026-11-03; queued 2026-11-04.** Code, flag-off
-> equality check, smoke run and bench are done (below). Stage 1 starts
-> automatically when trunk-soup's training queue ends
-> (`results/launch_after_soup.log`). Capacity control: see the addendum under
-> Confounds.
+> **Status: DONE 2026-11-05 — D1 FAILS → D0, `--spec_branch` not adopted; stage 2
+> not run.** Stage 1 (sb_spec s2040–2043) trained 11-04/05 with no crashes. Under R0
+> dev pump moved −0.65 (pre-registered gate ≥ +0.40), and (b) and (c) failed too.
+> The branch *is* used (P7 0.22) and lifts dev pump id_02 by +2.9 on 4/4 seeds, but it
+> costs pump id_00/id_06, valve and slider. Under S1′ (secondary) pump turns +0.36,
+> still short of the gate. See Results.
 
 ## Why this exists
 
@@ -270,19 +271,107 @@ Reference values (`ao_nogain`, 2040–2043):
 | `score.py` | 4-seed means, paired Δ with se, per-seed pump Δ, and the D1 checklist → `scores/summary.txt` |
 | `make_plots.py` | figures from `scores/` only; skips any figure whose inputs are missing |
 | `head_share.py` | P7 diagnostic → `scores/head_share.csv` |
+| `score_s1p.py` | secondary S1′ on `extract.py` dumps, paired with `../aug-ops` dumps → `scores/s1p.csv`, `scores/s1p_summary.txt` (`run.sh s1p`) |
 | `eqtest.py` | the flag-off equality test |
 | `bench.py` | step rate with and without the branch → `scores/bench.txt` |
 
 ## Figures
 
-*(after the runs)*
-
 | file | shows |
 |---|---|
 | `plots/fig1_machines.png` | paired Δ AUC per machine, dev and eval, seeds and mean |
 | `plots/fig2_pump.png` | pump per ID for both arms, dev and eval, with the paper's dev pump AUC |
-| `plots/fig3_probe.png` | dev-test probe over training (pump AUC, overall AUC), mean over seeds |
+| `plots/fig3_probe.png` | dev-test probe over training (pump AUC, overall AUC), mean over seeds: faster early, lower plateau |
 
 ## Results
 
-*(empty)*
+Δ = `sb_spec` − `ao_nogain`, 4 seed pairs (2040–2043), AUC points, se over pairs.
+Full output: `scores/summary.txt` (R0) and `scores/s1p_summary.txt` (S1′). S0
+recomputed from the dumps matches eval.py to 1.2e-4 AUC per ID.
+
+| | sb_spec | ao_nogain | Δ R0 (se) | Δ S1′ (se) |
+|---|---|---|---|---|
+| dev AUC | 95.95 | 96.17 | −0.22 (0.21) | +0.20 (0.13) |
+| dev mean(AUC, pAUC) | 93.41 | 93.67 | −0.26 (0.22) | +0.01 (0.18) |
+| **dev pump** | 94.92 | 95.57 | **−0.65 (0.49)** | +0.36 (0.09) |
+| dev pump id_02 | 94.22 | 91.28 | **+2.93 (0.29)** | +4.06 (0.73) |
+| dev pump id_00 / id_06 | 92.65 / 97.21 | 94.23 / 99.30 | −1.57 / −2.09 | |
+| dev ToyConveyor | 85.80 | 85.96 | −0.16 (0.94) | +0.64 (0.58) |
+| eval mean(AUC, pAUC) | 92.72 | 93.04 | −0.32 (0.54) | −0.31 (0.53) |
+| eval pump | 98.01 | 97.63 | +0.38 (0.11) | +0.33 (0.18) |
+| eval pump id_03 | 91.84 | 90.58 | +1.26 (0.97) | |
+| eval ToyCar | 91.81 | 93.48 | −1.67 (0.14) | +0.15 (0.23) |
+| eval ToyCar id_05 | 78.79 | 81.60 | −2.81 (0.10) | |
+
+(sb_spec / ao_nogain columns are R0.) Per-seed dev pump Δ under R0: −0.20, +0.45,
+−1.83, −1.01.
+
+Per machine, Δ mean(AUC, pAUC), dev / eval:
+
+| rule | fan | pump | slider | ToyCar | ToyConveyor | valve |
+|---|---|---|---|---|---|---|
+| R0 | +0.84 / +0.49 | −0.78 / +0.23 | −0.21 / −1.26 | +0.02 / −0.95 | −0.22 / +0.81 | −1.19 / −1.21 |
+| S1′ | +1.46 / +0.53 | −0.21 / +0.32 | −0.30 / −2.02 | +0.07 / +0.16 | +0.18 / −0.26 | −1.11 / −0.58 |
+
+**P7 (branch used):** spectrum share of the head's first-layer variance 0.227,
+0.207, 0.225, 0.219 (mean 0.22). The head uses the branch, so the null is
+informative.
+
+### D1 checklist (R0)
+
+| criterion | value | |
+|---|---|---|
+| (a) dev pump Δ ≥ +0.40 | −0.65 | FAIL |
+| (a) Δ > 0 on ≥ 3/4 seeds | 1/4 | FAIL |
+| (b) dev AUC Δ ≥ −0.10 | −0.22 | FAIL |
+| (b) dev mean Δ ≥ −0.10 | −0.26 | FAIL |
+| (c) eval mean Δ ≥ −0.20 | −0.32 | FAIL |
+| (d) dev ToyConveyor Δ ≥ −0.80 | −0.16 | ok |
+
+**D1 fails → D0: stop.** Stage 2 and the `sb_melres` control are not run.
+Read under S1′ instead, D1 would still fail: (a) +0.36 < +0.40 and (c) −0.31 < −0.20.
+
+### Predictions
+
+| | predicted (80% interval) | observed | |
+|---|---|---|---|
+| P1 dev pump | +0.35 [−0.30, +1.00] | −0.65 | **fails** (below interval) |
+| P2 dev pump id_02 | +0.8 [−1.0, +2.5] | +2.93 | direction right, **above** interval |
+| P3 eval pump id_03 | +0.5 [−1.5, +2.5] | +1.26 | holds |
+| P4 dev AUC | +0.05 [−0.30, +0.30] | −0.22 | holds (sign wrong) |
+| P5 dev ToyConveyor | 0.0 [−1.0, +1.0] | −0.16 | holds |
+| P6 eval mean | 0.0 [−0.40, +0.40] | −0.32 | holds (sign wrong) |
+| P7 share | 0.30 [0.15, 0.50] | 0.22 | holds |
+
+### What this shows
+
+- **The spectrum carries the information pump id_02 needs.** +2.9 under R0 and
+  +4.1 under S1′, on 4/4 seeds, with the branch taking ~22% of the head's
+  variance. id_02 was the ID the idea was built for (P2), and the effect is
+  larger than predicted. Eval pump id_03 moves the same way (+1.3, noisier).
+- **It hurts transient machines.** Valve and slider lose on both sets and
+  both rules. The other pump IDs (id_00, id_06) lose 1.6–2.1. A whole-clip
+  spectrum has no time axis, so it adds weight to stationary content at the
+  expense of events. That is the premise of the branch, and also its cost.
+- **R0 understates the branch; S1′ recovers most of it.** Under R0 the
+  branch's CE score loses on eval ToyCar (−1.7, id_05 −2.8, 4/4 seeds). Under
+  S1′ that loss disappears (+0.15) and dev pump turns positive. The 256-d
+  embedding holds the information; the ArcFace logit calibrates it badly.
+- **Faster early, lower plateau** (fig3): the branch lifts the probe by
+  several points before epoch 150, then both arms flatten and the branch ends
+  0.2 (all) and 0.7 (pump) lower.
+- Not tested: whether the spectrum or the extra capacity is responsible (no
+  `sb_melres`), and linear vs log magnitude.
+
+### What next (not pre-registered)
+
+- **Not as a recipe change.** One network has to serve every machine, and
+  the transient-machine cost cancels the pump gain.
+- **As an ensemble member, it may be useful.** Its errors differ from
+  `ao_nogain`'s by machine (fan/pump up, valve/slider down), which is the
+  diversity the trunk-soup forks lacked. A mixed E2′ with sb_spec members would
+  need its own pre-registration (D3).
+- **A time-aware version** (spectrum of short windows, or a gate that lets the
+  head down-weight the branch per clip) would address the transient cost.
+  This sits close to the per-band, pooled kNN scoring proposed after the
+  2026-11-05 literature survey; that cheaper route comes first.

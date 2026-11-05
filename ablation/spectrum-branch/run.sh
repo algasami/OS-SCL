@@ -4,6 +4,8 @@
 #   bash ablation/spectrum-branch/run.sh train   # sb_spec x seeds 2040-2043 (GPUS="0 1 2" by default)
 #   bash ablation/spectrum-branch/run.sh score   # eval.py dev+eval CSVs, probe, wall, curves -> scores/
 #   bash ablation/spectrum-branch/run.sh plots   # score.py summary + make_plots.py -> scores/, plots/
+#   bash ablation/spectrum-branch/run.sh s1p     # extract.py dumps (results/emb, scratch) -> score_s1p.py -> scores/s1p.csv
+#                                                # needs ../aug-ops dumps: AO_EMB=<aug-ops results/emb>
 #   SB_SEEDS="2044 2045 2046 2047" bash ablation/spectrum-branch/run.sh train   # stage 2, only if D1 passes
 #
 # Every stage is resumable: train_one.sh skips finished runs, score skips scored splits.
@@ -29,7 +31,7 @@ score_run() {   # score_run <name>
     done
 }
 
-case ${1:?usage: run.sh train|score|plots} in
+case ${1:?usage: run.sh train|score|plots|s1p} in
 train)
     echo "=== train start $(date) | seeds=$SEEDS ==="
     for s in $SEEDS; do echo "$s"; done | xargs -P 3 -L1 $D/run_one.sh
@@ -45,5 +47,11 @@ score)
 plots)
     /home/f74134118/anaconda3/bin/python $D/score.py | tee $D/scores/summary.txt
     /home/f74134118/anaconda3/bin/python $D/make_plots.py ;;
+s1p)
+    runs=$(for d in check_points/SCLTFSTgramMFN_sb_*_s20[0-9][0-9]; do [ -f "$d/done" ] && basename $d; done)
+    $PY ablation/ensemble-backend/extract.py --gpu "${SB_SCORE_GPU:-0}" --repo "$PWD" --out $D/results/emb \
+        --runs $runs > $D/results/extract.log 2>&1 || { echo "FAIL extract"; exit 1; }
+    /home/f74134118/anaconda3/bin/python $D/score_s1p.py $D/results/emb \
+        "${AO_EMB:-../OS-SCL-augops/ablation/aug-ops/results/emb}" | tee $D/scores/s1p_summary.txt ;;
 *) echo "unknown stage"; exit 1 ;;
 esac
