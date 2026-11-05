@@ -12,10 +12,10 @@ from model.waveq import TFgram
 
 
 class BasicHead(nn.Module):
-    def __init__(self):
+    def __init__(self, in_dim=128):
         super(BasicHead, self).__init__()
         self.head = nn.Sequential(
-            nn.Linear(128, 64),
+            nn.Linear(in_dim, 64),
             nn.ReLU(inplace=True),
             nn.BatchNorm1d(64),
             nn.Linear(64, 128),
@@ -28,10 +28,10 @@ class BasicHead(nn.Module):
 
 
 class LeakyReLUHead(nn.Module):
-    def __init__(self, ):
+    def __init__(self, in_dim=128):
         super(LeakyReLUHead, self).__init__()
         self.head = nn.Sequential(
-            nn.Linear(128, 64),
+            nn.Linear(in_dim, 64),
             nn.LeakyReLU(0.01, inplace=True),
             nn.BatchNorm1d(64),
 
@@ -240,6 +240,46 @@ class TgramNet(nn.Module):
         return out
 
 
+class SpecNet(nn.Module):
+    """Whole-clip magnitude-spectrum branch (ablation/spectrum-branch, --spec_branch 1).
+
+    A port of the "FFT" sub-network of Wilkinghoff's DCASE2023 Task 2 system
+    (github.com/wilkinghoff/DCASE2023_task2, main.py, model_emb_cnn): |FFT| of the
+    whole clip, bins 0-8 kHz, no log and no input normalisation; three strided 1-D
+    convs (128 ch; k/s 256/64, 64/32, 16/4; no bias; ReLU); flatten; four
+    Linear(128) + BN + ReLU; a final Linear(128) embedding. Keras 'same' padding is
+    reproduced exactly for a 160000-sample clip: 80000 -> 1250 -> 40 -> 10 frames.
+    Differences from the original: PyTorch default init (not Glorot), and no
+    per-layer L2 (AdamW's decay applies instead).
+
+    The FFT and the whole branch run in fp32 even under --amp: raw spectrum
+    magnitudes reach ~1e3 and the first conv sums 256 of them.
+    """
+
+    def __init__(self, n_samples=160000, emb=128, ch=128):
+        super().__init__()
+        self.n_bins = n_samples // 2
+        layers, length = [], self.n_bins
+        for i, (k, s) in enumerate(((256, 64), (64, 32), (16, 4))):
+            out = -(-length // s)                                   # ceil: Keras 'same'
+            pad = max((out - 1) * s + k - length, 0)
+            assert pad % 2 == 0, (length, k, s, pad)                # symmetric for these sizes
+            layers += [nn.Conv1d(1 if i == 0 else ch, ch, k, s, pad // 2, bias=False), nn.ReLU(inplace=True)]
+            length = out
+        self.conv = nn.Sequential(*layers)
+        dense, width = [], ch * length
+        for _ in range(4):
+            dense += [nn.Linear(width, emb, bias=False), nn.BatchNorm1d(emb), nn.ReLU(inplace=True)]
+            width = emb
+        self.dense = nn.Sequential(*dense, nn.Linear(emb, emb, bias=False))
+
+    def forward(self, x_wav):
+        with torch.autocast('cuda', enabled=False):
+            x = x_wav.float().reshape(x_wav.shape[0], -1)
+            spec = torch.fft.rfft(x).abs()[:, :self.n_bins].unsqueeze(1)   # (B, 1, 80000)
+            return self.dense(self.conv(spec).flatten(1))
+
+
 class SCLTFSTgramMFN(nn.Module):
 
     def __init__(self, cfg,
@@ -271,11 +311,18 @@ class SCLTFSTgramMFN(nn.Module):
         if not lean or 'tfgram' in branches:
             self.TFgramNet = TFgram(classes_num=41, act=cfg.get('tf_act', 'relu'),
                                     pool=cfg.get('tf_pool', 'max'), lean=lean)
+        # --spec_branch 1: the spectrum embedding is concatenated with MobileFaceNet's
+        # before the head, so the head's first layer widens to 256. Built last, so the
+        # modules above draw exactly the init they draw without it.
+        self.spec_branch = bool(cfg.get('spec_branch', False))
+        emb_dim = c_dim * 2 if self.spec_branch else c_dim
         head_type = cfg["ht"]
         if head_type == 'basic':
-            self.head = BasicHead()
+            self.head = BasicHead(emb_dim)
         elif head_type == 'leaky_relu':
-            self.head = LeakyReLUHead()
+            self.head = LeakyReLUHead(emb_dim)
+        if self.spec_branch:
+            self.specnet = SpecNet(emb=c_dim)
 
     def branch_input(self, x_wav, x_mel, train=True):
         """The fussion mode's branches stacked as channels: the MobileFaceNet input."""
@@ -295,11 +342,17 @@ class SCLTFSTgramMFN(nn.Module):
 
         return feats[0] if len(feats) == 1 else torch.cat(feats, dim=1)
 
+    def embed(self, x_wav, x_mel, train=True):
+        """The pre-head embedding: MobileFaceNet's 128-d output, with the spectrum
+        branch's 128-d embedding appended under --spec_branch (fp32)."""
+        _, feature = self.mobilefacenet(self.branch_input(x_wav, x_mel, train))
+        if self.spec_branch:
+            feature = torch.cat([feature.float(), self.specnet(x_wav)], dim=1)
+        return feature
+
     def forward(self, x_wav, x_mel, label, train=True):
 
-        x = self.branch_input(x_wav, x_mel, train)
-
-        out, feature = self.mobilefacenet(x)
+        feature = self.embed(x_wav, x_mel, train)
 
         # head, normalisation and the ArcFace margin stay fp32 under --amp: acos-free
         # margin math needs sqrt(1 - cos^2) near |cos| = 1, and SupCon's 1/0.02 logits

@@ -71,6 +71,9 @@ def parse_arguments():
     parser.add_argument('--wave_aug_ops', type=str,
                         help="Comma-separated subset of noise,shift,gain that --wave_aug applies "
                              "(ablation/aug-ops). Default: all three")
+    parser.add_argument('--spec_branch', type=int, choices=[0, 1],
+                        help='1 = add a whole-clip |FFT| embedding branch (Wilkinghoff), concatenated before '
+                             'the head (ablation/spectrum-branch)')
     parser.add_argument('--state_snapshots', type=str,
                         help="Comma-separated epochs at which to save the full training state (state_e<N>.pth)")
     parser.add_argument('--resume_state', type=str,

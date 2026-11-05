@@ -1,0 +1,23 @@
+check: max |S0 − eval.py| per-ID AUC 1.16e-04
+
+== S0: sb_spec | ao_nogain | paired Δ (se), seeds (2040, 2041, 2042, 2043)
+  dev  ALL           AUC   95.95 |  96.17 | -0.22 (0.21)
+  dev  ALL           mean  93.41 |  93.67 | -0.26 (0.22)
+  dev  pump          AUC   94.92 |  95.57 | -0.65 (0.49)
+  dev  pump id_02    AUC   94.22 |  91.28 | +2.94 (0.30)
+  dev  ToyConveyor   AUC   85.80 |  85.96 | -0.16 (0.94)
+  eval ALL           mean  92.72 |  93.04 | -0.32 (0.54)
+  eval pump          AUC   98.01 |  97.63 | +0.38 (0.11)
+  eval ToyCar        AUC   91.81 |  93.48 | -1.67 (0.14)
+  eval ToyConveyor   AUC   84.48 |  83.18 | +1.29 (1.41)
+
+== S1p: sb_spec | ao_nogain | paired Δ (se), seeds (2040, 2041, 2042, 2043)
+  dev  ALL           AUC   96.67 |  96.47 | +0.20 (0.13)
+  dev  ALL           mean  94.06 |  94.05 | +0.01 (0.18)
+  dev  pump          AUC   95.86 |  95.50 | +0.36 (0.09)
+  dev  pump id_02    AUC   95.22 |  91.16 | +4.06 (0.73)
+  dev  ToyConveyor   AUC   88.00 |  87.35 | +0.64 (0.58)
+  eval ALL           mean  93.42 |  93.73 | -0.31 (0.53)
+  eval pump          AUC   98.35 |  98.02 | +0.33 (0.18)
+  eval ToyCar        AUC   95.13 |  94.98 | +0.15 (0.23)
+  eval ToyConveyor   AUC   87.16 |  87.19 | -0.03 (0.84)

@@ -101,8 +101,7 @@ def test_table(data):
 
 def forward(net, wav, mel, label):
     # the model's own branch stacking, so new input channels (--mel_gate) score correctly
-    x = net.branch_input(wav, mel, train=wav.shape[0] > 1)
-    _, pre = net.mobilefacenet(x)
+    pre = net.embed(wav, mel, train=wav.shape[0] > 1)   # + the spectrum embedding under --spec_branch
     logits = net.arcface(F.normalize(net.head(pre), dim=1), label)
     return logits, pre
 
