@@ -168,10 +168,12 @@ def fig2_overall():
         ax.set_title(f'{ds} {k}')
     axes[0].set_ylabel('points (seeds and 4-seed mean)')
     axes[0].legend(loc='lower left', fontsize=8)
-    s1 = have['S1p'] or have['R0']
-    gap = np.mean([p[1]['ALL'][0] for p in s1]) - PAPER_PM[('dev', 'AUC')]
-    fig.suptitle(f'Overall scores by rule; {ARMS[1][1]} dev AUC under {"S1′" if have["S1p"] else "R0"} is {gap:+.2f} '
-                 f'vs the PerMix paper (its baseline was weaker)', x=0.01, ha='left', fontsize=10.5,
+    RULE_NAME = {'K': "K (the paper's kNN rule)", 'S1p': 'S1′', 'R0': 'R0'}
+    rule = 'K' if have.get('K') else ('S1p' if have['S1p'] else 'R0')
+    gap = np.mean([p[1]['ALL'][0] for p in have[rule]]) - PAPER_PM[('dev', 'AUC')]
+    fig.suptitle(f'{ARMS[1][1]} is below ao_nogain under every rule; its dev AUC under '
+                 f'{RULE_NAME[rule]} is {gap:+.2f} vs the paper: not reproduced',
+                 x=0.01, ha='left', fontsize=10.5,
                  fontweight='bold', y=1.04)
     fig.tight_layout()
     save(fig, 'fig2_overall.png')

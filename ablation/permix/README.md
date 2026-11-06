@@ -1,8 +1,11 @@
 # PerMix: does predicting the perturbation ratio of multi-sample mixes beat Noisy-ArcMix + SupCon?
 
-> **Status: PRE-REGISTERED 2026-11-05, stage 1 (pm s2040–2043) launched after this
-> commit.** No pm run had trained past the 2-epoch smoke when the design,
-> predictions and decision rules below were written.
+> **Status: DONE 2026-11-06 — D1 FAILS on every criterion → D0, `--permix` not
+> adopted; stage 2 not run.** Stage 1 (pm s2040–2043) trained 11-05/06 with no
+> crashes. S1′ dev AUC −1.41 (0/4 seeds positive), R0 dev AUC −2.88, dev
+> ToyConveyor −2.51. Gains are confined to eval ToyCar id_05 and ToyConveyor id_06.
+> The paper's absolute numbers are not reproduced (K dev AUC 94.95 vs 95.89). See
+> Results. Pre-registration text below is unchanged.
 
 ## Why this exists
 
@@ -371,10 +374,90 @@ The paper's +1.6 dev AUC is shrunk hard, for three reasons:
 |---|---|
 | `plots/fig1_machines.png` | paired Δ AUC per machine and overall, dev and eval, under S1′ and R0 (seeds and mean) |
 | `plots/fig2_overall.png` | overall dev/eval AUC and pAUC for both arms under S1′, R0 and K, against the PerMix paper's numbers |
-| `plots/fig3_probe.png` | dev-test probe over training (R0): overall, ToyCar, ToyConveyor; mean over seeds |
+| `plots/fig3_probe.png` | dev-test probe over training (R0): overall, ToyCar, ToyConveyor; mean over seeds — PerMix learns later and its ToyConveyor decays after ~epoch 200 |
 
-(Rendered once stage-1 scores exist.)
 
 ## Results
 
-Pending: stage 1 is training.
+Δ = pm − ao_nogain, 4 seed pairs (2040–2043), AUC points, se over pairs; per-seed
+values and every machine/ID are in `scores/summary.txt`. S0 recomputed from the
+dumps matches eval.py to 2.0e-4 AUC per ID.
+
+| | pm | ao_nogain | Δ (se) | seeds > 0 |
+|---|---|---|---|---|
+| **S1′ dev AUC** (primary) | 95.06 | 96.47 | **−1.41 (0.14)** | 0/4 |
+| S1′ dev pAUC | 90.19 | 91.62 | −1.43 (0.38) | 0/4 |
+| S1′ eval mean(AUC, pAUC) | 93.47 | 93.73 | −0.26 (0.38) | 2/4 |
+| R0 dev AUC | 93.29 | 96.17 | −2.88 (0.18) | 0/4 |
+| R0 eval mean | 92.20 | 93.04 | −0.83 | |
+| K dev AUC (paper's rule) | 94.95 | 95.51 | −0.56 | |
+| K eval mean | 92.99 | 93.44 | −0.44 (0.23) | 1/4 |
+
+Per machine, Δ AUC under S1′, dev / eval: fan −2.26 / −1.25, pump −3.15 / −0.97,
+slider −0.38 / −0.00, ToyCar +0.44 / +0.16, ToyConveyor −2.51 / +1.15,
+valve −0.62 / −0.92. Under K the Toy gains on eval are clearer: ToyCar +1.34
+(4/4 seeds; id_05 +2.87), ToyConveyor +1.47 (id_06 +3.79). Dev pump id_00 and
+id_02 lose ~4 points under K.
+
+### D1 checklist
+
+| criterion | value | |
+|---|---|---|
+| (a) S1′ dev AUC Δ ≥ +0.20 | −1.41 | FAIL |
+| (a) Δ > 0 on ≥ 3/4 seeds | 0/4 | FAIL |
+| (a) S1′ dev pAUC Δ ≥ 0 | −1.43 | FAIL |
+| (b) S1′ eval mean Δ ≥ −0.20 | −0.26 | FAIL |
+| (c) R0 dev AUC Δ ≥ −0.20 | −2.88 | FAIL |
+| (c) R0 eval mean Δ ≥ −0.30 | −0.83 | FAIL |
+| (d) S1′ dev ToyConveyor Δ ≥ −0.80 | −2.51 | FAIL |
+
+**D1 fails → D0: stop.** Stage 2 is not run.
+
+### Predictions
+
+| | predicted (80% interval) | observed | |
+|---|---|---|---|
+| P1 S1′ dev AUC | +0.10 [−0.35, +0.50] | −1.41 | **fails** (far below) |
+| P2 S1′ dev pAUC | +0.15 [−0.50, +0.80] | −1.43 | fails |
+| P3 S1′ dev ToyConveyor | +0.5 [−1.5, +2.5] | −2.51 | fails |
+| P3 S1′ dev ToyCar | +0.1 [−0.5, +0.6] | +0.44 | holds |
+| P4 S1′ dev pump | −0.2 [−1.0, +0.6] | −3.15 | fails (direction right) |
+| P5 S1′ eval mean | +0.1 [−0.7, +0.9] | −0.26 | holds |
+| P5 S1′ eval ToyCar | +0.3 [−0.8, +1.4] | +0.16 | holds |
+| P5 S1′ eval ToyConveyor | +0.5 [−2.0, +3.0] | +1.15 | holds |
+| P6 R0 dev AUC | −0.05 [−0.45, +0.35] | −2.88 | fails |
+| P6 R0 eval mean | 0.0 [−0.8, +0.8] | −0.83 | fails (just) |
+| P7 K Δ − S1′ Δ (dev AUC) | +0.15 [−0.3, +0.6] | +0.85 | above interval, direction right |
+| P8 λ 0.72 ± 0.01 | | 0.717–0.722 | holds |
+| P8 selected valid CE within ±15% of ao_nogain | | 0.075–0.105 vs 0.28–0.31 | **fails** (3–4× lower) |
+| P8 no fp16 skips after epoch 5 | | 0 skips | holds |
+
+### What this shows
+
+- **On our recipe, PerMix trades the stationary machines for the Toy machines,
+  and loses overall.** fan, pump and valve drop on both sets; the gains the
+  paper reports (ToyCar, ToyConveyor) appear only on eval and are cancelled.
+- **A better proxy classifier, a worse detector.** The selected EMA nets reach
+  valid CE 0.075–0.105 (valid accuracy 99.5%) against 0.28–0.31 for ao_nogain.
+  The ID task gets easier and the normal-clip embedding gets tighter, but the
+  anomaly scores separate less. Dev ToyConveyor (fig3) peaks near epoch 200 and
+  then decays from ~83.5 to 78.3 while valid CE keeps falling, so validation CE
+  picks a late, worse checkpoint. ao_nogain's ToyConveyor stays flat.
+- **R0 suffers most** (−2.9): with a near-saturated ID classifier, the
+  own-ID CE separates normal from anomalous clips poorly. kNN (K, S1′) recovers
+  part of it, which is why P7 came out larger than predicted.
+- **Not a reproduction of the paper.** K dev AUC/pAUC 94.95/89.81 vs the paper's
+  95.89/90.98; eval K AUC 95.93 vs 96.45. Our deviations (FPH head kept,
+  wave_aug noise+shift before mixing, SupCon's τ factor, fast recipe,
+  valid-CE checkpoint selection) are confounded, so this says PerMix does not
+  stack on `ao_nogain`, not that the paper is wrong. Our baseline already
+  exceeds the paper's PerMix numbers under S1′ and C1.
+
+### What next (not pre-registered)
+
+- Not as a recipe change. A faithful replication (no FPH, no wave_aug, kNN,
+  their selection) would only test the paper, and our baseline already beats
+  its reported numbers.
+- For `../beats` (separate track): the PerMix paper reports BEATs with PerMix
+  far above BEATs with plain ArcFace, but this result gives no support for
+  porting our implementation there. `bt_arc` stays as pre-registered.
