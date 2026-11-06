@@ -74,6 +74,9 @@ def parse_arguments():
     parser.add_argument('--spec_branch', type=int, choices=[0, 1],
                         help='1 = add a whole-clip |FFT| embedding branch (Wilkinghoff), concatenated before '
                              'the head (ablation/spectrum-branch)')
+    parser.add_argument('--tpool', type=int, choices=[0, 1],
+                        help="1 = tie linear7's (8, 20) depthwise kernel over time: an (8, 1) kernel on the "
+                             "time mean of MobileFaceNet's final map (ablation/timepool-head)")
     parser.add_argument('--state_snapshots', type=str,
                         help="Comma-separated epochs at which to save the full training state (state_e<N>.pth)")
     parser.add_argument('--resume_state', type=str,

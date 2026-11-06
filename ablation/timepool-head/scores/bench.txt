@@ -1,0 +1,5 @@
+NVIDIA RTX A4000, torch 2.6.0+cu124, batch 64, random inputs; GPU load before start: 92 %, 7275 MiB
+fussion 1  lean 1  cudnn bench  amp fp16  tpool 0 |  2.54 it/s |    1.4 M params | peak  5.7 GB
+fussion 1  lean 1  cudnn bench  amp fp16  tpool 1 |  2.56 it/s |    1.3 M params | peak  5.7 GB
+fussion 1  lean 1  cudnn bench  amp fp16  tpool 0 |  2.49 it/s |    1.4 M params | peak  5.7 GB
+fussion 1  lean 1  cudnn bench  amp fp16  tpool 1 |  2.82 it/s |    1.3 M params | peak  5.7 GB

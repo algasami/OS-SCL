@@ -19,7 +19,7 @@ import os
 
 import torch
 
-ARCH_KEYS = ('fussion', 'ht', 'm', 'lean', 'mel_gate', 'eca', 'tf_act', 'tf_pool')
+ARCH_KEYS = ('fussion', 'ht', 'm', 'lean', 'mel_gate', 'eca', 'tf_act', 'tf_pool', 'tpool')
 
 
 def main():

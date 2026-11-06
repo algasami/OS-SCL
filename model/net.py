@@ -185,6 +185,7 @@ class MobileFaceNet(nn.Module):
         self.conv2 = ConvBlock(bottleneck_setting[-1][1], 512, 1, 1, 0)
         # 20(10), 4(2), 8(4)
         self.linear7 = ConvBlock(512, 512, (8, 20), 1, 0, dw=True, linear=True)
+        self.tpool = bool(cfg.get('tpool', False))
 
         self.linear1 = ConvBlock(512, 128, 1, 1, 0, linear=True)
 
@@ -196,6 +197,31 @@ class MobileFaceNet(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
+        if self.tpool:
+            self._tie_linear7_over_time()
+
+    def _tie_linear7_over_time(self):
+        """--tpool 1 (ablation/timepool-head): linear7 with its weights tied across time.
+
+        The (8, 20) depthwise kernel is one weight per (frequency, time) cell, so linear7 is
+        where absolute time position enters (ablation/pooled-knn diagnostic). Tied over time,
+        it becomes a (8, 1) depthwise kernel applied to the map's time mean: per channel,
+        sum_f w[c, f] * mean_t x[c, f, t], then BN as before. That is the only linear
+        functional of the map that is invariant to circular time shifts while keeping a
+        free weight per channel and frequency band. Output stays 512 x 1 x 1.
+
+        Init: the (8, 20) layer above is built and drawn as usual, so every other module and
+        the RNG stream after the net are exactly those of the flag-off net at the same seed.
+        The tied kernel is then set deterministically to the time-sum of that draw (the
+        (8, 20) kernel's response to a time-constant map); its construction draws are
+        discarded via fork_rng. BN that follows makes the kernel's overall scale irrelevant.
+        """
+        old = self.linear7
+        with torch.random.fork_rng(devices=[]):
+            self.linear7 = ConvBlock(512, 512, (8, 1), 1, 0, dw=True, linear=True)
+        with torch.no_grad():
+            self.linear7.conv.weight.copy_(old.conv.weight.sum(3, keepdim=True))
+        self.linear7.bn.load_state_dict(old.bn.state_dict())
 
     def _make_layer(self, block, setting):
         layers = []
@@ -214,6 +240,8 @@ class MobileFaceNet(nn.Module):
         x = self.dw_conv1(x)
         x = self.blocks(x)
         x = self.conv2(x)
+        if self.tpool:
+            x = x.mean(3, keepdim=True)          # (B, 512, 8, 20) -> (B, 512, 8, 1)
         x = self.linear7(x)
         x = self.linear1(x)
         feature = x.view(x.size(0), -1)
