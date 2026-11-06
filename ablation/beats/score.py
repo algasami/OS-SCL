@@ -223,7 +223,7 @@ def stage(ds, emb):
         c1 = c1_seed('eval')
         d1 = dict(rule=rule, beats_eval_Amean=float(np.mean(bt)), per_seed=bt, c1_eval8=C1_EVAL8,
                   delta=float(np.mean(bt) - C1_EVAL8), seeds_above=int(sum(x > C1_EVAL8 for x in bt)),
-                  paired_c1=[c1.get(int(r[-4:])) for r in BT])
+                  paired_c1=[c1.get(int(r[-4:])) if r[-4:].isdigit() else None for r in BT])
         d1['pass'] = bool(d1['delta'] >= 0.5 and d1['seeds_above'] >= 2)
         # D2: chosen fusion vs E2′[A8]
         ci = boot(ev, S[fusion], S['A8'])

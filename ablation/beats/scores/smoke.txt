@@ -1,0 +1,33 @@
+# smoke test 2026-11-06, GPU 1 (idle), seed 2040, 200 steps x 16 clips (no accumulation, 0.09 epoch), warm-up 50
+# NOT A RESULT: a pipeline check. WITH EXTERNAL PRETRAINING (BEATs_iter3).
+## training
+lr: 0.0000759 | EPOCH: 100 | Train_loss: 14.85225 | Train_accuracy: 0.00000 | Valid_loss: 13.17021 | Valid_accuracy: 0.00000
+lr: 0.0000000 | EPOCH: 200 | Train_loss: 11.92022 | Train_accuracy: 0.02312 | Valid_loss: 9.58535 | Valid_accuracy: 0.07769
+done | 200 steps | 0.03 h | skipped 0 | peak 6.55 GiB
+crash-resumed check_points/BEATsASD_smoke/state_last.pth at step 100
+lr: 0.0000000 | EPOCH: 200 | Train_loss: 11.92094 | Train_accuracy: 0.02312 | Valid_loss: 9.58560 | Valid_accuracy: 0.07769
+done | 200 steps | 0.02 h | skipped 0 | peak 6.55 GiB
+## extraction (fp32, 1 run, 36283 train + 17971 test clips)
+train 1 runs: 100%|██████████| 1134/1134 [11:29<00:00,  1.64it/s]
+test 1 runs: 100%|██████████| 562/562 [05:39<00:00,  1.65it/s]
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 17:16.44
+	Maximum resident set size (kbytes): 3602252
+## score.py dev / eval (results/smoke_scores)
+P0  E2′[A8] dev Amean 94.7692 vs committed 94.7692 (|d| 3.3e-05)
+single S0   mean: AUC 67.54 pAUC 59.83 mAUC 60.68 Amean 63.69 | per seed 63.69 | fan 65.3 pump 58.3 slider 73.8 ToyCar 69.5 ToyConveyor 50.1 valve 65.2
+single K    mean: AUC 85.49 pAUC 75.60 mAUC 75.66 Amean 80.55 | per seed 80.55 | fan 67.8 pump 76.1 slider 97.6 ToyCar 88.3 ToyConveyor 60.9 valve 92.5
+single zKp  mean: AUC 85.34 pAUC 76.22 mAUC 75.66 Amean 80.78 | per seed 80.78 | fan 66.4 pump 78.4 slider 98.0 ToyCar 88.3 ToyConveyor 61.9 valve 91.6
+single S1p  mean: AUC 84.23 pAUC 75.82 mAUC 75.37 Amean 80.02 | per seed 80.02 | fan 66.8 pump 79.1 slider 97.5 ToyCar 86.4 ToyConveyor 58.7 valve 91.7
+single C1b  mean: AUC 85.39 pAUC 76.96 mAUC 76.56 Amean 81.17 | per seed 81.17 | fan 67.1 pump 79.6 slider 97.9 ToyCar 89.4 ToyConveyor 60.6 valve 92.5
+system A8               AUC 97.05 pAUC 92.48 mAUC 94.10 Amean 94.77 (Δ vs A8 +0.00)
+system F1               AUC 97.02 pAUC 92.40 mAUC 94.18 Amean 94.71 (Δ vs A8 -0.06)
+system F2               AUC 96.29 pAUC 91.47 mAUC 92.89 Amean 93.88 (Δ vs A8 -0.89)
+SELECTED (dev): single rule C1b, fusion F1
+P0  E2′[A8] eval Amean 94.7764 vs committed 94.7764 (|d| 2.7e-05)
+single S0   mean: AUC 72.96 pAUC 63.40 mAUC 65.99 Amean 68.18 | per seed 68.18 | fan 76.3 pump 70.2 slider 70.6 ToyCar 71.0 ToyConveyor 53.4 valve 67.5
+single K    mean: AUC 87.33 pAUC 73.86 mAUC 80.58 Amean 80.60 | per seed 80.60 | fan 80.4 pump 65.8 slider 89.8 ToyCar 92.0 ToyConveyor 69.9 valve 85.7
+single zKp  mean: AUC 86.34 pAUC 73.86 mAUC 80.58 Amean 80.10 | per seed 80.10 | fan 78.9 pump 65.6 slider 89.8 ToyCar 91.7 ToyConveyor 70.4 valve 84.2
+single S1p  mean: AUC 86.43 pAUC 73.97 mAUC 80.24 Amean 80.20 | per seed 80.20 | fan 79.4 pump 72.0 slider 88.6 ToyCar 91.8 ToyConveyor 66.7 valve 82.7
+single C1b  mean: AUC 87.43 pAUC 74.69 mAUC 81.78 Amean 81.06 | per seed 81.06 | fan 79.8 pump 70.1 slider 89.3 ToyCar 93.3 ToyConveyor 68.9 valve 84.9
+D1 single C1b: eval Amean 81.06 vs C1 94.09 -> Δ -13.03, 0/1 seeds above | paired C1 [None] | PASS False
+D2 F1: eval Δ +0.02 CI -0.02,+0.06 | dev Δ -0.06 | one-seed Δ +0.02 | PASS False

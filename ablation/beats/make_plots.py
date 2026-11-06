@@ -25,6 +25,7 @@ SURFACE, INK, INK_2, MUTED, GRID = '#fcfcfb', '#0b0b0b', '#52514e', '#8a8983', '
 BLUE, ORANGE, GREEN = '#2a78d6', '#eb6834', '#1baf7a'
 MACH = ['fan', 'pump', 'slider', 'ToyCar', 'ToyConveyor', 'valve']
 RULES = ['S0', 'K', 'zKp', 'S1p', 'C1b']
+TICKS = ['fan', 'pump', 'slider', 'ToyCar', 'Toy-\nConveyor', 'valve', 'mean']
 TAG = 'with external pretraining (BEATs_iter3)'
 # AnoPatch (arXiv 2406.11364) Table 1, mean of AUC and pAUC per machine
 ANOPATCH = {'dev': dict(fan=86.46, pump=93.10, slider=99.20, ToyCar=96.10, ToyConveyor=73.20, valve=97.53),
@@ -80,22 +81,23 @@ def fig1():
             continue
         runs = [r for r in rows if r['rule'] == rule and r['run'] != 'mean']
         x = np.arange(len(MACH) + 1)
-        labels = MACH + ['mean']
         bt = [[float(r[m]) for r in runs] for m in MACH] + [[float(r['Amean']) for r in runs]]
         ours = [c1[m] for m in MACH] + [c1['overall']]
         ano = [ANOPATCH[ds][m] for m in MACH] + [np.mean(list(ANOPATCH[ds].values()))]
         ax.bar(x - 0.2, ours, 0.38, color=BLUE, label='ours, C1 single (8 seeds)')
-        ax.bar(x + 0.2, [np.mean(b) for b in bt], 0.38, color=ORANGE, label=f'BEATs, {rule} ({len(runs)} seeds)')
+        ax.bar(x + 0.2, [np.mean(b) for b in bt], 0.38, color=ORANGE, label=f'BEATs, {rule} (n={len(runs)})')
         for j, b in enumerate(bt):
             ax.scatter([x[j] + 0.2] * len(b), b, s=9, color=INK, zorder=3, lw=0)
         ax.scatter(x, ano, marker='_', s=160, color=INK_2, zorder=4, label='AnoPatch (published)')
-        ax.set_xticks(x, labels, rotation=0, fontsize=8)
-        ax.set_ylim(70, 100.5)
+        ax.set_xticks(x, TICKS, fontsize=8)
+        lo = min(min(min(b) for b in bt), min(ours), min(ano))
+        ax.set_ylim(min(70, 5 * np.floor((lo - 2) / 5)), 100.5)
         ax.yaxis.grid(True)
         ax.set_axisbelow(True)
         ax.set_title(f'{ds}: mean of AUC and pAUC per machine', fontsize=9, loc='left')
         ax.set_ylabel('Amean (%)')
-    axes[0].legend(loc='lower left', fontsize=8)
+    h, lab = axes[0].get_legend_handles_labels()
+    fig.legend(h, lab, loc='lower center', ncol=3, fontsize=8, bbox_to_anchor=(0.5, -0.06))
     fig.suptitle(f'Single models — BEATs {TAG}', fontsize=10, x=0.01, ha='left')
     save(fig, 'fig1_single_per_machine.png')
 
@@ -149,12 +151,13 @@ def fig3():
             ax.text(x[-1] + (k - 0.5) * 0.38, d[-1], f'{d[-1]:+.2f}', ha='center',
                     va='bottom' if d[-1] >= 0 else 'top', fontsize=7, color=INK_2)
         ax.axhline(0, color=MUTED, lw=0.8)
-        ax.set_xticks(x, MACH + ['mean'], fontsize=8)
+        ax.set_xticks(x, TICKS, fontsize=8)
         ax.yaxis.grid(True)
         ax.set_axisbelow(True)
         ax.set_title(f'{ds}: Δ Amean vs E2′[A8]', fontsize=9, loc='left')
     if drawn:
-        axes[0].legend(loc='lower left', fontsize=8)
+        h, lab = axes[0].get_legend_handles_labels()
+        fig.legend(h, lab, loc='lower center', ncol=2, fontsize=8, bbox_to_anchor=(0.5, -0.06))
         fig.suptitle(f'Fusing BEATs into our best ensemble — {TAG}', fontsize=10, x=0.01, ha='left')
         save(fig, 'fig3_fusion.png')
     else:
