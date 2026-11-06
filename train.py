@@ -74,6 +74,11 @@ def parse_arguments():
     parser.add_argument('--spec_branch', type=int, choices=[0, 1],
                         help='1 = add a whole-clip |FFT| embedding branch (Wilkinghoff), concatenated before '
                              'the head (ablation/spectrum-branch)')
+    parser.add_argument('--permix', type=int, choices=[0, 1],
+                        help='1 = PerMix (arXiv 2610.31434): mix each clip with 1-3 others, Dirichlet weights, '
+                             'lambda-scaled ArcFace BCE + dominance SupCon (ablation/permix)')
+    parser.add_argument('--permix_a', type=float, help='PerMix Dirichlet concentration (default 0.5)')
+    parser.add_argument('--permix_r', type=int, help='PerMix max perturbing clips R, R ~ U{1..r} (default 3)')
     parser.add_argument('--state_snapshots', type=str,
                         help="Comma-separated epochs at which to save the full training state (state_e<N>.pth)")
     parser.add_argument('--resume_state', type=str,

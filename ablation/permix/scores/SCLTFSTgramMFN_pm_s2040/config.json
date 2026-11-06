@@ -1,0 +1,23 @@
+{
+    "m": 0.4,
+    "gpu_num": 0,
+    "epoch": 300,
+    "batch_size": 64,
+    "fussion": 1,
+    "ht": "basic",
+    "desc": "pm_s2040",
+    "seed": 2040,
+    "num_workers": 8,
+    "amp": "fp16",
+    "cudnn_bench": 1,
+    "lean": 1,
+    "cache_dir": "data/cache",
+    "probe_every": 5,
+    "wave_aug": 1,
+    "wave_aug_ops": "noise,shift",
+    "permix": 1,
+    "permix_a": 0.5,
+    "permix_r": 3,
+    "state_every": 10,
+    "model_name": "SCLTFSTgramMFN_pm_s2040"
+}

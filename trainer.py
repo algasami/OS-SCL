@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 
 from tqdm import tqdm
-from utils import get_accuracy, mixup_data, os_scl
+from utils import get_accuracy, mixup_data, os_scl, permix_data, permix_loss
 from losses import ASDLoss, SupConLoss, WeightEMA
 from probe import append_row, devtest_metrics, load_devtest
 
@@ -100,6 +100,14 @@ class Trainer:
         self.wave_ops = set(ops.split(','))
         assert self.wave_ops and self.wave_ops <= {'noise', 'shift', 'gain'}, f'bad --wave_aug_ops {ops}'
 
+        # --permix 1 (ablation/permix): PerMix's multi-sample Dirichlet mixing, the
+        # lambda-scaled ArcFace BCE and dominance SupCon replace mixup + os_scl. Off = original.
+        self.permix = bool(cfg.get('permix'))
+        self.permix_a = float(cfg.get('permix_a') or 0.5)
+        self.permix_r = int(cfg.get('permix_r') or 3)
+        if self.permix and (self.teachers or self.m_warmup):
+            raise ValueError('--permix is not combined with --kd_teachers or --m_warmup')
+
     def train(self, train_loader, valid_loader, start_epoch=0):
         num_steps = len(train_loader)
         # a fork selects its own best epoch from the fork point on, not against the trunk's;
@@ -111,6 +119,7 @@ class Trainer:
             sum_accuracy = 0.
             sum_kd = 0.
             sum_acc_final = 0.
+            sum_per = sum_dom = sum_lam = 0.
 
             for step, (x_wavs, x_mels, labels) in tqdm(enumerate(train_loader), total=num_steps, dynamic_ncols=True):
                 self.net.train()
@@ -122,13 +131,25 @@ class Trainer:
                 if self.wave_aug:
                     x_wavs, x_mels = self.augment(x_wavs, x_mels)
 
-                mixed_x_wavs, mixed_x_mels, y_a, y_b, lam, mixed_y = mixup_data(x_wavs, x_mels, labels,
-                                                                                self.device)
-                with torch.autocast('cuda', dtype=self.amp_dtype, enabled=self.amp):
-                    logits, feature = self.net(mixed_x_wavs, mixed_x_mels, labels)
-                loss = os_scl(self.criterion, logits, y_a, y_b, lam,
-                              self.suploss,
-                              feature)
+                if self.permix:
+                    mixed_x_wavs, mixed_x_mels, lam_dom = permix_data(x_wavs, x_mels, labels,
+                                                                      self.permix_a, self.permix_r)
+                    with torch.autocast('cuda', dtype=self.amp_dtype, enabled=self.amp):
+                        _, feature = self.net(mixed_x_wavs, mixed_x_mels, labels)
+                    with torch.autocast('cuda', enabled=False):
+                        logits = self.net.arcface.forward_permix(feature, labels, lam_dom)
+                        loss, l_per, l_dom = permix_loss(logits, labels, lam_dom, self.suploss, feature)
+                    sum_per += l_per.item()
+                    sum_dom += l_dom.item()
+                    sum_lam += lam_dom.mean().item()
+                else:
+                    mixed_x_wavs, mixed_x_mels, y_a, y_b, lam, mixed_y = mixup_data(x_wavs, x_mels, labels,
+                                                                                    self.device)
+                    with torch.autocast('cuda', dtype=self.amp_dtype, enabled=self.amp):
+                        logits, feature = self.net(mixed_x_wavs, mixed_x_mels, labels)
+                    loss = os_scl(self.criterion, logits, y_a, y_b, lam,
+                                  self.suploss,
+                                  feature)
                 if self.teachers:
                     kd = self.kd_loss(mixed_x_wavs, mixed_x_mels, labels, feature)
                     loss = loss + self.kd_beta * kd
@@ -167,7 +188,9 @@ class Trainer:
                     f'lr: {lr:.7f} | EPOCH: {epoch} | Train_loss: {avg_loss:.5f} | Train_accuracy: {avg_accuracy:.5f} | Valid_loss: {valid_loss:.5f} | Valid_accuracy: {valid_accuracy:.5f}'
                     + (f' | KD: {sum_kd / num_steps:.5f}' if self.teachers else '')
                     + (f' | m: {self.net.arcface.m:.4f} | Train_acc_mfinal: {sum_acc_final / num_steps:.5f}'
-                       if self.m_warmup else ''))
+                       if self.m_warmup else '')
+                    + (f' | L_per: {sum_per / num_steps:.5f} | L_dom: {sum_dom / num_steps:.5f}'
+                       f' | lam: {sum_lam / num_steps:.4f}' if self.permix else ''))
                 torch.save(self.ema_net.state_dict(), self.model_path)
             if self.probe_every and ((epoch + 1) % self.probe_every == 0 or epoch + 1 == self.epochs):
                 self.probe(epoch, valid_loss, saved)

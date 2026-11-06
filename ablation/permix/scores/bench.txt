@@ -1,0 +1,5 @@
+NVIDIA RTX A4000 (GPU 2), torch 2.6.0+cu124, batch 64, random inputs, full Trainer step (wave_aug noise,shift, fp16, cudnn.benchmark, lean)
+rep 0 permix 0 |  4.31 it/s (40 steps + 1 valid batch) | peak  5.7 GB
+rep 0 permix 1 |  4.42 it/s (40 steps + 1 valid batch) | peak  5.7 GB
+rep 1 permix 0 |  4.47 it/s (40 steps + 1 valid batch) | peak  5.7 GB
+rep 1 permix 1 |  4.36 it/s (40 steps + 1 valid batch) | peak  5.7 GB

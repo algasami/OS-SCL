@@ -65,6 +65,22 @@ class ArcMarginProduct(nn.Module):
         output = output * self.s
         return output
 
+    def forward_permix(self, x, label, lam):
+        """PerMix's logit (arXiv 2610.31434, Eq. 3): on the dominant class only, the margin
+        term is blended by the dominant-class ratio lam, s*(lam*cos(theta+m) + (1-lam)*cos theta);
+        other classes stay s*cos theta. lam = 1 gives forward() exactly. The same
+        cos(theta+m) as forward(), including its theta+m > pi fallback (ablation/permix)."""
+        assert self.sub == 1 and not self.easy_margin, 'forward_permix: sub=1, easy_margin=False only'
+        cosine = F.linear(F.normalize(x), F.normalize(self.weight))
+        sine = torch.sqrt(1.0 - torch.pow(cosine, 2))
+        phi = cosine * self.cos_m - sine * self.sin_m
+        phi = torch.where((cosine - self.th) > 0, phi, cosine - self.mm)
+        lam = lam.view(-1, 1)
+        one_hot = torch.zeros(cosine.size(), device=x.device)
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        output = one_hot * (lam * phi + (1.0 - lam) * cosine) + (1.0 - one_hot) * cosine
+        return output * self.s
+
 
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
