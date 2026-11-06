@@ -1,0 +1,20 @@
+P0  dev S0 max |per-ID AUC - eval.py| 1.37e-04 (< 5e-4: True); max |R0 - aug-ops| train 0.0e+00 test 2.4e-04; max |S1p - s1p.csv| 0.0000; fp16 max per-ID AUC diff 2.0e-04
+standalone, 4 selection seeds, dev mean AUC / pAUC / Amean:
+    S0      96.17  91.16  93.67
+    S1p     96.47  91.62  94.05
+    zR0p    96.13  91.24  93.68
+    zKp     95.54  90.89  93.22
+    Gmean   93.40  85.05  89.22
+    Gmax    89.33  81.47  85.40
+    Gmm     92.96  85.33  89.15
+    Bmean   94.43  86.69  90.56
+    Bmax    90.18  80.09  85.13
+    All     93.37  85.61  89.49
+candidates, Δ vs S1′ (4-seed mean): AUC pAUC Amean mAUC | Amean per seed
+    C1 Gmean  +0.100 +0.160 +0.130 +0.362 | +0.209 +0.096 +0.078 +0.136
+    C2 Gmax   -0.364 -0.286 -0.325 -0.745 | -0.322 -0.370 -0.266 -0.341
+    C3 Gmm    -0.088 -0.023 -0.055 -0.115 | -0.007 -0.105 -0.053 -0.056
+    C4 Bmean  +0.115 +0.131 +0.123 +0.328 | +0.166 +0.135 +0.108 +0.081
+    C5 Bmax   -0.293 -0.261 -0.277 -0.449 | -0.271 -0.314 -0.239 -0.283
+    C6 All    -0.066 -0.028 -0.047 -0.050 | -0.008 -0.081 -0.043 -0.056
+CHOSEN C1 = S1′ + zGmean (Δ Amean +0.130); D0: False
