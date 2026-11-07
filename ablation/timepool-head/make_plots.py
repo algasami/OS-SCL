@@ -81,8 +81,9 @@ def fig1_rules(S):
         ax.set_title(f'{ds}, mean(AUC, pAUC)')
     axes[0].set_ylabel('tp − ao_nogain (points)')
     c = S['rules']['C1']
-    fig.suptitle(f'Under C1, tying linear7 over time moves Amean {c["dev|overall|Amean"]["d"]:+.2f} dev, '
-                 f'{c["eval|overall|Amean"]["d"]:+.2f} eval (n={len(S["seeds"])} seed pairs; dots: seeds, bar: mean)',
+    fig.suptitle(f'Tying linear7 over time: C1 Amean {c["dev|overall|Amean"]["d"]:+.2f} dev, '
+                 f'{c["eval|overall|Amean"]["d"]:+.2f} eval, D1 fails; R0 loses most '
+                 f'(n={len(S["seeds"])} seed pairs; dots: seeds, bar: mean)',
                  x=0.01, ha='left', fontsize=10.5, fontweight='bold', y=1.03)
     save(fig, 'fig1_rules.png')
 
@@ -99,8 +100,8 @@ def fig2_machines(S):
         ax.set_title(f'{ds}, C1')
     axes[0].set_ylabel('AUC, tp − ao_nogain (points)')
     c = S['rules']['C1']
-    fig.suptitle(f'Per machine under C1: ToyCar {c["dev|ToyCar|AUC"]["d"]:+.2f} dev / {c["eval|ToyCar|AUC"]["d"]:+.2f} eval, '
-                 f'non-Toy Amean {c["dev|nontoy|Amean"]["d"]:+.2f} / {c["eval|nontoy|Amean"]["d"]:+.2f}',
+    fig.suptitle(f'Per machine under C1: ToyConveyor {c["dev|ToyConveyor|AUC"]["d"]:+.2f} dev fails D1(d); '
+                 f'ToyCar {c["dev|ToyCar|AUC"]["d"]:+.2f} / {c["eval|ToyCar|AUC"]["d"]:+.2f}; non-Toy Amean {c["dev|nontoy|Amean"]["d"]:+.2f} / {c["eval|nontoy|Amean"]["d"]:+.2f}',
                  x=0.01, ha='left', fontsize=10.5, fontweight='bold', y=1.03)
     save(fig, 'fig2_machines.png')
 
@@ -150,8 +151,12 @@ def fig4_roll():
             for arm, nm, ls in (('ao', 'S1p', '-'), ('tp', 'S1p', '-'), ('tp', 'Gmean', ':')):
                 y = o[f'{arm}|{nm}'][key]
                 ax.plot(k, y, color=COL[arm], lw=1.8, ls=ls, marker='o', ms=3)
-                ax.annotate(f'{LAB[arm].split(" ")[0]} {"S1′" if nm == "S1p" else "zGmean"}', (k[4], y[4]),
-                            xytext=(0, 6 if arm == 'ao' else -12), textcoords='offset points', ha='center',
+                # tp's two curves sit close: label them at different rolls, on the side away from the other
+                i = 4 if arm == 'ao' else (2 if nm == 'S1p' else 6)
+                other = o['tp|Gmean' if nm == 'S1p' else 'tp|S1p'][key][i]
+                dy = 6 if arm == 'ao' else (6 if y[i] >= other else -12)
+                ax.annotate(f'{LAB[arm].split(" ")[0]} {"S1′" if nm == "S1p" else "zGmean"}', (k[i], y[i]),
+                            xytext=(0, dy), textcoords='offset points', ha='center',
                             fontsize=7.5, color=INK if arm == 'tp' else INK_2)
             if col == 0:
                 ax.set_ylabel(ylab)
@@ -192,17 +197,21 @@ def fig5_probe(seeds):
             ep = sorted(set.intersection(*(set(r) for r in got)))
             y = np.array([[100 * float(r[e][key]) for e in ep] for r in got]).mean(0)
             ax.plot(np.array(ep) + 1, y, color=COL[arm], lw=1.6)
-            ends[(key, arm)] = y[-1]
-            ax.annotate(f'{LAB[arm].split(" ")[0]} {y[-1]:.2f}', (ep[-1] + 1, y[-1]),
-                        xytext=(4, 6 if arm == 'tp' else -6), textcoords='offset points', va='center', fontsize=7.5,
-                        color=INK if arm == 'tp' else INK_2)
+            ends[(key, arm)] = (ep[-1] + 1, y[-1])
+        hi = max(('ao', 'tp'), key=lambda a: ends[(key, a)][1])
+        for arm in ('ao', 'tp'):
+            x, v = ends[(key, arm)]
+            ax.annotate(f'{LAB[arm].split(" ")[0]} {v:.2f}', (x, v), xytext=(4, 6 if arm == hi else -6),
+                        textcoords='offset points', va='center', fontsize=7.5, color=INK if arm == 'tp' else INK_2)
+        ends = {k2: (v2 if not isinstance(v2, tuple) else v2[1]) for k2, v2 in ends.items()}
         ax.set_ylim(85, 100)
-        ax.set_xlim(0, 340)
+        ax.set_xlim(100, 345)
         ax.set_title(title)
         ax.set_xlabel('epoch')
     axes[0].set_ylabel('EMA-net R0 probe AUC (points), seed mean')
-    fig.suptitle(f'Dev-test R0 probe over training: final ToyCar {ends[("ToyCar_AUC", "tp")]:.2f} (tp) vs '
-                 f'{ends[("ToyCar_AUC", "ao")]:.2f} (ao_nogain); diagnostic only', x=0.01, ha='left',
+    fig.suptitle(f'Dev-test R0 probe: tp trails ao_nogain from epoch 130 on (final {ends[("AUC", "tp")]:.2f} vs '
+                 f'{ends[("AUC", "ao")]:.2f}); ToyCar ends level ({ends[("ToyCar_AUC", "tp")]:.2f} vs '
+                 f'{ends[("ToyCar_AUC", "ao")]:.2f}); diagnostic only', x=0.01, ha='left',
                  fontsize=10.5, fontweight='bold', y=1.03)
     save(fig, 'fig5_probe.png')
 

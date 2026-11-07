@@ -1,7 +1,10 @@
 # Time-pooled head: does tying `linear7` over time help, now that we know position enters there?
 
-> **Status: PRE-REGISTERED 2026-11-06, stage 1 (seeds 2040–2043) queued.** Predictions and
-> decision rules below were committed before any `tp` training run.
+> **Status: DONE 2026-11-07. D1 FAILS on (a) and (d) → D0: stop, `--tpool` not adopted, no stage 2.**
+> Under C1, dev Amean Δ −0.21 (2/4 seeds ≥ 0), eval +0.10; dev ToyConveyor AUC −1.73. Tying `linear7`
+> over time cuts ToyCar's roll penalty from 27 / 41 sd to 1.7 / 3.7 sd, but loses accuracy
+> rather than gaining it: eval ToyCar id_05 *falls* (−1.58 C1, −5.22 R0). See *Results*.
+> Predictions and decision rules below were committed (416a24d) before any `tp` training run.
 
 ## Why this exists
 
@@ -261,6 +264,116 @@ still (eval per-seed sd 2–3).
   on `tp` nets would need its own pre-registration. Ensembles with `tp` members, and composition
   with TTA, are not tested here.
 
+## Results (stage 1, seeds 2040–2043, 2026-11-07)
+
+Four `tp` runs, 300 epochs each, no crashes (40.5–48.8 ks wall; s2043 on the slow GPU 1).
+Scored with `score.py main` on the dumps from `extract.py`. P0 check: R0 recomputed from the
+dumps matches `eval.py` to ≤ 1.4e-4 per-ID AUC, and `ao_nogain`'s S1′/C1 match `../pooled-knn`
+to ≤ 4.8e-5. Full table: `scores/scorecard_2040_2041_2042_2043.txt`.
+
+### D1 (rule C1, `tp` − `ao_nogain`, 4 pairs)
+
+| criterion | value | pass |
+|---|---|---|
+| (a) dev Amean Δ ≥ +0.05, or (dev ≥ −0.10 and eval ≥ +0.30) | dev **−0.21** (se 0.23), eval +0.10 (se 0.29) | **no** |
+| (b) eval Amean Δ ≥ −0.20 | +0.10 | yes |
+| (c) non-Toy Amean Δ ≥ −0.20 dev / ≥ −0.40 eval | +0.21 / +0.30 | yes |
+| (d) dev ToyConveyor AUC Δ ≥ −1.0 | **−1.73** (se 0.85; per seed −3.49 −1.26 +0.42 −2.59) | **no** |
+
+**D0 applies.** `--tpool` stays off by default and stage 2 is not run.
+
+### Amean by rule (Δ, se)
+
+| rule | dev | eval |
+|---|---|---|
+| R0 | **−0.51** (0.28) | −0.34 (0.23) |
+| S1′ | −0.22 (0.22) | +0.02 (0.24) |
+| C1 (primary) | −0.21 (0.23) | +0.10 (0.29) |
+| zK′ alone (embedding kNN) | **+0.26** (0.11), 4/4 seeds | +0.27 (0.39) |
+| zGmean alone (time-mean kNN) | +0.24 (0.17) | −0.42 (0.27) |
+
+The loss is in the **classifier score**. R0, the CE of the own-ID logit, loses 0.5 dev Amean and
+4.06 points on dev ToyConveyor. The kNN on `tp`'s embedding is *better* than `ao_nogain`'s
+(+0.26 dev, 4/4 seeds; +1.00 dev mAUC). S1′ = zR0′ + zK′ averages the two to a wash. So
+position weighting at `linear7` helps the network tell machine IDs apart, which is what the
+CE score measures. It does not help the geometry of the embedding.
+
+### Per machine (C1 AUC Δ)
+
+| | fan | pump | slider | ToyCar | ToyConveyor | valve |
+|---|---|---|---|---|---|---|
+| dev | −0.02 | +0.67 | −0.07 | −0.26 | **−1.73** | +0.05 |
+| eval | −0.13 | +0.05 | +0.01 | −0.49 | −0.65 | +0.84 |
+
+- **ToyCar loses on both sets and every seed** (dev −0.19…−0.30, eval −0.23…−0.91). The ID
+  the bet was about went the wrong way. Eval **id_05 is 85.48 vs 87.05** under C1 (−1.58, 4/4
+  seeds negative). Under R0 it is 76.39 vs 81.60 (−5.22). Dev id_03 falls 99.63 → 98.82
+  (−0.81, 4/4 seeds).
+- **ToyConveyor loses on five of six IDs under every rule.** Eval id_04, the easy one, is level
+  (C1 +0.06). It is worst on dev id_02/id_03 (R0 −5.2 / −6.0).
+- Non-Toy machines gain slightly: pump +0.67 dev (C1), valve +0.84 eval (seed spread ±2).
+  Both are inside noise.
+
+### Diagnostic: the roll penalty (`score.py diag`, `scores/diag.json`)
+
+ToyCar normal-clip penalty at rolls of 37.5–62.5% of the clip, in sd of the unrolled score:
+
+| | dev S1′ | eval S1′ | dev C1 | eval C1 |
+|---|---|---|---|---|
+| `ao_nogain` | 27.29 | 40.56 | 24.55 | 33.12 |
+| `tp` | **1.65** | **3.66** | 1.66 | 3.06 |
+
+The network change does what it was built to do: it cuts the penalty 16× on dev and 11× on eval.
+It doesn't remove it. ToyCar S1′ AUC still falls from 97.9 to 89.5 (dev) and from 94.1 to 83.8
+(eval) at the farthest roll. `ao_nogain` falls to 54.1 / 71.2. The residual is presumably (not tested) the Tgram
+branch's per-frame LayerNorm affine, the edge padding of the convolutions, and the frame
+borders the roll creates (README *Robustness*). The pooled map itself is nearly roll-free
+(`tp` zGmean 0.56 / 0.67 sd).
+
+### Predictions vs outcome
+
+| | predicted (80% interval) | outcome | in interval |
+|---|---|---|---|
+| P1 dev Amean C1 | −0.10 [−0.55, +0.30] | −0.21 | yes |
+| P2 eval Amean C1 | +0.05 [−0.65, +0.70] | +0.10 | yes |
+| P3 R0 dev / eval | −0.05 [−0.55, +0.40] / +0.25 [−0.50, +1.00] | −0.51 / −0.34 | yes / yes |
+| P3 S1′ dev / eval | −0.05 [−0.50, +0.35] / +0.15 [−0.55, +0.85] | −0.22 / +0.02 | yes / yes |
+| P3 R0 Δ > C1 Δ on eval ToyCar (70%) | yes | −2.30 vs −0.49 | **wrong** |
+| P4 ToyCar C1 dev / eval | 97.6 [95.8, 98.6] / 96.0 [94.6, 97.0] | 98.19 / 95.31 | yes / yes |
+| P4 R0 eval ToyCar Δ | +1.0 [−0.5, +2.5] | −2.30 | **no** |
+| P5 dev id_03 C1 | 95.5 [88.0, 99.6]; drop > 1 point (65%) | 98.82; drop 0.81 | yes; wrong |
+| P6 eval id_05 C1 / R0 | 88.0 [85.0, 90.5] / 85.0 [81.0, 89.0] | 85.48 / 76.39 | yes (edge) / **no** |
+| P7 ToyConveyor C1 dev / eval | 0.0 [−1.2, +1.2] / +0.3 [−2.5, +3.0] | −1.73 / −0.65 | **no** / yes |
+| P8 non-Toy C1 dev / eval | 0.00 [−0.25, +0.25] / 0.0 [−0.6, +0.6] | +0.21 / +0.30 | yes / yes |
+| P9 `tp` C1 − S1′ dev; smaller than `ao`'s (80%) | +0.04 [−0.08, +0.15] | +0.14 (ao +0.13) | yes; wrong |
+| P10 penalty dev / eval | 0.5 [0.05, 4] / 0.6 [0.05, 5] sd | 1.65 / 3.66 | yes / yes |
+| P10 verdict | removes 65%, reduces 30% | reduces | (the 30% branch) |
+| P10 k = 4 within 1.5 points of k = 0 (70%) | yes | −8.4 / −10.2 | **wrong** |
+
+Most interval predictions held, but nearly every **directional** bet about the Toy machines
+was wrong. I expected eval ToyCar, and id_05 above all, to gain once position was removed, with
+R0 gaining most. Instead id_05 lost under every rule and R0 lost most. The pooled term was not
+made redundant either (P9): C1 − S1′ is as large in `tp` (+0.14 dev, +0.26 eval) as in
+`ao_nogain`.
+
+### What this shows
+
+- **Position at `linear7` is a cue the classifier uses well, not a bug.** Removing it hurts the
+  ID-classification score (R0) on both Toy machines and both sets. The embedding-kNN score gets
+  slightly better (dev +0.26, 4/4 seeds), and the composite S1′/C1 ends up at about zero.
+- **ToyCar's eval id_05 failure is not caused by positional latching.** A network that is
+  ~11× less position-sensitive does worse on id_05. `../pooled-knn`'s C1 gain on id_05 came
+  from *adding* a position-free view next to the positional one, not from replacing it.
+- **Scoring-side fusion beats the architectural fix.** C1 on `ao_nogain` (94.18 / 93.91) stays
+  the best single-network rule. `tp` C1 is 93.97 / 94.01.
+
+### What next (not pre-registered here)
+
+- `tp` nets as **ensemble members**. Their embedding kNN is better and their errors differ
+  (ToyCar penalty profile, pump/valve gains), so a `tp` + `ao_nogain` E2′/C1 mix may beat
+  E2′[A8]. That needs its own pre-registration; D3 rules it out here.
+- Nothing more on the architecture of the last layer. Roll-invariance is reached and buys nothing.
+
 ## Files
 
 | file | what |
@@ -277,7 +390,7 @@ still (eval per-seed sd 2–3).
 
 ## Figures
 
-_(to be rendered after stage 1)_
+All read `scores/` only (`make_plots.py`).
 
 | file | shows |
 |---|---|
@@ -285,4 +398,4 @@ _(to be rendered after stage 1)_
 | `plots/fig2_machines.png` | paired Δ AUC per machine under C1, dev and eval |
 | `plots/fig3_toy_ids.png` | ToyCar and ToyConveyor per-ID AUC, both arms, S1′ and C1 |
 | `plots/fig4_toycar_roll.png` | ToyCar penalty and AUC vs circular roll: `tp` S1′, `tp` zGmean, `ao_nogain` S1′ |
-| `plots/fig5_probe.png` | dev-test R0 probe over training, both arms (overall and ToyCar) |
+| `plots/fig5_probe.png` | dev-test R0 probe over training, both arms (overall and ToyCar); `tp` trails from epoch 130 on |
