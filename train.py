@@ -79,6 +79,9 @@ def parse_arguments():
                              'lambda-scaled ArcFace BCE + dominance SupCon (ablation/permix)')
     parser.add_argument('--permix_a', type=float, help='PerMix Dirichlet concentration (default 0.5)')
     parser.add_argument('--permix_r', type=int, help='PerMix max perturbing clips R, R ~ U{1..r} (default 3)')
+    parser.add_argument('--tpool', type=int, choices=[0, 1],
+                        help="1 = tie linear7's (8, 20) depthwise kernel over time: an (8, 1) kernel on the "
+                             "time mean of MobileFaceNet's final map (ablation/timepool-head)")
     parser.add_argument('--state_snapshots', type=str,
                         help="Comma-separated epochs at which to save the full training state (state_e<N>.pth)")
     parser.add_argument('--resume_state', type=str,
