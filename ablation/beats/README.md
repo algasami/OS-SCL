@@ -6,10 +6,19 @@
 > The from-scratch bests stay where they are: C1 single model (`ablation/pooled-knn`) and
 > E2′[A8] ensemble (`ablation/mixed-ensemble`).
 
-**Status (2026-11-08): TRAINED, stage A (dev) committed; stage B (eval) next.**
-- 3 runs done (17.6–19.5 h each, 0 skipped steps, final valid accuracy 0.9989).
-- Stage A picks zKp and F1 (see *Stage A note*: the BEATs CE degeneracy, and a declared
-  descriptive secondary F1k).
+**Status (2026-11-08): DONE. D1 fails, D2 passes.** All numbers are with external pretraining.
+- **Single model:** a fine-tuned BEATs model scored with z kNN reaches eval Amean 92.26. That is
+  **−1.83** below our from-scratch C1 (94.09), with 0/3 seeds above it. BEATs wins on ToyCar
+  (+3.7 on eval) and loses on ToyConveyor (−8.8), valve (−3.4) and fan (−3.0).
+- **Ensemble:** adding the 3 BEATs nets to E2′[A8] (F1) gives eval **95.15 (+0.37, 95% CI
+  +0.12..+0.60)** and dev 94.93 (+0.16), with all 3 one-seed additions positive. The gain is
+  mostly eval ToyCar (+2.30).
+  - E2′[A8 + BEATs] is the best system *with external pretraining*.
+  - E2′[A8] stays the best from-scratch system.
+- **Secondary F1k** (CE-free, declared before eval, not a decision): +0.48 eval
+  (CI +0.34..+0.61), +0.24 dev.
+- Neither number reaches published BEATs systems: BEAM 96.2 eval, and PerMix-BEATs 95.6 eval
+  Amean.
 
 ## Question
 
@@ -245,6 +254,96 @@ with the D2 checks, under `secondary_F1k` in `decisions.json`. Disclosure: its d
 is already seen, **95.01 (+0.24 vs A8)**, with one-seed deltas +0.22 / +0.17 / +0.16. It
 was not chosen by looking at eval, and eval has not been scored.
 
+## Results (stage B, scored once with the stage-A picks)
+
+Source: `scores/scorecard_{dev,eval}.txt`, `single_*.csv`, `systems_*.csv`, `decisions.json`.
+
+### D1: single model (rule zKp): FAILS
+
+| | dev Amean | eval Amean | eval per seed |
+|---|---|---|---|
+| BEATs zKp, 3 seeds | 90.80 | **92.26** | 92.31 / 92.17 / 92.29 |
+| our C1, 8 seeds (bar) | 94.16 | 94.09 | paired s2040–42: 92.90 / 94.64 / 94.45 |
+| Δ | −3.36 | **−1.83** (needs ≥ +0.50) | 0/3 seeds above 94.09 (needs 2) |
+
+All rules, 3-seed mean Amean, dev / eval: R0 77.69 / 77.49, K 90.30 / 91.47,
+**zKp 90.80 / 92.26**, S1′ 89.38 / 90.53, C1b 90.53 / 91.84. The dev pick is also the best
+rule on eval.
+
+Per machine (zKp, 3-seed mean Amean), against the predictions:
+
+| | dev pred | dev | eval pred | eval | our C1 eval |
+|---|---|---|---|---|---|
+| fan | 87.5 [83, 92] | 89.1 | 95.5 [93, 97.5] | 95.5 | 98.5 |
+| pump | 93.0 [90.5, 95.5] | 90.9 | 94.5 [92, 96.5] | 95.5 | 95.9 |
+| slider | 99.2 [98, 99.8] | 98.9 | 99.6 [99, 99.9] | 99.7 | 98.8 |
+| ToyCar | 96.3 [94, 98] | 97.4 | 95.5 [93, 97.5] | 97.5 | 93.8 |
+| ToyConveyor | 75 [70, 82] | **69.3** | 84 [80, 87.5] | **74.2** | 83.0 |
+| valve | 97.5 [94, 99.5] | 99.2 | 96 [93, 98] | **91.1** | 94.5 |
+| **overall** | 91.3 [89.5, 93.0] | 90.80 | 94.2 [93.0, 95.3] | **92.26** | 94.09 |
+
+Bold marks a value outside its 80% interval. The overall eval miss is ToyConveyor (−10 vs
+predicted) and valve (−5). Both are also far below AnoPatch's published 83.7 and 96.3.
+AnoPatch's recipe was the template, so our run under-reproduces it on those two machines.
+Why is not tested. Candidates:
+- details AnoPatch reports that we did not copy exactly (patch/token pooling, augmentation);
+- our final-weights checkpoint (no selection);
+- seed luck is unlikely: the 3 seeds agree to 0.14.
+
+### D2: ensemble (fusion F1): PASSES
+
+| check | needs | got |
+|---|---|---|
+| eval Δ Amean vs E2′[A8] (94.78) | ≥ +0.20 | **+0.37** (95.15) |
+| paired clip-bootstrap 95% CI | > 0 | **+0.12 .. +0.60** |
+| dev Δ | ≥ −0.10 | **+0.16** (94.93) |
+| one BEATs seed added, eval Δ > 0 | ≥ 2/3 | **3/3** (+0.10 / +0.18 / +0.24) |
+
+Per machine, eval Δ vs E2′[A8], F1: fan −0.20, pump −0.53, slider +0.54, **ToyCar +2.30**,
+ToyConveyor +0.20, valve −0.08 (dev: pump +0.94, ToyCar +0.52, ToyConveyor −0.52).
+F2 (block-balanced) is +0.40 eval but −0.02 dev, and was not picked.
+
+**Secondary F1k** (E2′[A8] + Σ zKp of the 3 BEATs nets; declared in *Stage A note*, never a
+decision):
+- eval +0.48 (CI +0.34..+0.61), dev +0.24, one-seed +0.26 / +0.25 / +0.29;
+- it would pass every D2 check;
+- it beats F1 on eval by 0.10 with a tighter CI. Using the CE-free score for the BEATs block
+  is the cleaner way to fuse it.
+
+### Mechanism predictions
+
+| ID | prediction | outcome |
+|---|---|---|
+| P1 | BEATs dev fan ≥ 5 below our C1 (96.5) | **true** (89.1, −7.4) |
+| P2 | BEATs eval ToyCar above our C1's 93.8 | **true** (97.5) |
+| P3 | R0 below K on dev | **true** (77.69 vs 90.30) |
+| P4 | valid accuracy ≥ 0.99 by step 2000 | **true** (0.991 / 0.995 / 0.994 at step 2000) |
+| P5 | seed spread of eval Amean ≤ 1.5 | **true** (0.14) |
+| P6 | dev picks F1, not F2 | **true** |
+| — | P(D1) ≈ 0.35, P(D2) ≈ 0.35 | D1 failed, D2 passed |
+| — | fused eval Δ +0.4 [−0.2, +1.0]; dev −0.2 [−0.8, +0.3]; eval ToyCar +1.0 [0, +2.5] | +0.37, +0.16, +2.30: all inside |
+
+### What this shows
+
+- **Pretrained BEATs is a weaker single detector than our from-scratch MFN on DCASE2020.**
+  This holds on dev and eval, and under every scoring rule. It is better only on ToyCar
+  (and slightly on slider).
+- **Its errors differ from ours, so it helps the ensemble.** The fused gain sits where BEATs
+  is strong (eval ToyCar +2.3). The losses sit where it is weak (pump, fan) and are small.
+- **The classifier score is useless for BEATs** (R0 ≈ 77.5). The fine-tuned classifier
+  saturates: training CE is at the fp32 floor. Only the embedding kNN carries the signal,
+  as AnoPatch argued.
+- ToyConveyor, our biggest error source, is not helped. BEATs is worse there than we are,
+  and fusion gives +0.20 on eval.
+
+### What next
+
+- If an external-pretraining system is wanted, report **E2′[A8 + BEATs] with F1k** (CE-free).
+  It needs its own pre-registration: it was a secondary here.
+- Closing the ToyConveyor/valve gap to AnoPatch's numbers could add more, both alone and in
+  fusion. Start by diffing our recipe against AnoPatch's code.
+- From-scratch rules and systems are unchanged: C1 single, E2′[A8] ensemble.
+
 ## Smoke test and bench
 
 **Bench** (`run.sh bench`, `scores/bench.csv`): GPU 2, idle, bf16 unless stated, 4 timed
@@ -301,13 +400,13 @@ bash ablation/beats/run.sh curves     # config.json + curve.csv into scores/, pl
 
 ## Figures
 
-Rendered by `make_plots.py` from `scores/` after stage B. None exist yet: there are no results.
+Rendered by `make_plots.py` from `scores/`; titles are computed from the data.
 
 | figure | shows |
 |---|---|
 | `plots/fig1_single_per_machine.png` | per-machine Amean, dev and eval: BEATs (selected rule, seeds as dots) vs our C1 single model (8 seeds) vs AnoPatch's published numbers |
 | `plots/fig2_rules.png` | overall Amean of every BEATs scoring rule (R0, AnoPatch kNN, z kNN, S1′, C1b) per seed, dev and eval, with our C1 as a reference line |
-| `plots/fig3_fusion.png` | per-machine Δ Amean of F1 and F2 vs E2′[A8], dev and eval |
+| `plots/fig3_fusion.png` | per-machine Δ Amean of F1, F2 and the secondary F1k vs E2′[A8], dev and eval |
 | `plots/fig4_curves.png` | training and validation ArcFace loss and validation accuracy per optimizer step |
 
 ## Files

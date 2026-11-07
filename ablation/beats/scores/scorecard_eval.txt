@@ -1,0 +1,25 @@
+ALL NUMBERS: WITH EXTERNAL PRETRAINING (BEATs_iter3, AudioSet)
+runs: BEATsASD_bt_arc_s2040 BEATsASD_bt_arc_s2041 BEATsASD_bt_arc_s2042
+
+P0  E2′[A8] eval Amean 94.7764 vs committed 94.7764 (|d| 2.7e-05)
+single S0   mean: AUC 77.57 pAUC 77.42 mAUC 58.53 Amean 77.49 | per seed 79.14 74.81 78.53 | fan 88.0 pump 85.0 slider 86.5 ToyCar 80.6 ToyConveyor 51.7 valve 73.1
+single K    mean: AUC 94.10 pAUC 88.84 mAUC 90.82 Amean 91.47 | per seed 91.35 92.09 90.97 | fan 95.1 pump 95.6 slider 99.6 ToyCar 96.0 ToyConveyor 72.0 valve 90.5
+single zKp  mean: AUC 94.93 pAUC 89.58 mAUC 90.82 Amean 92.26 | per seed 92.31 92.17 92.29 | fan 95.5 pump 95.5 slider 99.7 ToyCar 97.5 ToyConveyor 74.2 valve 91.1
+single S1p  mean: AUC 93.04 pAUC 88.02 mAUC 87.35 Amean 90.53 | per seed 91.17 90.30 90.14 | fan 94.9 pump 94.5 slider 99.4 ToyCar 96.9 ToyConveyor 69.8 valve 87.7
+single C1b  mean: AUC 94.44 pAUC 89.24 mAUC 89.79 Amean 91.84 | per seed 92.21 91.70 91.61 | fan 95.5 pump 95.2 slider 99.6 ToyCar 97.5 ToyConveyor 73.5 valve 89.7
+system A8               AUC 96.88 pAUC 92.67 mAUC 93.26 Amean 94.78 (Δ vs A8 +0.00)
+system F1               AUC 97.14 pAUC 93.16 mAUC 93.96 Amean 95.15 (Δ vs A8 +0.37)
+system F2               AUC 97.10 pAUC 93.25 mAUC 93.90 Amean 95.17 (Δ vs A8 +0.40)
+system F1k              AUC 97.21 pAUC 93.30 mAUC 94.20 Amean 95.25 (Δ vs A8 +0.48)
+system F1[s2040]        AUC 97.02 pAUC 92.74 mAUC 93.65 Amean 94.88 (Δ vs A8 +0.10)
+system F2[s2040]        AUC 97.03 pAUC 92.87 mAUC 93.85 Amean 94.95 (Δ vs A8 +0.17)
+system F1k[s2040]       AUC 97.08 pAUC 93.00 mAUC 93.75 Amean 95.04 (Δ vs A8 +0.26)
+system F1[s2041]        AUC 96.99 pAUC 92.93 mAUC 93.59 Amean 94.96 (Δ vs A8 +0.18)
+system F2[s2041]        AUC 96.78 pAUC 93.04 mAUC 93.20 Amean 94.91 (Δ vs A8 +0.13)
+system F1k[s2041]       AUC 97.03 pAUC 93.02 mAUC 93.76 Amean 95.03 (Δ vs A8 +0.25)
+system F1[s2042]        AUC 97.07 pAUC 92.97 mAUC 93.79 Amean 95.02 (Δ vs A8 +0.24)
+system F2[s2042]        AUC 96.96 pAUC 92.98 mAUC 93.73 Amean 94.97 (Δ vs A8 +0.19)
+system F1k[s2042]       AUC 97.09 pAUC 93.03 mAUC 93.88 Amean 95.06 (Δ vs A8 +0.29)
+D1 single zKp: eval Amean 92.26 vs C1 94.09 -> Δ -1.83, 0/3 seeds above | paired C1 [92.8953, 94.6446, 94.4539] | PASS False
+D2 F1: eval Δ +0.37 CI +0.12,+0.60 | dev Δ +0.16 | one-seed Δ +0.10 +0.18 +0.24 | PASS True
+secondary F1k (not a decision): eval Δ +0.48 CI +0.34,+0.61 | dev Δ +0.24 | one-seed Δ +0.26 +0.25 +0.29 | would pass D2 True

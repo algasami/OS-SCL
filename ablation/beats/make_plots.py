@@ -98,7 +98,18 @@ def fig1():
         ax.set_ylabel('Amean (%)')
     h, lab = axes[0].get_legend_handles_labels()
     fig.legend(h, lab, loc='lower center', ncol=3, fontsize=8, bbox_to_anchor=(0.5, -0.06))
-    fig.suptitle(f'Single models — BEATs {TAG}', fontsize=10, x=0.01, ha='left')
+    title = f'Single models — BEATs {TAG}'
+    rows, c1 = read(os.path.join(SCORES, 'single_eval.csv')), c1_machine('eval')
+    if rows and c1:
+        mean = {r_['rule']: r_ for r_ in rows if r_['run'] == 'mean'}[rule]
+        d = {m: float(mean[m]) - c1[m] for m in MACH}
+        dec = read(os.path.join(SCORES, 'decisions.json'))
+        verdict = ('passes' if dec['D1']['pass'] else 'fails') if dec else 'not scored'
+        win = [m for m in MACH if d[m] > 1]
+        lose = [m for m in MACH if d[m] < -2]
+        title = (f'BEATs single model: eval Amean {float(mean["Amean"]) - c1["overall"]:+.2f} vs our C1 '
+                 f'(D1 {verdict}); ahead on {", ".join(win)}, behind on {", ".join(lose[:-1]) + " and " + lose[-1] if len(lose) > 1 else "".join(lose)}\n{TAG}')
+    fig.suptitle(title, fontsize=10, x=0.01, ha='left', y=1.04)
     save(fig, 'fig1_single_per_machine.png')
 
 
@@ -126,7 +137,16 @@ def fig2():
         ax.set_axisbelow(True)
         ax.set_title(f'{ds}: overall Amean by scoring rule', fontsize=9, loc='left')
     if drawn:
-        fig.suptitle(f'BEATs scoring rules — {TAG}', fontsize=10, x=0.01, ha='left')
+        best = {}
+        for ds in ('dev', 'eval'):
+            rows = read(os.path.join(SCORES, f'single_{ds}.csv')) or []
+            mean = {r['rule']: float(r['Amean']) for r in rows if r['run'] == 'mean'}
+            best[ds] = max(mean, key=mean.get) if mean else '?'
+        names = dict(S0='R0', K='kNN', zKp='z kNN', S1p='S1′', C1b='C1b')
+        same = best['dev'] == best['eval']
+        lead = (f'{names[best["dev"]]} is the best BEATs rule on dev and eval' if same else
+                f'best BEATs rule: {names[best["dev"]]} (dev), {names[best["eval"]]} (eval)')
+        fig.suptitle(f'{lead}; every rule is below our C1, R0 far below\n{TAG}', fontsize=10, x=0.01, ha='left', y=1.04)
         save(fig, 'fig2_rules.png')
     else:
         plt.close(fig)
@@ -144,11 +164,16 @@ def fig3():
         drawn = True
         S = {r['system']: r for r in rows}
         x = np.arange(len(MACH) + 1)
-        for k, (f, col) in enumerate((('F1', GREEN), ('F2', INK_2))):
+        arms = [a for a in (('F1', dict(color=GREEN)), ('F2', dict(color=INK_2)),
+                            ('F1k', dict(color=SURFACE, edgecolor=GREEN, hatch='/////', lw=0.8))) if a[0] in S]
+        w = 0.8 / len(arms)
+        labels = {'F1': 'F1 = E2′[A8 + B3] (pre-registered pick)', 'F2': 'F2 = E2′[A8] + 8/3 ΣS1′[B3]',
+                  'F1k': 'F1k = E2′[A8] + ΣzK′[B3] (secondary, CE-free)'}
+        for k, (f, style) in enumerate(arms):
             d = [float(S[f][m]) - float(S['A8'][m]) for m in MACH] + [float(S[f]['Amean']) - float(S['A8']['Amean'])]
-            ax.bar(x + (k - 0.5) * 0.38, d, 0.38, color=col, label={'F1': 'F1 = E2′[A8 + B3]',
-                                                                     'F2': 'F2 = E2′[A8] + 8/3 ΣS1′[B3]'}[f])
-            ax.text(x[-1] + (k - 0.5) * 0.38, d[-1], f'{d[-1]:+.2f}', ha='center',
+            xs = x + (k - (len(arms) - 1) / 2) * w
+            ax.bar(xs, d, w, label=labels[f], **style)
+            ax.text(xs[-1], d[-1] + (0.08 if d[-1] >= 0 else -0.08), f'{d[-1]:+.2f}', ha='center', rotation=90,
                     va='bottom' if d[-1] >= 0 else 'top', fontsize=7, color=INK_2)
         ax.axhline(0, color=MUTED, lw=0.8)
         ax.set_xticks(x, TICKS, fontsize=8)
@@ -157,8 +182,18 @@ def fig3():
         ax.set_title(f'{ds}: Δ Amean vs E2′[A8]', fontsize=9, loc='left')
     if drawn:
         h, lab = axes[0].get_legend_handles_labels()
-        fig.legend(h, lab, loc='lower center', ncol=2, fontsize=8, bbox_to_anchor=(0.5, -0.06))
-        fig.suptitle(f'Fusing BEATs into our best ensemble — {TAG}', fontsize=10, x=0.01, ha='left')
+        fig.legend(h, lab, loc='lower center', ncol=3, fontsize=8, bbox_to_anchor=(0.5, -0.06))
+        title = f'Fusing BEATs into our best ensemble — {TAG}'
+        dec, ev = read(os.path.join(SCORES, 'decisions.json')), read(os.path.join(SCORES, 'systems_eval.csv'))
+        if dec and ev:
+            S = {r['system']: r for r in ev}
+            d2 = dec['D2']
+            dm = {m: float(S[d2['fusion']][m]) - float(S['A8'][m]) for m in MACH}
+            top = max(dm, key=dm.get)
+            title = (f'Adding BEATs to E2′[A8]: {d2["fusion"]} eval {d2["eval_delta"]:+.2f} '
+                     f'(95% CI {d2["eval_ci95"][0]:+.2f}..{d2["eval_ci95"][1]:+.2f}, D2 '
+                     f'{"passes" if d2["pass"] else "fails"}); largest gain {top} {dm[top]:+.2f}\n{TAG}')
+        fig.suptitle(title, fontsize=10, x=0.01, ha='left', y=1.04)
         save(fig, 'fig3_fusion.png')
     else:
         plt.close(fig)
@@ -185,7 +220,10 @@ def fig4():
         ax.set_xlabel('optimizer step')
         ax.yaxis.grid(True)
     axes[0].legend(fontsize=8)
-    fig.suptitle(f'BEATs fine-tuning curves — {TAG}', fontsize=10, x=0.01, ha='left')
+    reach = [min((int(x['epoch']) for x in c if float(x['valid_acc']) >= 0.99), default=None) for c in curves.values()]
+    lead = (f'validation accuracy first reaches 0.99 by step {max(reach)} in every seed' if None not in reach
+            else 'BEATs fine-tuning curves')
+    fig.suptitle(f'{lead}; final weights used (no early stopping)\n{TAG}', fontsize=10, x=0.01, ha='left', y=1.04)
     save(fig, 'fig4_curves.png')
 
 
