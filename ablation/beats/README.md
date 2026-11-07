@@ -6,12 +6,10 @@
 > The from-scratch bests stay where they are: C1 single model (`ablation/pooled-knn`) and
 > E2′[A8] ensemble (`ablation/mixed-ensemble`).
 
-**Status (2026-11-06): PREPARATION DONE and pre-registered. Full runs NOT launched** (the GPUs
-are held by permix / timepool-head).
-- Committed: the code, the checkpoint hash, the smoke test, the bench and the
-  pre-registration below.
-- Launch: `GPUS="0 2 1" bash ablation/beats/run.sh train` (see *Launch*).
-- Cost: ≈ 19–23 h wall, ~60 GPU-hours.
+**Status (2026-11-08): TRAINED, stage A (dev) committed; stage B (eval) next.**
+- 3 runs done (17.6–19.5 h each, 0 skipped steps, final valid accuracy 0.9989).
+- Stage A picks zKp and F1 (see *Stage A note*: the BEATs CE degeneracy, and a declared
+  descriptive secondary F1k).
 
 ## Question
 
@@ -217,6 +215,35 @@ The reasoning behind the predictions:
 | P4 | validation accuracy is ≥ 0.99 by step 2000 |
 | P5 | seed spread (max − min) of eval Amean is ≤ 1.5 |
 | P6 | dev picks F1, not F2: the BEATs block is weaker on dev |
+
+## Stage A note (2026-11-08, written after `score.py dev` and BEFORE `score.py eval`)
+
+**The stage-A picks are unchanged: single rule `zKp`, fusion `F1`** (`scores/selection.json`).
+The decisions D1 and D2 use exactly these picks.
+
+Dev, 3-seed mean Amean: K 90.30, **zKp 90.80**, S1p 89.38, C1b 90.53, S0 (R0) 77.69.
+Fusion vs E2′[A8] (94.77): F1 +0.16, F2 −0.02.
+
+**A degeneracy the pre-registration did not anticipate.** The fine-tuned BEATs classifier
+saturates on its training clips:
+- In 26–30 of the 41 IDs per seed, the training-part CE sits at the fp32 floor (std ~1e-7).
+  10–17% of training clips have CE exactly 0.
+- z(R0′) divides by that std. So BEATs S1′ (and C1b, which contains it) is finite but has
+  values up to 1e9 (`score.py` asserts finiteness, and that passed).
+- The `RuntimeWarning: divide by zero` lines come from the hold-out z (`zR0`). It is computed
+  but not used by any rule here.
+- K and zKp do not use CE, so the selected single rule and D1 are clean.
+- F1 adds BEATs S1′ to A8. On dev, the BEATs block is small for the median clip (1.7–59)
+  but reaches 1e8–1e9 at its 99th percentile. So F1 is effectively A8 with the clips the
+  BEATs classifier flags pushed to the top.
+- The MFN members show the same effect, much milder: the A8 sum's median |score| is 11–900
+  per machine. This is a property S1′ always had, made extreme here.
+
+**Secondary, declared now (descriptive, never a decision): `F1k` = E2′[A8] + Σ_B zKp.** It
+is the CE-free counterpart of F1, built from the rule stage A selected. Stage B reports it
+with the D2 checks, under `secondary_F1k` in `decisions.json`. Disclosure: its dev number
+is already seen, **95.01 (+0.24 vs A8)**, with one-seed deltas +0.22 / +0.17 / +0.16. It
+was not chosen by looking at eval, and eval has not been scored.
 
 ## Smoke test and bench
 

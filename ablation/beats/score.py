@@ -109,9 +109,14 @@ def load_all(emb):
     e2 = sum(A[r]['S1p'] for r in A8)
     bsum = sum(B[r]['S1p'] for r in BT)
     sys_ = {'A8': e2, 'F1': e2 + bsum, 'F2': e2 + (len(A8) / len(BT)) * bsum}
+    # SECONDARY, declared after stage A and before eval (README *Stage A note*): BEATs CE sits at the fp32
+    # floor on training clips, so z(R0') divides by ~1e-7 and BEATs S1p reaches 1e9. F1k adds the CE-free
+    # zKp instead. Descriptive only: never selected, never a decision.
+    sys_['F1k'] = e2 + sum(B[r]['zKp'] for r in BT)
     for r in BT:      # descriptive: one BEATs seed added, at F1 / F2 weight
         sys_[f'F1[{r[-5:]}]'] = e2 + B[r]['S1p']
         sys_[f'F2[{r[-5:]}]'] = e2 + len(A8) * B[r]['S1p']
+        sys_[f'F1k[{r[-5:]}]'] = e2 + B[r]['zKp']
     return meta, B, sys_
 
 
@@ -210,7 +215,8 @@ def stage(ds, emb):
         fusion = max(FUSIONS, key=lambda f: fused[f]['Amean'])
         sel = dict(rule=rule, fusion=fusion, runs=BT,
                    dev_rule_Amean={c: float(np.mean([single[(r, c)]['Amean'] for r in BT])) for c in CANDS},
-                   dev_fusion_Amean={f: fused[f]['Amean'] for f in FUSIONS}, dev_A8_Amean=a8['Amean'])
+                   dev_fusion_Amean={f: fused[f]['Amean'] for f in FUSIONS}, dev_A8_Amean=a8['Amean'],
+                   dev_F1k_Amean=fused['F1k']['Amean'])
         json.dump(sel, open(sel_path, 'w'), indent=2)
         p(f'SELECTED (dev): single rule {rule}, fusion {fusion}')
     else:
@@ -232,11 +238,22 @@ def stage(ds, emb):
                   dev_delta=dev_fused, per_seed_eval_delta=seeds)
         d2['pass'] = bool(d2['eval_delta'] >= 0.2 and ci[0] > 0 and dev_fused >= -0.1
                           and sum(x > 0 for x in seeds) >= 2)
-        json.dump(dict(D1=d1, D2=d2), open(os.path.join(SCORES, 'decisions.json'), 'w'), indent=2)
+        # secondary F1k: the D2 checks, reported only (never a decision)
+        ci_k = boot(ev, S['F1k'], S['A8'])
+        dev_k = sel.get('dev_F1k_Amean', float('nan')) - sel['dev_A8_Amean']
+        seeds_k = [fused[f'F1k[{r[-5:]}]']['Amean'] - a8['Amean'] for r in BT]
+        sec = dict(fusion='F1k', decision=False, eval_delta=fused['F1k']['Amean'] - a8['Amean'], eval_ci95=ci_k,
+                   dev_delta=dev_k, per_seed_eval_delta=seeds_k)
+        sec['would_pass_D2'] = bool(sec['eval_delta'] >= 0.2 and ci_k[0] > 0 and dev_k >= -0.1
+                                    and sum(x > 0 for x in seeds_k) >= 2)
+        json.dump(dict(D1=d1, D2=d2, secondary_F1k=sec), open(os.path.join(SCORES, 'decisions.json'), 'w'), indent=2)
         p(f'D1 single {rule}: eval Amean {d1["beats_eval_Amean"]:.2f} vs C1 {C1_EVAL8} -> Δ {d1["delta"]:+.2f}, '
           f'{d1["seeds_above"]}/{len(BT)} seeds above | paired C1 {d1["paired_c1"]} | PASS {d1["pass"]}')
         p(f'D2 {fusion}: eval Δ {d2["eval_delta"]:+.2f} CI {ci[0]:+.2f},{ci[1]:+.2f} | dev Δ {dev_fused:+.2f} | '
           f'one-seed Δ {" ".join(f"{x:+.2f}" for x in seeds)} | PASS {d2["pass"]}')
+        p(f'secondary F1k (not a decision): eval Δ {sec["eval_delta"]:+.2f} CI {ci_k[0]:+.2f},{ci_k[1]:+.2f} | '
+          f'dev Δ {dev_k:+.2f} | one-seed Δ {" ".join(f"{x:+.2f}" for x in seeds_k)} | '
+          f'would pass D2 {sec["would_pass_D2"]}')
     txt = '\n'.join(L)
     print(txt)
     open(os.path.join(SCORES, f'scorecard_{ds}.txt'), 'w').write(txt + '\n')
