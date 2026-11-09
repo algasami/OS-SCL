@@ -12,15 +12,16 @@
 # - writes check_points/<run>/wall.csv, and crashes.csv if any attempt died
 # - logs to ablation/<ablation>/results/train_<desc>.log
 #
-# Env: PY (python), GPUS, IDLE_SLEEP (seconds between idle checks), IDLE_MB (busy threshold, 1000);
+# Env: ABL_ROOT (ablation | synthesis, default ablation), PY (python), GPUS, IDLE_SLEEP (seconds between idle checks), IDLE_MB (busy threshold, 1000);
 # IGNORE_LOCKS=1 with a high IDLE_MB forces a busy GPU (smoke tests only).
 set -uo pipefail
 cd "$(dirname "$0")/.."
 abl=$1; desc=$2; epochs=$3; shift 3
+ABL_ROOT=${ABL_ROOT:-ablation}
 PY=${PY:-/home/f74134118/anaconda3/envs/os-scl-cu124/bin/python}
 GPUS=${GPUS:-"0 1 2"}
 LOCKS=/tmp/os-scl-${abl}-locks
-OUT=ablation/${abl}/results
+OUT=${ABL_ROOT}/${abl}/results
 name=SCLTFSTgramMFN_${desc}
 ck=check_points/${name}
 mkdir -p "$OUT" "$LOCKS"
