@@ -1,0 +1,133 @@
+system,dataset,machine,AUC,pAUC,mAUC,Amean
+"R0 (single, mean of 8)",dev,fan,98.34,95.00,93.97,96.67
+"R0 (single, mean of 8)",dev,pump,95.53,87.72,91.00,91.62
+"R0 (single, mean of 8)",dev,slider,99.62,97.98,98.49,98.80
+"R0 (single, mean of 8)",dev,ToyCar,97.71,93.97,90.81,95.84
+"R0 (single, mean of 8)",dev,ToyConveyor,85.77,72.97,79.91,79.37
+"R0 (single, mean of 8)",dev,valve,99.60,98.86,98.51,99.23
+"R0 (single, mean of 8)",eval,fan,99.41,97.58,98.42,98.49
+"R0 (single, mean of 8)",eval,pump,97.69,92.52,90.82,95.11
+"R0 (single, mean of 8)",eval,slider,99.45,97.19,98.75,98.32
+"R0 (single, mean of 8)",eval,ToyCar,93.68,90.38,82.26,92.03
+"R0 (single, mean of 8)",eval,ToyConveyor,83.62,73.67,76.47,78.64
+"R0 (single, mean of 8)",eval,valve,97.96,94.46,95.28,96.21
+"C1 (single, mean of 8)",dev,fan,98.44,94.63,94.36,96.53
+"C1 (single, mean of 8)",dev,pump,95.45,88.42,91.49,91.93
+"C1 (single, mean of 8)",dev,slider,99.72,98.55,98.56,99.14
+"C1 (single, mean of 8)",dev,ToyCar,98.43,94.51,94.13,96.47
+"C1 (single, mean of 8)",dev,ToyConveyor,87.49,75.55,81.47,81.52
+"C1 (single, mean of 8)",dev,valve,99.77,99.01,99.30,99.39
+"C1 (single, mean of 8)",eval,fan,99.45,97.57,98.49,98.51
+"C1 (single, mean of 8)",eval,pump,98.09,93.70,92.16,95.90
+"C1 (single, mean of 8)",eval,slider,99.60,97.93,98.78,98.77
+"C1 (single, mean of 8)",eval,ToyCar,95.97,91.69,87.59,93.83
+"C1 (single, mean of 8)",eval,ToyConveyor,88.46,77.53,83.61,83.00
+"C1 (single, mean of 8)",eval,valve,96.97,92.08,94.62,94.52
+"C1T (single, mean of 8)",dev,fan,98.41,94.54,94.40,96.48
+"C1T (single, mean of 8)",dev,pump,95.48,88.57,91.61,92.02
+"C1T (single, mean of 8)",dev,slider,99.79,98.88,98.57,99.33
+"C1T (single, mean of 8)",dev,ToyCar,98.53,94.68,94.44,96.60
+"C1T (single, mean of 8)",dev,ToyConveyor,87.66,75.76,81.69,81.71
+"C1T (single, mean of 8)",dev,valve,99.79,99.06,99.37,99.42
+"C1T (single, mean of 8)",eval,fan,99.45,97.59,98.48,98.52
+"C1T (single, mean of 8)",eval,pump,98.10,93.76,92.12,95.93
+"C1T (single, mean of 8)",eval,slider,99.62,98.00,98.82,98.81
+"C1T (single, mean of 8)",eval,ToyCar,96.07,91.76,87.83,93.91
+"C1T (single, mean of 8)",eval,ToyConveyor,88.56,77.74,83.75,83.15
+"C1T (single, mean of 8)",eval,valve,96.88,91.70,94.68,94.29
+A8,dev,fan,98.82,95.22,94.89,97.02
+A8,dev,pump,96.00,88.52,93.09,92.26
+A8,dev,slider,99.74,98.65,98.64,99.20
+A8,dev,ToyCar,98.54,94.99,94.35,96.77
+A8,dev,ToyConveyor,89.26,77.75,83.72,83.51
+A8,dev,valve,99.95,99.76,99.88,99.86
+A8,eval,fan,99.71,98.55,99.15,99.13
+A8,eval,pump,98.40,94.08,93.12,96.24
+A8,eval,slider,99.72,98.51,99.33,99.11
+A8,eval,ToyCar,96.00,91.75,86.81,93.88
+A8,eval,ToyConveyor,88.97,78.22,84.33,83.59
+A8,eval,valve,98.49,94.94,96.80,96.71
+G8,dev,fan,99.04,96.02,95.50,97.53
+G8,dev,pump,96.13,89.02,92.77,92.57
+G8,dev,slider,99.73,98.60,98.65,99.17
+G8,dev,ToyCar,98.37,94.73,93.44,96.55
+G8,dev,ToyConveyor,89.88,78.40,84.50,84.14
+G8,dev,valve,99.96,99.77,99.85,99.86
+G8,eval,fan,99.64,98.28,98.89,98.96
+G8,eval,pump,98.31,94.07,92.88,96.19
+G8,eval,slider,99.77,98.80,99.19,99.28
+G8,eval,ToyCar,95.96,91.62,86.83,93.79
+G8,eval,ToyConveyor,89.69,78.88,85.53,84.28
+G8,eval,valve,98.40,94.99,96.78,96.70
+GS12,dev,fan,99.21,96.66,95.70,97.93
+GS12,dev,pump,96.59,89.27,95.35,92.93
+GS12,dev,slider,99.80,98.97,98.64,99.39
+GS12,dev,ToyCar,98.41,94.79,93.63,96.60
+GS12,dev,ToyConveyor,90.33,78.65,85.11,84.49
+GS12,dev,valve,99.97,99.82,99.83,99.90
+GS12,eval,fan,99.80,98.98,99.34,99.39
+GS12,eval,pump,98.47,94.56,93.19,96.52
+GS12,eval,slider,99.76,98.76,99.09,99.26
+GS12,eval,ToyCar,95.98,91.70,86.91,93.84
+GS12,eval,ToyConveyor,89.64,78.49,84.93,84.06
+GS12,eval,valve,98.36,94.69,96.42,96.52
+NG18,dev,fan,99.15,96.42,95.42,97.78
+NG18,dev,pump,96.64,89.47,95.05,93.05
+NG18,dev,slider,99.80,98.93,98.65,99.37
+NG18,dev,ToyCar,98.44,94.98,93.85,96.71
+NG18,dev,ToyConveyor,90.25,78.51,85.14,84.38
+NG18,dev,valve,99.99,99.93,99.91,99.96
+NG18,eval,fan,99.79,98.89,99.31,99.34
+NG18,eval,pump,98.45,94.44,93.28,96.44
+NG18,eval,slider,99.79,98.91,99.19,99.35
+NG18,eval,ToyCar,95.86,91.55,86.50,93.71
+NG18,eval,ToyConveyor,89.61,79.36,84.82,84.49
+NG18,eval,valve,98.64,95.43,97.00,97.04
+FAST42,dev,fan,98.94,95.90,94.44,97.42
+FAST42,dev,pump,96.03,88.66,93.68,92.34
+FAST42,dev,slider,99.76,98.74,98.66,99.25
+FAST42,dev,ToyCar,98.37,95.05,93.58,96.71
+FAST42,dev,ToyConveyor,89.60,77.70,83.50,83.65
+FAST42,dev,valve,99.98,99.90,99.85,99.94
+FAST42,eval,fan,99.78,98.90,99.39,99.34
+FAST42,eval,pump,98.51,94.17,93.89,96.34
+FAST42,eval,slider,99.79,98.88,99.37,99.33
+FAST42,eval,ToyCar,97.32,93.31,91.13,95.32
+FAST42,eval,ToyConveyor,89.44,79.31,84.85,84.38
+FAST42,eval,valve,98.86,95.89,97.40,97.37
+ALL50,dev,fan,98.90,95.75,94.24,97.33
+ALL50,dev,pump,95.93,88.47,93.52,92.20
+ALL50,dev,slider,99.76,98.75,98.66,99.26
+ALL50,dev,ToyCar,98.21,94.89,93.01,96.55
+ALL50,dev,ToyConveyor,89.31,77.07,82.71,83.19
+ALL50,dev,valve,99.98,99.91,99.87,99.95
+ALL50,eval,fan,99.76,98.79,99.34,99.27
+ALL50,eval,pump,98.54,94.23,93.98,96.39
+ALL50,eval,slider,99.74,98.64,99.34,99.19
+ALL50,eval,ToyCar,97.46,93.52,91.54,95.49
+ALL50,eval,ToyConveyor,89.10,78.72,84.50,83.91
+ALL50,eval,valve,98.90,95.92,97.41,97.41
+F1k,dev,fan,98.87,95.42,94.88,97.14
+F1k,dev,pump,96.72,89.62,95.48,93.17
+F1k,dev,slider,99.74,98.64,98.78,99.19
+F1k,dev,ToyCar,98.91,95.83,95.52,97.37
+F1k,dev,ToyConveyor,89.16,77.20,84.11,83.18
+F1k,dev,valve,100.00,100.00,100.00,100.00
+F1k,eval,fan,99.67,98.36,99.07,99.01
+F1k,eval,pump,98.43,94.03,93.07,96.23
+F1k,eval,slider,99.90,99.48,99.79,99.69
+F1k,eval,ToyCar,97.72,94.46,92.56,96.09
+F1k,eval,ToyConveyor,88.99,78.58,83.93,83.78
+F1k,eval,valve,98.55,94.87,96.79,96.71
+X1[r=0.375],dev,fan,99.17,96.58,95.59,97.87
+X1[r=0.375],dev,pump,97.10,90.40,96.11,93.75
+X1[r=0.375],dev,slider,99.77,98.80,98.78,99.28
+X1[r=0.375],dev,ToyCar,98.81,95.61,95.00,97.21
+X1[r=0.375],dev,ToyConveyor,90.13,78.08,85.22,84.10
+X1[r=0.375],dev,valve,100.00,99.99,99.99,100.00
+X1[r=0.375],eval,fan,99.76,98.78,99.28,99.27
+X1[r=0.375],eval,pump,98.47,94.36,93.10,96.42
+X1[r=0.375],eval,slider,99.95,99.73,99.79,99.84
+X1[r=0.375],eval,ToyCar,97.67,94.62,92.52,96.14
+X1[r=0.375],eval,ToyConveyor,89.60,79.01,84.41,84.31
+X1[r=0.375],eval,valve,98.45,94.69,96.47,96.57
