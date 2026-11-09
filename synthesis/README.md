@@ -17,7 +17,7 @@ and an eval mean of 93.22.
 | ensemble | E2′[A8] (8 `la_aug`) — reported best | 97.05 / 92.48 / 94.10 | 94.77 | 94.78 | `ablation/mixed-ensemble` |
 | ensemble | E2′[G8] (8 `ao_nogain`) — dev pick, tied A8 on eval | 97.19 / 92.76 / 94.12 | 94.97 | 94.87 | `ablation/nogain-ensemble` |
 | external pretraining | E2′[A8] + ΣS1′[B3] (F1) | — | 94.93 | 95.15 | `ablation/beats` |
-| external pretraining | E2′[A8] + ΣzK′[B3] (F1k, CE-free, secondary) | — | 95.01 | 95.26 | `ablation/beats` |
+| external pretraining | E2′[A8] + ΣzK′[B3] (F1k, CE-free, secondary) | — | 95.01 | 95.25 | `ablation/beats` |
 
 Adopted findings that have **never been combined**:
 - **C1** (S1′ + zGmean, `pooled-knn`) and **small TTA** (shifts 0, ±1 %, `tta`) are both
