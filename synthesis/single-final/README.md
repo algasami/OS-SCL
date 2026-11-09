@@ -287,6 +287,10 @@ rule `C1T`).
 
 - Read it as "TTA's dev gain carries to C1, and eval does not contradict it". Eval does not show
   a gain: the eval CI includes 0, and 3 of 8 seeds are negative.
+- **[review 2026-11-09]** The adoption bar is asymmetric. On eval it was a point estimate,
+  Δ ≥ 0, and the result was +0.014 with 3/8 seeds negative and a CI spanning 0. So C1ᵀ is
+  adopted as "no worse on eval, slightly better on dev", not as a demonstrated eval gain. The
+  `fresh-confirm` seeds are the real test.
 - The rule was fixed before eval, and it passes. `fresh-confirm` scores C1ᵀ and C1 on seeds no
   rule has seen. If C1ᵀ falls below C1 there, that is the evidence to revert. A small eval
   shortfall alone is not: C1 is the fallback, simpler and 3× cheaper.
@@ -339,7 +343,7 @@ three-term sum did not dilute TTA. On dev, C1ᵀ's gain over C1 (+0.10) equals T
 | figure | shows |
 |---|---|
 | `plots/fig1_delta.png` | C1ᵀ − C1 Amean by stage (gate, confirm, dev 8, eval 8): per-seed dots, paired 95 % bootstrap, seeds positive; orange ticks are S1′ᵀ − C1. Dev +0.10 (8/8), eval +0.01 (5/8) |
-| `plots/fig2_per_machine.png` | C1ᵀ − C1 AUC per machine, dev and eval, with seed dots. ToyCar and ToyConveyor gain on both sets; eval valve −0.09 |
+| `plots/fig2_per_machine.png` | C1ᵀ − C1 AUC per machine, dev and eval, with seed dots. ToyCar and ToyConveyor gain on dev. **[review 2026-11-09]** The original caption said "on both sets", but eval (+0.10 / +0.09, 1/8 and 2/8 seeds negative) is flat within seed noise; eval valve −0.09 |
 | `plots/fig3_absolute.png` | 8-seed Amean of S1′, S1′ᵀ, C1, C1ᵀ on dev and eval, with seed dots and the paper line |
 
 ## Using the adopted rule (for `fresh-confirm`)

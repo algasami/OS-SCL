@@ -133,8 +133,10 @@ def fig2():
     axes[0][0].set_ylabel('C1ᵀ − C1, AUC (points)')
     pm = {ds: d['per_machine_dAUC'] for ds, d in cells}
     neg = [f'{ds} {m} {v:+.2f}' for ds, p in pm.items() for m, v in p.items() if v < -0.05]
-    fig.suptitle('TTA on C1 helps ToyCar and ToyConveyor on ' + ('both sets' if len(cells) > 1 else 'dev')
-                 + ('; the one loss is ' + ', '.join(neg) if neg else ''), x=0.01, ha='left', fontsize=10)
+    # [review 2026-11-09] was 'TTA on C1 helps ToyCar and ToyConveyor on both sets; ...': eval moves are
+    # +0.10 / +0.09 AUC with 1/8 and 2/8 seeds negative, far under the ToyConveyor noise floor
+    fig.suptitle('TTA on C1: dev gains on ToyConveyor and ToyCar; eval is flat within seed noise'
+                 + ('; only loss: ' + ', '.join(neg) if neg else ''), x=0.01, ha='left', fontsize=10)
     fig.tight_layout()
     save(fig, 'fig2_per_machine.png')
 
