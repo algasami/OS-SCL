@@ -76,3 +76,18 @@ dumps, max |ΔR0| 0.015 (0.14 % relative), max |Δpre| 0.013, max |Δgmean| 5e-4
 1.000. The phase-1 dumps agree with each other bit-exactly, so the gap is this pass, most likely
 cuDNN choosing other conv algorithms on a busy GPU (unverified). Fresh checkpoints are only ever
 scored from this extractor, so the gap never enters a comparison.
+
+## Scorer self-test (`score.py selftest`, before any fresh score)
+
+`score.py` was run on "pseudo-fresh" dumps rebuilt in this study's format from phase-1 data
+(`ao_nogain_s2040–2043` from the tta + pooled-knn dumps, `sb_spec_s2040–2043` from spectrum-branch).
+It reproduces single-final's committed per-seed C1ᵀ and C1 Amean on dev and eval to ≤ 4.9e-5 (the
+CSVs' 4-decimal rounding), and the 4 G (w 2) + 4 S (w 1) ensemble exactly (dev 95.1790, eval 94.8030)
+against grand-ensemble's own loader on the phase-1 flat dumps (`scores/selftest.json`).
+
+Faulty RAM, seen during the self-test: one segfault (GP fault in `dmesg`); two npz files that this
+study had written CRC-clean then failed their CRC when read back, and were clean again once evicted
+from the page cache, i.e. the bits flipped in cached pages, not on disk; and five score vectors that
+needed a third computation to get two bit-identical ones. `score.py` therefore evicts every `.npz`
+before reading it, reads it whole and retries on a CRC failure; every vector and metric is still
+computed until two runs agree.
