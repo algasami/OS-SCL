@@ -1,0 +1,63 @@
+DEV ONLY (selection set). E2′ = Σ w·S1′ per member (BEATs: zK′). Amean = mean(AUC, pAUC).
+
+cand       n     AUC   pAUC   mAUC  Amean |     fan    pump  slider  ToyCar ToyConv   valve   (per machine: AUC)
+G8         8   97.19  92.76  94.12  94.97 |   99.04   96.13   99.73   98.37   89.88   99.96
+GA16      16   97.17  92.68  94.18  94.93 |   98.98   96.08   99.74   98.48   89.79   99.96
+GS12      12   97.38  93.03  94.71  95.21 |   99.21   96.59   99.80   98.41   90.33   99.97
+GT12      12   97.20  92.76  94.21  94.98 |   98.99   96.38   99.74   98.43   89.68   99.98
+GST16     16   97.36  93.02  94.68  95.19 |   99.15   96.69   99.79   98.46   90.11   99.99
+GAST24    24   97.32  92.95  94.58  95.14 |   99.12   96.52   99.79   98.51   90.00   99.98
+NG18      18   97.38  93.04  94.67  95.21 |   99.15   96.64   99.80   98.44   90.25   99.99
+FAST42    42   97.11  92.66  93.95  94.89 |   98.94   96.03   99.76   98.37   89.60   99.98
+ALL50     50   97.02  92.48  93.67  94.75 |   98.90   95.93   99.76   98.21   89.31   99.98
+GREEDY    14   97.42  93.06  94.75  95.24 |   99.19   96.58   99.83   98.37   90.56   99.98
+A8 (bar)   8   97.05  92.48  94.10  94.77 |   98.82   96.00   99.74   98.54   89.26   99.95
+
+GREEDY trace (blocks = type-mean S1′; stop when best gain < +0.02):
+  step 1: +G   -> 94.9717
+  step 2: +S   -> 95.2009 (gain +0.2292)
+  step 3: +TS  -> 95.2401 (gain +0.0392)
+  step 4: +G   -> 95.2328 (gain -0.0073)  NOT TAKEN (stop)
+  GREEDY = {'G': 1, 'S': 1, 'TS': 1}  per-member weights {'G': 0.125, 'S': 0.25, 'TS': 0.5}
+
+X0 PICK (highest dev Amean; tie within 0.05 -> smaller n): GS12  dev Amean 95.2061 (G8 94.9717, Δ +0.2343; A8 94.7692)
+
+X1 (WITH EXTERNAL PRETRAINING): X0 pick + 3 BEATs (zK′), BEATs block = r × X0 total weight
+  X1[r=0.375]  dev Amean 95.3695  per-BEATs-member w 1.500
+  X1[r=0.75]   dev Amean 95.3046  per-BEATs-member w 3.000
+  X1[r=1.5]    dev Amean 95.0941  per-BEATs-member w 6.000
+  F1k (A8 + B3, bar) dev Amean 95.0093
+  X1 PICK: X1[r=0.375]
+
+O1 clip split-half (20 splits): mean Δ_A(pick−G8) +0.2808, mean Δ_B +0.2084 -> optimism +0.0724; honest full-dev margin +0.2343 − +0.0724 = +0.1620
+  half-A picks: {'G8': 0, 'GA16': 0, 'GS12': 12, 'GT12': 0, 'GST16': 0, 'GAST24': 0, 'NG18': 0, 'FAST42': 0, 'ALL50': 0, 'GREEDY': 8}   full-dev pick chosen in 12/20
+O2 seed half H1: pick GS12 {'G': 1, 'S': 1}  Δ(pick−G4) on H1 +0.2428, rebuilt on H2 +0.3069
+O2 seed half H2: pick GREEDY {'G': 1, 'S': 1, 'TS': 1, 'PM': 1}  Δ(pick−G4) on H2 +0.4249, rebuilt on H1 +0.2096
+size-matched 4G+4S (w G 2.000, S 1.000) over 70 subsets: dev Amean 95.1505 [95.0691, 95.2341] vs 4-G subsets 94.8255 -> +0.3250; G8 94.9717
+
+Paired clip-bootstrap (2000) on dev, Amean: mean [2.5%, 97.5%]
+  GA16-G8                -0.046 [-0.099, +0.005]
+  GS12-G8                +0.236 [+0.127, +0.356]
+  GT12-G8                +0.003 [-0.050, +0.058]
+  GST16-G8               +0.218 [+0.113, +0.334]
+  GAST24-G8              +0.166 [+0.070, +0.270]
+  NG18-G8                +0.237 [+0.132, +0.351]
+  FAST42-G8              -0.086 [-0.205, +0.040]
+  ALL50-G8               -0.225 [-0.349, -0.096]
+  GREEDY-G8              +0.270 [+0.142, +0.414]
+  G8-A8                  +0.204 [+0.099, +0.307]
+  GA16-A8                +0.158 [+0.098, +0.214]
+  GS12-A8                +0.440 [+0.302, +0.577]
+  GT12-A8                +0.207 [+0.105, +0.310]
+  GST16-A8               +0.422 [+0.295, +0.551]
+  GAST24-A8              +0.370 [+0.274, +0.471]
+  NG18-A8                +0.441 [+0.319, +0.568]
+  FAST42-A8              +0.118 [+0.008, +0.237]
+  ALL50-A8               -0.021 [-0.135, +0.102]
+  GREEDY-A8              +0.475 [+0.337, +0.621]
+  X1[r=0.375]-F1k        +0.363 [+0.252, +0.478]
+  X1[r=0.75]-F1k         +0.296 [+0.188, +0.410]
+  X1[r=1.5]-F1k          +0.087 [-0.048, +0.222]
+  X1[r=0.375]-GS12       +0.164 [+0.065, +0.263]
+  X1[r=0.75]-GS12        +0.096 [-0.044, +0.235]
+  X1[r=1.5]-GS12         -0.113 [-0.295, +0.067]

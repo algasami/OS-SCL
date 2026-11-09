@@ -1,0 +1,19 @@
+Reproduction check (no C1ᵀ number computed). max |recomputed − committed| over every per-seed per-machine and overall cell (AUC, pAUC, mAUC, Amean; committed files are 4 dp):
+    C1_dev     0.00e+00  (224 cells)
+    S1p_dev    0.00e+00  (224 cells)
+    S1pT_dev   0.00e+00  (176 cells)
+    C1_eval    0.00e+00  (224 cells)
+    S1p_eval   0.00e+00  (224 cells)
+    S1pT_eval  0.00e+00  (176 cells)
+    C1 from TTA shift-0 copy vs C1 from pooled dump, dev, max |Δ overall| over seeds: AUC 0.0e+00 pAUC 0.0e+00 mAUC 0.0e+00 Amean 0.0e+00
+    C1 from TTA shift-0 copy vs C1 from pooled dump, eval, max |Δ overall| over seeds: AUC 0.0e+00 pAUC 0.0e+00 mAUC 0.0e+00 Amean 0.0e+00
+PASS (≤ 1e-3): True
+8-seed means AUC / pAUC / mAUC / Amean:
+    C1_dev8       96.55  91.78  93.22  94.16
+    S1p_dev8      96.43  91.58  92.82  94.00
+    S1pT_dev8     96.52  91.72  93.01  94.12
+    C1_0_dev8     96.55  91.78  93.22  94.16
+    C1_eval8      96.42  91.75  92.54  94.09
+    S1p_eval8     96.19  91.57  91.96  93.88
+    S1pT_eval8    96.24  91.61  92.12  93.93
+    C1_0_eval8    96.42  91.75  92.54  94.09

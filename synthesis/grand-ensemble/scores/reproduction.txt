@@ -1,0 +1,19 @@
+P0 reproduction: committed phase-1 numbers recomputed from the dumps (Amean = mean(AUC, pAUC))
+  A8     dev  94.7692 vs committed 94.7692 (d -3.3e-05)  [nogain-ensemble/scores/systems_dev.csv]
+  A8     eval 94.7764 vs committed 94.7764 (d +2.7e-05)  [nogain-ensemble/scores/systems_eval.csv]
+  G8     dev  94.9717 vs committed 94.9717 (d +3.1e-05)  [nogain-ensemble/scores/systems_dev.csv]
+  G8     eval 94.8685 vs committed 94.8685 (d -4.7e-05)  [nogain-ensemble/scores/systems_eval.csv]
+  GA16   dev  94.9252 vs committed 94.9252 (d -5.1e-06)  [nogain-ensemble/scores/systems_dev.csv]
+  GA16   eval 94.8745 vs committed 94.8745 (d -3.7e-05)  [nogain-ensemble/scores/systems_eval.csv]
+  F20g   dev  94.3197 vs committed 94.3197 (d +7.1e-06)  [nogain-ensemble/scores/systems_dev.csv]
+  F20g   eval 95.0181 vs committed 95.0181 (d +4.5e-05)  [nogain-ensemble/scores/systems_eval.csv]
+  F20    dev  94.2390 vs committed 94.2390 (d +3.1e-05)  [nogain-ensemble/scores/systems_dev.csv]
+  F20    eval 94.9610 vs committed 94.9610 (d -3.0e-05)  [nogain-ensemble/scores/systems_eval.csv]
+  relu8  dev  93.6410 vs committed 93.6410 (d +1.5e-05)  [nogain-ensemble/scores/systems_dev.csv]
+  relu8  eval 94.4647 vs committed 94.4647 (d +2.3e-05)  [nogain-ensemble/scores/systems_eval.csv]
+  F1k    dev  95.0093 vs committed 95.0093 (d -8.1e-06)  [beats/scores/systems_dev.csv]
+  F1k    eval 95.2532 vs committed 95.2532 (d +4.8e-05)  [beats/scores/systems_eval.csv]
+  KNOWN: SCLTFSTgramMFN_tp_s2041 eval S1′ AUC 96.1827 pAUC 91.9632 vs committed 96.1012 91.9087 (|d| 8.1e-02); only eval ToyConveyor S1′ differs (R0 matches; dump zip CRCs pass; timepool-head's own run_scores on the same dump gives this study's value) -> a faulty-RAM event during timepool-head scoring
+  zip CRC over every dump file: all pass
+  worst |d| systems 4.8e-05; single-member S1′ (AUC, pAUC) vs committed, worst 5.0e-05 over 59 member-sets (KNOWN excluded)
+  PASS: True
