@@ -50,6 +50,7 @@ pk = _load('pk_score', os.path.join(ABL, 'pooled-knn', 'score.py'))   # l2, nn1,
 eb = pk.eb                                                             # Evaluator, MACH, PAPER
 
 SCORES = os.path.join(HERE, 'scores')
+CACHE = os.path.join(HERE, 'results', 'cache')    # verified per-member score vectors (*.npz: gitignored)
 TTA_EMB = os.environ.get('SF_TTA_EMB', '/home/f74134118/OS-SCL-tta/ablation/tta/results/emb')
 PK_EMB = os.environ.get('SF_PK_EMB', '/home/f74134118/OS-SCL-pknn/ablation/pooled-knn/results/emb')
 SEL, CONF = (2040, 2041, 2042, 2043), (2044, 2045, 2046, 2047)
@@ -178,7 +179,7 @@ def digest(*objs):
     return h.hexdigest()
 
 
-def twice(f, tries=4):
+def twice(f, tries=6):
     """Run f until two runs agree bit for bit (smartlab1's host RAM flips bits mid-computation:
     the first check run lost 0.17 AUC on one machine of one seed that way). Returns (value, n_runs)."""
     seen = []
@@ -261,15 +262,28 @@ class Ctx:
         """{rule: full-length score vector (NaN off ds)}, plus checks. 'C1' and 'S1p' come from the
         pooled-knn dumps (the incumbent exactly); 'C1_0' is C1 rebuilt from the TTA dump's
         shift-0 copy (cross-family check); ᵀ rules use the TTA dump."""
-        for attempt in range(3):
+        cache = os.path.join(CACHE, f'{ds}_{RUN(seed)}_{"-".join(rules)}.npz')
+        if os.path.exists(cache):            # a verified result of an earlier (crashed / aborted) run
+            c = np.load(cache, allow_pickle=False)
+            out = {r: c[r] for r in rules}
+            if digest(out) == str(c['digest']):
+                return out, json.loads(str(c['chk']))
+            print(f'    note: cache {cache} fails its digest; recomputing', flush=True)
+        ballast = []
+        for attempt in range(8):
             tr, te, pkd, valid, lab, idx, chk = self.member(seed, ds)
             h0 = digest(tr, te, pkd, valid)
             out, chk = self._score(tr, te, pkd, valid, lab, idx, chk, rules)
             # inputs unchanged while in RAM? A mismatch can also be a transient misread (the faulty
             # line flips on read too), so re-read up to 3 times before reloading the member
             if any(digest(tr, te, pkd, valid) == h0 for _ in range(3)):
+                chk['input_reloads'] = attempt
+                os.makedirs(CACHE, exist_ok=True)
+                np.savez(cache, digest=digest(out), chk=json.dumps(chk), **out)
                 return out, chk
             print(f'    note: input arrays changed in RAM while scoring {RUN(seed)} {ds}; reloading', flush=True)
+            # keep a random-size block alive so the reload lands on other physical pages
+            ballast.append(np.ones(int(np.random.default_rng().integers(1, 64)) << 20, np.uint8))
         sys.exit('ABORT: input arrays kept changing in RAM')
 
     def _score(self, tr, te, pkd, valid, lab, idx, chk, rules):

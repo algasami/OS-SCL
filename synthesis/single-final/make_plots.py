@@ -88,7 +88,10 @@ def fig1():
         ax.scatter([j - 0.16] * len(pts), pts, color=BLUE, s=11, alpha=0.5, lw=0)
         sp = [T[(s, ds, 'S1pT', 'overall')]['Amean'] - T[(s, ds, 'C1', 'overall')]['Amean'] for s in seeds]
         ax.scatter([j - 0.3], [np.mean(sp)], marker='_', s=120, color=ORANGE, lw=2)
-    ax.text(len(cells) - 0.7, ax.get_ylim()[0], '— S1′ᵀ − C1 (mean)', color=ORANGE, fontsize=7.5, va='bottom')
+    from matplotlib.lines import Line2D
+    ax.legend(handles=[Line2D([], [], color=BLUE, marker='o', lw=2.2, label='C1ᵀ − C1: mean, 95% CI, seeds'),
+                       Line2D([], [], color=ORANGE, marker='_', ms=12, mew=2, lw=0, label='S1′ᵀ − C1: seed mean')],
+              loc='lower right', fontsize=7.5)
     ax.axhline(0, color=MUTED, lw=0.8)
     ax.set_xticks(range(len(cells)))
     ax.set_xticklabels([c[0] for c in cells], fontsize=8)
@@ -128,7 +131,6 @@ def fig2():
         ax.set_title(f'{ds}, 8 seeds (bar = mean, dots = seeds)', loc='left', fontsize=9.5)
         ax.grid(axis='y')
     axes[0][0].set_ylabel('C1ᵀ − C1, AUC (points)')
-    top = max(cells, key=lambda c: abs(c[1]['per_machine_dAUC']['ToyConveyor']))
     fig.suptitle(f'Where TTA moves C1: ToyConveyor {cells[0][1]["per_machine_dAUC"]["ToyConveyor"]:+.2f} dev'
                  + (f', {cells[1][1]["per_machine_dAUC"]["ToyConveyor"]:+.2f} eval' if len(cells) > 1 else ''),
                  x=0.01, ha='left', fontsize=10)
@@ -159,7 +161,7 @@ def fig3():
         ax.set_title(f'{ds}: Amean, 8 seeds (bar = mean)', loc='left', fontsize=9.5)
         ax.grid(axis='y')
     axes[0].set_ylabel('Amean = mean(AUC, pAUC) (points)')
-    fig.suptitle('One ao_nogain network under each single-model rule; every rule is above the paper on both sets',
+    fig.suptitle('One ao_nogain network under each single-model rule: every rule\'s 8-seed mean is above the paper on both sets',
                  x=0.01, ha='left', fontsize=10)
     fig.tight_layout()
     save(fig, 'fig3_absolute.png')

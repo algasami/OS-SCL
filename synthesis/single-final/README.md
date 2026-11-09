@@ -198,6 +198,24 @@ C1     96.55  91.78  93.22  94.16    96.42  91.75  92.54  94.09
 - S1′ᵀ alone is 0.04 below C1 here, so TTA's gain adds to the pooled term rather than replacing it.
 - P1 (+0.06 [−0.03, +0.15], gate passes): holds.
 
+## Stage B — confirm dev (2026-11-09, before any eval C1ᵀ number)
+
+`scores/scorecard_stageB.txt`, `stageB.json`, `metrics_stageB.csv`, `perid_stageB.csv`. Seeds
+2040–2043 were rescored here and match stage A exactly.
+
+- **Confirm seeds (2044–2047):** Δ Amean **+0.112** [+0.007, +0.248], 4/4 positive (+0.14,
+  +0.08, +0.06, +0.16). Δ AUC +0.06, Δ pAUC +0.16.
+- **Dev, 8 seeds:** Δ AUC +0.057, Δ pAUC +0.138, Δ Amean **+0.098** [+0.006, +0.214], 8/8
+  seeds positive. C1ᵀ scores 96.61 / 91.91 / 93.35, Amean 94.26 (C1 94.16, S1′ᵀ 94.12).
+- Δ AUC by machine (8 seeds): ToyConveyor +0.17, ToyCar +0.09, slider +0.06, pump +0.03,
+  valve +0.01, fan −0.02.
+- **D1's dev conditions all hold** (gate A, 8-seed Δ > 0 with 8/8 positive, confirm Δ > 0).
+  Eval decides.
+- Guard events: in this run, 7 score vectors needed a third or fourth computation, and 2 members
+  were reloaded. The first stage-B attempt aborted on s2047 (the inputs kept changing). It was
+  rerun with verified per-member caching and more retries; no score from the aborted attempt was
+  read.
+
 ## Files
 
 | file | what |
