@@ -186,6 +186,18 @@ S1′ᵀ   96.52  91.72  93.01  94.12    96.24  91.61  92.12  93.93
 C1     96.55  91.78  93.22  94.16    96.42  91.75  92.54  94.09
 ```
 
+## Stage A — gate (2026-11-09, before any confirm-seed or eval C1ᵀ number)
+
+`scores/scorecard_stageA.txt`, `stageA.json`, `metrics_stageA.csv`, `perid_stageA.csv`.
+
+- **Gate A passes.** C1ᵀ − C1 on seeds 2040–2043 dev: Δ Amean **+0.083**, 95 % CI
+  [−0.001, +0.188], 4/4 seeds positive (+0.09, +0.06, +0.06, +0.13).
+  - Δ AUC +0.05, Δ pAUC +0.12. mAUC moves +0.16 and is not read.
+- Δ AUC by machine: ToyConveyor +0.15, ToyCar +0.10, slider +0.06, pump +0.03, valve +0.02,
+  fan −0.04.
+- S1′ᵀ alone is 0.04 below C1 here, so TTA's gain adds to the pooled term rather than replacing it.
+- P1 (+0.06 [−0.03, +0.15], gate passes): holds.
+
 ## Files
 
 | file | what |
