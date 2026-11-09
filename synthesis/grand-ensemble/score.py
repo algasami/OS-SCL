@@ -355,6 +355,409 @@ def stage_repro():
     assert worst < 5e-3 and mworst < 5e-3 and not crc_bad, 'reproduction failed: stop'
 
 
+# ---------------------------------------------------------------------------------- candidates (README, fixed)
+FAST = ['G', 'A', 'P', 'Ga', 'E', 'S', 'T', 'PM', 'TS']
+CANDS = {   # name: ('member', {type: per-member weight})  -- order = README table order (tie-break)
+    'G8':     ('member', {'G': 1}),
+    'GA16':   ('member', {'G': 1, 'A': 1}),
+    'GS12':   ('member', {'G': 1, 'S': 1}),
+    'GT12':   ('member', {'G': 1, 'T': 1}),
+    'GST16':  ('member', {'G': 1, 'S': 1, 'T': 1}),
+    'GAST24': ('member', {'G': 1, 'A': 1, 'S': 1, 'T': 1}),
+    'NG18':   ('member', {'G': 1, 'S': 1, 'T': 1, 'TS': 1}),
+    'FAST42': ('member', {t: 1 for t in FAST}),
+    'ALL50':  ('member', {t: 1 for t in FAST + ['O']}),
+}
+ORDER = list(CANDS) + ['GREEDY']
+SEEN_EVAL = {'G8': 'ablation/nogain-ensemble', 'GA16': 'ablation/nogain-ensemble'}
+BARS = {'A8': ('member', {'A': 1}), 'G8': ('member', {'G': 1})}
+R_GRID = (3 / 8, 3 / 4, 3 / 2)
+GREEDY_MIN_GAIN, GREEDY_MAX_STEPS, TIE = 0.02, 10, 0.05
+N_SPLITS = 20
+
+
+def build(V, spec):
+    """spec = ('member', {t: w per member}) or ('block', {t: count of mean-blocks}); missing types ignored."""
+    kind, d = spec
+    if kind == 'member':
+        return sum(w * sum(V[t]) for t, w in d.items() if w and V.get(t))
+    return sum(c * sum(V[t]) / len(V[t]) for t, c in d.items() if c and V.get(t))
+
+
+def per_member_weights(V, spec):
+    kind, d = spec
+    return {t: (float(w) if kind == 'member' else w / len(V[t])) for t, w in d.items() if w and V.get(t)}
+
+
+def total_weight(V, spec):
+    return sum(w * len(V[t]) for t, w in per_member_weights(V, spec).items())
+
+
+def n_used(V, spec):
+    return sum(len(V[t]) for t in per_member_weights(V, spec))
+
+
+def amean(ev, score, idx=None):
+    return ev(score, idx)['overall']['mean_AUC_pAUC']
+
+
+def greedy(V, ev, idx=None):
+    """Caruana forward selection with replacement over type blocks (README). -> (spec, trace)."""
+    blocks = {t: sum(V[t]) / len(V[t]) for t in SCRATCH_TYPES if V.get(t)}
+    cur, counts, best, trace = 0.0, {}, -np.inf, []
+    for step in range(GREEDY_MAX_STEPS):
+        val, pick = -np.inf, None
+        for t in SCRATCH_TYPES:          # strict > keeps the earlier type on ties
+            if t in blocks:
+                a = amean(ev, cur + blocks[t], idx)
+                if a > val:
+                    val, pick = a, t
+        if step > 0 and val - best < GREEDY_MIN_GAIN:
+            trace.append(dict(step=step + 1, type=pick, amean=val, gain=val - best, taken=False))
+            break
+        cur = cur + blocks[pick]
+        counts[pick] = counts.get(pick, 0) + 1
+        trace.append(dict(step=step + 1, type=pick, amean=val, gain=(val - best) if step else None, taken=True))
+        best = val
+    return ('block', counts), trace
+
+
+def select(V, ev, idx=None):
+    """Score every candidate (GREEDY re-run) on (a subset of) dev; apply the pick rule."""
+    specs = dict(CANDS)
+    specs['GREEDY'], trace = greedy(V, ev, idx)
+    val = {n: amean(ev, build(V, specs[n]), idx) for n in ORDER}
+    top = max(val.values())
+    close = [n for n in ORDER if top - val[n] <= TIE]
+    pick = min(close, key=lambda n: (n_used(V, specs[n]), ORDER.index(n)))
+    return pick, specs, val, trace
+
+
+def halves(V, h):
+    return {t: (v[:len(v) // 2] if h == 0 else v[len(v) // 2:]) for t, v in V.items()}
+
+
+def split_idx(ev, seed):
+    rng = np.random.default_rng(seed)
+    a, b = [], []
+    for ix in ev.strata.values():
+        p = rng.permutation(ix)
+        a.append(p[:len(p) // 2])
+        b.append(p[len(p) // 2:])
+    return np.concatenate(a), np.concatenate(b)
+
+
+def x1_specs(V, x0spec):
+    """X0 pick + BEATs block at ratio r of the X0 total weight (per BEATs member r*W/3)."""
+    W = total_weight(V, x0spec)
+    out = {}
+    for r in R_GRID:
+        w = per_member_weights(V, x0spec)
+        w['B'] = r * W / len(V['B'])
+        out[f'X1[r={r:g}]'] = ('member', w)
+    return out
+
+
+# ---------------------------------------------------------------------------------- parallel bootstrap
+_BOOT = {}
+
+
+def _boot_chunk(chunk):
+    ev, vecs, pairs, idxs = _BOOT['ev'], _BOOT['vecs'], _BOOT['pairs'], _BOOT['idxs']
+    out = []
+    for i in chunk:
+        o = {n: ev(v, idxs[i])['overall'] for n, v in vecs.items()}
+        out.append({f'{a}-{b}': {k: o[a][k] - o[b][k] for k in KEYS} for a, b in pairs})
+    return out
+
+
+def paired_boot(ev, vecs, pairs, n_boot=N_BOOT, seed=RNG_SEED, procs=4):
+    import multiprocessing as mp
+    rng = np.random.default_rng(seed)
+    idxs = [ev.resample(rng) for _ in range(n_boot)]
+    _BOOT.update(ev=ev, vecs=vecs, pairs=pairs, idxs=idxs)
+    chunks = [list(range(i, n_boot, procs * 4)) for i in range(procs * 4)]
+    with mp.get_context('fork').Pool(procs) as pool:
+        res = [r for part in pool.map(_boot_chunk, chunks) for r in part]
+    out = {}
+    for a, b in pairs:
+        key = f'{a}-{b}'
+        out[key] = {k: [float(np.mean([r[key][k] for r in res])),
+                        *map(float, np.percentile([r[key][k] for r in res], [2.5, 97.5]))] for k in KEYS}
+    return out
+
+
+def system_rows(name, n, ds, res):
+    o = res['overall']
+    rows = [[name, n, ds, 'overall', '', fmt(o['AUC']), fmt(o['pAUC']), fmt(o['mAUC']), fmt(o['mean_AUC_pAUC'])]]
+    for m in MACH:
+        A, P = 100 * res[m]['AUC'], 100 * res[m]['pAUC']
+        rows.append([name, n, ds, m, '', fmt(A), fmt(P), fmt(100 * res[m]['mAUC']), fmt((A + P) / 2)])
+        for i, a in sorted(res[m]['ids'].items()):
+            rows.append([name, n, ds, m, i, fmt(100 * a), '', '', ''])
+    return rows
+
+
+SYS_HEADER = ['system', 'n', 'dataset', 'scope', 'id', 'AUC', 'pAUC', 'mAUC', 'Amean']
+
+
+def type_corr(V, ev):
+    """Mean over machine IDs of the Pearson correlation between type-mean scores on one set's clips."""
+    types = [t for t in POOL if V.get(t)]
+    M = {t: (sum(V[t]) / len(V[t]))[ev.sel] for t in types}
+    C = np.zeros((len(types), len(types)))
+    groups = [np.where((ev.mach == m) & (ev.id == i))[0] for m in MACH for i in np.unique(ev.id[ev.mach == m])]
+    for g in groups:
+        C += np.corrcoef(np.stack([M[t][g] for t in types]))
+    return types, C / len(groups)
+
+
+def stage_dev():
+    V = all_vectors()
+    ev = evaluator('dev')
+    L = ['DEV ONLY (selection set). E2′ = Σ w·S1′ per member (BEATs: zK′). Amean = mean(AUC, pAUC).', '']
+    pick, specs, val, trace = select(V, ev)
+    res = {n: ev(build(V, specs[n])) for n in ORDER}
+    bars = {'A8': ev(build(V, BARS['A8']))}
+    rows = []
+    for n in ORDER:
+        rows += system_rows(n, n_used(V, specs[n]), 'dev', res[n])
+    rows += system_rows('A8', 8, 'dev', bars['A8'])
+    write_csv('systems_dev.csv', SYS_HEADER, rows)
+    L.append(f'{"cand":8s} {"n":>3s}  {"AUC":>6s} {"pAUC":>6s} {"mAUC":>6s} {"Amean":>6s} | ' + ' '.join(f'{m[:7]:>7s}' for m in MACH)
+             + '   (per machine: AUC)')
+    for n, r in list(res.items()) + [('A8 (bar)', bars['A8'])]:
+        o = r['overall']
+        nn = n_used(V, specs[n]) if n in specs else 8
+        L.append(f'{n:8s} {nn:3d}  ' + ' '.join(f'{o[k]:6.2f}' for k in KEYS) + ' | '
+                 + ' '.join(f'{100 * r[m]["AUC"]:7.2f}' for m in MACH))
+    L += ['', 'GREEDY trace (blocks = type-mean S1′; stop when best gain < +0.02):']
+    for t in trace:
+        L.append(f'  step {t["step"]}: +{t["type"]:3s} -> {t["amean"]:.4f}'
+                 + (f' (gain {t["gain"]:+.4f})' if t['gain'] is not None else '') + ('' if t['taken'] else '  NOT TAKEN (stop)'))
+    L.append(f'  GREEDY = {specs["GREEDY"][1]}  per-member weights {per_member_weights(V, specs["GREEDY"])}')
+    L += ['', f'X0 PICK (highest dev Amean; tie within {TIE} -> smaller n): {pick}  dev Amean {val[pick]:.4f} '
+          f'(G8 {val["G8"]:.4f}, Δ {val[pick] - val["G8"]:+.4f}; A8 {bars["A8"]["overall"]["mean_AUC_pAUC"]:.4f})']
+
+    # ---- X1 (with external pretraining)
+    x1 = x1_specs(V, specs[pick])
+    x1res = {n: ev(build(V, s)) for n, s in x1.items()}
+    f1k = ev(build(V, ('member', {'A': 1, 'B': 1})))
+    x1val = {n: r['overall']['mean_AUC_pAUC'] for n, r in x1res.items()}
+    top = max(x1val.values())
+    x1pick = [n for n in x1 if top - x1val[n] <= TIE][0]      # grid is in increasing r: first = smallest r
+    rows = []
+    for n, r in x1res.items():
+        rows += system_rows(n, n_used(V, x1[n]), 'dev', r)
+    rows += system_rows('F1k', 11, 'dev', f1k)
+    write_csv('x1_dev.csv', SYS_HEADER, rows)
+    L += ['', 'X1 (WITH EXTERNAL PRETRAINING): X0 pick + 3 BEATs (zK′), BEATs block = r × X0 total weight']
+    for n, v in x1val.items():
+        L.append(f'  {n:12s} dev Amean {v:.4f}  per-BEATs-member w {x1[n][1]["B"]:.3f}')
+    L.append(f'  F1k (A8 + B3, bar) dev Amean {f1k["overall"]["mean_AUC_pAUC"]:.4f}')
+    L.append(f'  X1 PICK: {x1pick}')
+
+    # ---- O1: clip split-half optimism
+    o1 = []
+    for sd in range(N_SPLITS):
+        ia, ib = split_idx(ev, sd)
+        pk, sp, va, _ = select(V, ev, ia)
+        da = va[pk] - va['G8']
+        db = amean(ev, build(V, sp[pk]), ib) - amean(ev, build(V, sp['G8']), ib)
+        o1.append(dict(seed=sd, pick=pk, spec=sp[pk][1], delta_A=da, delta_B=db))
+    opt = float(np.mean([r['delta_A'] - r['delta_B'] for r in o1]))
+    freq = {n: sum(r['pick'] == n for r in o1) for n in ORDER}
+    honest = (val[pick] - val['G8']) - opt
+    L += ['', f'O1 clip split-half ({N_SPLITS} splits): mean Δ_A(pick−G8) {np.mean([r["delta_A"] for r in o1]):+.4f}, '
+          f'mean Δ_B {np.mean([r["delta_B"] for r in o1]):+.4f} -> optimism {opt:+.4f}; '
+          f'honest full-dev margin {val[pick] - val["G8"]:+.4f} − {opt:+.4f} = {honest:+.4f}',
+          f'  half-A picks: {freq}   full-dev pick chosen in {freq[pick]}/{N_SPLITS}']
+
+    # ---- O2: seed halves
+    o2 = []
+    for h in (0, 1):
+        Vs, Vo = halves(V, h), halves(V, 1 - h)
+        pk, sp, va, _ = select(Vs, ev)
+        d_sel = va[pk] - va['G8']
+        d_oth = amean(ev, build(Vo, sp[pk])) - amean(ev, build(Vo, sp['G8']))
+        o2.append(dict(select_half=h + 1, pick=pk, spec=sp[pk][1], delta_select=d_sel, delta_other=d_oth))
+        L.append(f'O2 seed half H{h + 1}: pick {pk} {sp[pk][1]}  Δ(pick−G4) on H{h + 1} {d_sel:+.4f}, '
+                 f'rebuilt on H{2 - h} {d_oth:+.4f}')
+
+    # ---- size-matched reduction for fresh-confirm
+    W = {t: w * len(V[t]) for t, w in per_member_weights(V, specs[pick]).items()}
+    others = {t: w for t, w in W.items() if t not in ('G', 'TS')}
+    sm = dict(W_t=W)
+    if 'G' not in W:
+        sm.update(build='UNDEFINED: pick has no G', X=None)
+    elif not others:
+        sm.update(build='8G', X=None, per_member_weights={'G': 1.0})
+    else:
+        top_w = max(others.values())
+        tied = [t for t, w in others.items() if abs(w - top_w) < 1e-9]
+        if len(tied) > 1:
+            full = amean(ev, build(V, specs[pick]))
+            cost = {t: full - amean(ev, build(V, ('member', {k: v for k, v in per_member_weights(V, specs[pick]).items()
+                                                               if k != t}))) for t in tied}
+            X = max(tied, key=lambda t: cost[t])
+            sm['tie_removal_cost'] = cost
+        else:
+            X = tied[0]
+        wg, wx = W['G'] / 4, W[X] / 4
+        sm.update(build=f'4G+4{X}', X=X, per_member_weights={'G': wg, X: wx})
+        gsub = list(itertools.combinations(range(len(V['G'])), 4))
+        xsub = list(itertools.combinations(range(len(V[X])), min(4, len(V[X]))))
+        combos = [(g, x) for g in gsub for x in xsub]
+        rng = np.random.default_rng(RNG_SEED)
+        if len(combos) > 1000:
+            combos = [combos[i] for i in sorted(rng.choice(len(combos), 1000, replace=False))]
+        red = [amean(ev, wg * sum(V['G'][i] for i in g) + wx * sum(V[X][i] for i in x)) for g, x in combos]
+        g4 = [amean(ev, sum(V['G'][i] for i in g)) for g in gsub]
+        sm['dev_check'] = dict(n_combos=len(combos), reduced_mean=float(np.mean(red)),
+                               reduced_p05=float(np.percentile(red, 5)), reduced_p95=float(np.percentile(red, 95)),
+                               hom4_G_mean=float(np.mean(g4)), hom4_G_p05=float(np.percentile(g4, 5)),
+                               hom4_G_p95=float(np.percentile(g4, 95)), G8=val['G8'],
+                               reduced_minus_hom4G=float(np.mean(red) - np.mean(g4)))
+        L.append(f'size-matched {sm["build"]} (w G {wg:.3f}, {X} {wx:.3f}) over {len(combos)} subsets: dev Amean '
+                 f'{np.mean(red):.4f} [{np.percentile(red, 5):.4f}, {np.percentile(red, 95):.4f}] vs 4-G subsets '
+                 f'{np.mean(g4):.4f} -> {np.mean(red) - np.mean(g4):+.4f}; G8 {val["G8"]:.4f}')
+
+    # ---- diversity diagnostic
+    types, C = type_corr(V, ev)
+    write_csv('type_corr_dev.csv', ['type'] + types, [[t] + [f'{c:.4f}' for c in row] for t, row in zip(types, C)])
+
+    # ---- dev bootstraps (descriptive)
+    vecs = {n: build(V, specs[n]) for n in ORDER}
+    vecs['A8'] = build(V, BARS['A8'])
+    pairs = [(n, 'G8') for n in ORDER if n != 'G8'] + [(n, 'A8') for n in ORDER]
+    for n in x1:
+        vecs[n] = build(V, x1[n])
+    vecs['F1k'] = build(V, ('member', {'A': 1, 'B': 1}))
+    pairs += [(n, 'F1k') for n in x1] + [(n, pick) for n in x1]
+    boot = paired_boot(ev, vecs, pairs)
+    json.dump(boot, open(os.path.join(SCORES, 'bootstrap_dev.json'), 'w'), indent=2)
+    L += ['', f'Paired clip-bootstrap ({N_BOOT}) on dev, Amean: mean [2.5%, 97.5%]']
+    for k, v in boot.items():
+        L.append(f'  {k:22s} {v["mean_AUC_pAUC"][0]:+.3f} [{v["mean_AUC_pAUC"][1]:+.3f}, {v["mean_AUC_pAUC"][2]:+.3f}]')
+
+    sel = dict(x0_pick=pick, x0_spec=list(specs[pick]), x0_per_member_weights=per_member_weights(V, specs[pick]),
+               x0_n=n_used(V, specs[pick]), dev_amean=val, dev_A8=bars['A8']['overall']['mean_AUC_pAUC'],
+               greedy_spec=specs['GREEDY'][1], greedy_trace=trace,
+               x1_pick=x1pick, x1_specs={n: s[1] for n, s in x1.items()}, x1_dev_amean=x1val,
+               dev_F1k=f1k['overall']['mean_AUC_pAUC'],
+               O1=dict(splits=o1, optimism=opt, honest_margin_vs_G8=honest, pick_freq=freq),
+               O2=o2, size_matched=sm, seen_on_eval=SEEN_EVAL)
+    json.dump(sel, open(os.path.join(SCORES, 'selection_dev.json'), 'w'), indent=2, default=float)
+    txt = '\n'.join(L)
+    open(os.path.join(SCORES, 'scorecard_dev.txt'), 'w').write(txt + '\n')
+    print(txt)
+
+
+def committed_clean(path):
+    rel = os.path.relpath(path, REPO)
+    tracked = subprocess.run(['git', '-C', REPO, 'ls-files', '--error-unmatch', rel], capture_output=True).returncode == 0
+    clean = subprocess.run(['git', '-C', REPO, 'diff', '--quiet', 'HEAD', '--', rel]).returncode == 0
+    return tracked and clean
+
+
+def stage_eval():
+    sel_path = os.path.join(SCORES, 'selection_dev.json')
+    assert committed_clean(sel_path) and committed_clean(os.path.join(SCORES, 'dev_pick.json')), \
+        'selection_dev.json / dev_pick.json must be committed and unmodified before eval is scored'
+    sel = json.load(open(sel_path))
+    V = all_vectors()
+    ev = evaluator('eval')
+    pick, x1pick = sel['x0_pick'], sel['x1_pick']
+    specs = dict(CANDS)
+    specs['GREEDY'] = ('block', sel['greedy_spec'])            # the committed dev result, not re-run
+    assert list(specs[pick]) == sel['x0_spec'] or pick == 'GREEDY'
+    x1 = {n: ('member', w) for n, w in sel['x1_specs'].items()}
+    L = ['EVAL, SCORED ONCE with the committed dev picks. Amean = mean(AUC, pAUC).', '']
+    res = {n: ev(build(V, specs[n])) for n in ORDER}
+    res['A8'] = ev(build(V, BARS['A8']))
+    rows = []
+    for n in ORDER:
+        rows += system_rows(n, n_used(V, specs[n]), 'eval', res[n])
+    rows += system_rows('A8', 8, 'eval', res['A8'])
+    # GREEDY prefixes (descriptive size curve)
+    prefix, counts = [], {}
+    for t in sel['greedy_trace']:
+        if t['taken']:
+            counts = dict(counts)
+            counts[t['type']] = counts.get(t['type'], 0) + 1
+            nm = 'GREEDY@' + str(t['step'])
+            prefix.append(dict(step=t['step'], type=t['type'], dev=t['amean'],
+                               eval=amean(ev, build(V, ('block', counts)))))
+            rows += system_rows(nm, n_used(V, ('block', counts)), 'eval', ev(build(V, ('block', counts))))
+    write_csv('systems_eval.csv', SYS_HEADER, rows)
+    write_csv('greedy_trace.csv', ['step', 'type', 'dev_Amean', 'eval_Amean'],
+              [[p_['step'], p_['type'], fmt(p_['dev']), fmt(p_['eval'])] for p_ in prefix])
+    x1res = {n: ev(build(V, s_)) for n, s_ in x1.items()}
+    x1res['F1k'] = ev(build(V, ('member', {'A': 1, 'B': 1})))
+    rows = []
+    for n, r in x1res.items():
+        rows += system_rows(n, n_used(V, x1[n]) if n in x1 else 11, 'eval', r)
+    write_csv('x1_eval.csv', SYS_HEADER, rows)
+
+    L.append(f'{"system":12s} {"n":>3s}  {"AUC":>6s} {"pAUC":>6s} {"mAUC":>6s} {"Amean":>6s} | '
+             + ' '.join(f'{m[:7]:>7s}' for m in MACH) + '   (per machine: AUC)   dev Amean')
+    for n, r in list(res.items()):
+        o = r['overall']
+        nn = n_used(V, specs[n]) if n in specs else 8
+        dv = sel['dev_amean'].get(n, sel['dev_A8'])
+        L.append(f'{n:12s} {nn:3d}  ' + ' '.join(f'{o[k]:6.2f}' for k in KEYS) + ' | '
+                 + ' '.join(f'{100 * r[m]["AUC"]:7.2f}' for m in MACH) + f'   {dv:.2f}'
+                 + ('   <- X0 PICK' if n == pick else ''))
+    L += ['', 'GREEDY prefixes (descriptive): ' + '  '.join(f'@{p_["step"]}+{p_["type"]} dev {p_["dev"]:.2f} eval {p_["eval"]:.2f}'
+                                                        for p_ in prefix)]
+    L += ['', 'WITH EXTERNAL PRETRAINING:']
+    for n, r in x1res.items():
+        o = r['overall']
+        L.append(f'  {n:12s} ' + ' '.join(f'{o[k]:6.2f}' for k in KEYS) + ' | '
+                 + ' '.join(f'{100 * r[m]["AUC"]:7.2f}' for m in MACH)
+                 + f'   dev {sel["x1_dev_amean"].get(n, sel["dev_F1k"]):.2f}' + ('   <- X1 PICK' if n == x1pick else ''))
+
+    # ---- bootstraps
+    vecs = {n: build(V, specs[n]) for n in ORDER}
+    vecs['A8'] = build(V, BARS['A8'])
+    vecs.update({n: build(V, s_) for n, s_ in x1.items()})
+    vecs['F1k'] = build(V, ('member', {'A': 1, 'B': 1}))
+    pairs = [(n, 'A8') for n in ORDER] + [(n, 'G8') for n in ORDER if n != 'G8'] \
+        + [(n, 'F1k') for n in x1] + [(x1pick, pick)]
+    boot = paired_boot(ev, vecs, pairs)
+    json.dump(boot, open(os.path.join(SCORES, 'bootstrap_eval.json'), 'w'), indent=2)
+    L += ['', f'Paired clip-bootstrap ({N_BOOT}) on eval, Amean: point [2.5%, 97.5%]']
+    pt = {n: r['overall']['mean_AUC_pAUC'] for n, r in list(res.items()) + list(x1res.items())}
+    for k, v in boot.items():
+        a, b = k.split('-', 1)
+        L.append(f'  {k:22s} {pt[a] - pt[b]:+.3f} [{v["mean_AUC_pAUC"][1]:+.3f}, {v["mean_AUC_pAUC"][2]:+.3f}]')
+
+    # ---- decisions
+    d1 = dict(pick=pick, new=pick not in SEEN_EVAL, eval_delta_vs_A8=pt[pick] - pt['A8'],
+              ci95_vs_A8=boot[f'{pick}-A8']['mean_AUC_pAUC'][1:],
+              eval_delta_vs_G8=(pt[pick] - pt['G8']) if pick != 'G8' else 0.0,
+              ci95_vs_G8=boot[f'{pick}-G8']['mean_AUC_pAUC'][1:] if pick != 'G8' else None,
+              dev_delta_vs_A8=sel['dev_amean'][pick] - sel['dev_A8'],
+              dev_delta_vs_G8=sel['dev_amean'][pick] - sel['dev_amean']['G8'])
+    d1['replaces_A8'] = bool(d1['new'] and d1['eval_delta_vs_A8'] > 0 and d1['ci95_vs_A8'][0] > 0)
+    d2 = dict(pick=x1pick, eval_delta_vs_F1k=pt[x1pick] - pt['F1k'], ci95_vs_F1k=boot[f'{x1pick}-F1k']['mean_AUC_pAUC'][1:],
+              dev_delta_vs_F1k=sel['x1_dev_amean'][x1pick] - sel['dev_F1k'], label='WITH EXTERNAL PRETRAINING')
+    d2['replaces_F1k'] = bool(d2['eval_delta_vs_F1k'] > 0 and d2['ci95_vs_F1k'][0] > 0)
+    d4 = dict(honest_margin_vs_G8=sel['O1']['honest_margin_vs_G8'],
+              flag_selection_noise=bool(sel['O1']['honest_margin_vs_G8'] <= 0))
+    json.dump(dict(D1=d1, D2=d2, D4=d4), open(os.path.join(SCORES, 'decisions.json'), 'w'), indent=2, default=float)
+    L += ['', f'D1 X0 {pick}: eval Δ vs A8 {d1["eval_delta_vs_A8"]:+.3f} CI [{d1["ci95_vs_A8"][0]:+.3f}, '
+          f'{d1["ci95_vs_A8"][1]:+.3f}]; vs G8 {d1["eval_delta_vs_G8"]:+.3f} -> replaces A8: {d1["replaces_A8"]}',
+          f'D2 X1 {x1pick} (WITH EXTERNAL PRETRAINING): eval Δ vs F1k {d2["eval_delta_vs_F1k"]:+.3f} CI '
+          f'[{d2["ci95_vs_F1k"][0]:+.3f}, {d2["ci95_vs_F1k"][1]:+.3f}] -> replaces F1k: {d2["replaces_F1k"]}',
+          f'D4 honest dev margin vs G8 {d4["honest_margin_vs_G8"]:+.3f} -> selection-noise flag: {d4["flag_selection_noise"]}']
+    types, C = type_corr(V, ev)
+    write_csv('type_corr_eval.csv', ['type'] + types, [[t] + [f'{c:.4f}' for c in row] for t, row in zip(types, C)])
+    txt = '\n'.join(L)
+    open(os.path.join(SCORES, 'scorecard_eval.txt'), 'w').write(txt + '\n')
+    print(txt)
+
+
 if __name__ == '__main__':
     stage = sys.argv[1] if len(sys.argv) > 1 else ''
-    {'repro': stage_repro}[stage]()
+    {'repro': stage_repro, 'dev': stage_dev, 'eval': stage_eval}[stage]()

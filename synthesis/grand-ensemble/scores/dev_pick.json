@@ -1,0 +1,75 @@
+{
+  "study": "synthesis/grand-ensemble",
+  "status": "committed on dev only, before any eval score of the pick",
+  "x0_pick": {
+    "name": "GS12",
+    "member_types": {
+      "G": "ao_nogain (fast recipe + --wave_aug 1 --wave_aug_ops noise,shift)",
+      "S": "sb_spec = ao_nogain recipe + --spec_branch 1"
+    },
+    "members": [
+      "SCLTFSTgramMFN_ao_nogain_s2040",
+      "SCLTFSTgramMFN_ao_nogain_s2041",
+      "SCLTFSTgramMFN_ao_nogain_s2042",
+      "SCLTFSTgramMFN_ao_nogain_s2043",
+      "SCLTFSTgramMFN_ao_nogain_s2044",
+      "SCLTFSTgramMFN_ao_nogain_s2045",
+      "SCLTFSTgramMFN_ao_nogain_s2046",
+      "SCLTFSTgramMFN_ao_nogain_s2047",
+      "SCLTFSTgramMFN_sb_spec_s2040",
+      "SCLTFSTgramMFN_sb_spec_s2041",
+      "SCLTFSTgramMFN_sb_spec_s2042",
+      "SCLTFSTgramMFN_sb_spec_s2043"
+    ],
+    "per_member_weight": {
+      "G": 1.0,
+      "S": 1.0
+    },
+    "n": 12,
+    "dev_Amean": 95.20606779618657,
+    "dev_Amean_G8": 94.97173089204084,
+    "dev_Amean_A8": 94.76916706319216,
+    "honest_dev_margin_vs_G8_after_O1": 0.1619799868176365
+  },
+  "rule": "member score = S1' (zR0' + zK', per-ID z on the member's own training-part clips, ablation/ensemble-backend/score.py per_run_scores); BEATs members zK' only; ensemble = sum_member w * score",
+  "size_matched_for_fresh_confirm": {
+    "build": "4G+4S",
+    "second_type": "S",
+    "second_type_recipe": "exactly ao_nogain's flags plus --spec_branch 1 (see ablation/spectrum-branch/scores/SCLTFSTgramMFN_sb_spec_s2040/config.json: fussion 1, m 0.4, ht basic, epoch 300, amp fp16, cudnn_bench 1, lean 1, cache_dir data/cache, probe_every 5, wave_aug 1, wave_aug_ops noise,shift, spec_branch 1, num_workers 8)",
+    "per_member_weight": {
+      "G": 2.0,
+      "S": 1.0
+    },
+    "why_these_weights": "W_t = pick's total weight per type (G 8, S 4) spread over 4 fresh members each: G 8/4 = 2, S 4/4 = 1, i.e. the S block keeps half the G block's weight as in GS12",
+    "fallback_8G": {
+      "build": "8 ao_nogain",
+      "per_member_weight": {
+        "G": 1.0
+      },
+      "note": "= G8, the phase-1 dev pick"
+    },
+    "dev_check_on_existing_members": {
+      "n_combos": 70,
+      "reduced_mean": 95.15047954367472,
+      "reduced_p05": 95.06914924483975,
+      "reduced_p95": 95.23414313864275,
+      "hom4_G_mean": 94.82546547547894,
+      "hom4_G_p05": 94.6749376853554,
+      "hom4_G_p95": 94.98999577585289,
+      "G8": 94.97173089204084,
+      "reduced_minus_hom4G": 0.3250140681957845
+    },
+    "how_to_score": "import synthesis/grand-ensemble/score.py via importlib as ge; s = ge.ensemble_from_dumps([(path, 'G') for 4 fresh ao_nogain extract.py npz] + [(path, 'S') for 4 fresh sb_spec npz], weights={'G': 2.0, 'S': 1.0}); ge.evaluator('dev')(s) / ge.evaluator('eval')(s). Dumps must come from ablation/ensemble-backend/extract.py with meta.npz identical to lit-arms' below data/ (ge.check_meta)."
+  },
+  "x1_pick_with_external_pretraining": {
+    "name": "X1[r=0.375]",
+    "per_member_weight": {
+      "G": 1.0,
+      "S": 1.0,
+      "B": 1.5
+    },
+    "dev_Amean": 95.36951934960447,
+    "dev_Amean_F1k": 95.00929187377952,
+    "label": "WITH EXTERNAL PRETRAINING (BEATs_iter3, AudioSet-2M)"
+  }
+}
