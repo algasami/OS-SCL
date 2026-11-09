@@ -7,10 +7,18 @@
 >     95.21, +0.23 over G8 (O1 optimism +0.07, so the honest margin is +0.16).
 >   - On eval it scores **94.93**: **+0.16 [−0.02, +0.33]** vs A8 and +0.06 [−0.08, +0.21]
 >     vs G8. The CI touches 0, so D1 fails.
-> - **D2, with external pretraining: passes.**
+> - **D2, with external pretraining: passes the pre-registered bar, thinly.**
 >   - X1 = GS12 + 3 BEATs (zK′, w 1.5 each) scores eval **95.42**, **+0.17 [+0.02, +0.32]**
 >     vs F1k, and dev 95.37 (+0.36).
->   - It replaces F1k as the best system *with external pretraining*.
+>   - It replaces F1k as the best system *with external pretraining*, **pending the
+>     fresh-confirm seeds.**
+>   - **[review 2026-11-09]** Four reasons to read it as thin (details under *Decisions*):
+>     - other bootstrap seeds put the lower bound at +0.018 / +0.008, with P(Δ ≤ 0) ≈ 2%;
+>     - the CI covers clip resampling only, not seed or member variance;
+>     - every member's eval had been seen;
+>     - most of the gap is the GS12-vs-A8 swap that D1 calls a tie.
+> - **[review 2026-11-09] F1k's eval Amean is 95.25** (95.2532). Where this README says 95.26,
+>   read 95.25.
 > - **The dev/eval reversal of phase 1 returns.** Dilute pools rank near the bottom on dev and
 >   top on eval: FAST42 95.35 and ALL50 95.28, mostly from eval ToyCar +1.4. They were not dev
 >   picks, so this is secondary (D3).
@@ -32,7 +40,7 @@ So the question is:
 - **X0, from scratch:** which ensemble of the existing pool is best when picked on dev only?
   Does it beat E2′[A8] (the reported best, eval Amean 94.78)?
 - **X1, with external pretraining:** the X0 pick plus the three BEATs nets. Does it beat F1k
-  (eval Amean 95.26)?
+  (eval Amean 95.26 **[95.25]**)?
 
 ## Incumbents (all already seen on dev and eval)
 
@@ -42,7 +50,7 @@ So the question is:
 | E2′[G8] — phase-1 dev pick, tied A8 | 8 `ao_nogain` | 94.97 | 94.87 | `ablation/nogain-ensemble` |
 | GA16 | G8 + A8 | 94.93 | 94.87 | `ablation/nogain-ensemble` |
 | F20g | G8 + plain/gate/eca | 94.32 | 95.02 | `ablation/nogain-ensemble` (not a dev pick) |
-| F1k — with external pretraining | A8 + ΣzK′[B3] | 95.01 | 95.26 | `ablation/beats` (secondary there) |
+| F1k — with external pretraining | A8 + ΣzK′[B3] | 95.01 | 95.26 **[95.25]** | `ablation/beats` (secondary there) |
 
 ## P0: reproduction (done before anything new)
 
@@ -221,7 +229,7 @@ Source: `scores/scorecard_dev.txt`, `systems_dev.csv`, `x1_dev.csv`, `selection_
 `bootstrap_dev.json` and `type_corr_dev.csv`. Eval was not computed.
 
 ```
-dev, E2′      n   AUC   pAUC  mAUC  Amean | fan   pump  slider ToyCar ToyConv valve  Δ vs G8 [paired 95%]
+dev, E2′      n   AUC   pAUC  mAUC  Amean | fan   pump  slider ToyCar ToyConv valve  Δ vs G8: bootstrap mean [paired 95%]
 G8            8  97.19 92.76 94.12 94.97 | 99.04 96.13 99.73 98.37 89.88 99.96
 GA16         16  97.17 92.68 94.18 94.93 | 98.98 96.08 99.74 98.48 89.79 99.96   −0.05 [−0.10, +0.01]
 GS12  PICK   12  97.38 93.03 94.71 95.21 | 99.21 96.59 99.80 98.41 90.33 99.97   +0.24 [+0.13, +0.36]
@@ -235,6 +243,11 @@ GREEDY       14  97.42 93.06 94.75 95.24 | 99.19 96.58 99.83 98.37 90.56 99.98  
 A8 (bar)      8  97.05 92.48 94.10 94.77 | 98.82 96.00 99.74 98.54 89.26 99.95   −0.20
 paper, one model 95.71 90.23 91.23       |       96.25             96.55 83.56          (per machine: AUC)
 ```
+
+**[review 2026-11-09]** The Δ column is the **bootstrap mean** over 2000 resamples, not the point
+estimate. GS12 − G8 has a point estimate of **+0.23** (95.2061 − 94.9717 = 0.2343), which is the
+figure the text uses. The column shows +0.24 (bootstrap mean 0.236). The other rows differ from
+their point estimates by ≤ 0.01.
 
 - **GREEDY** took G, then S (+0.23), then TS (+0.04), and stopped (+G would gain −0.01). That is
   G + S + TS at equal block weight: per-member weights G 1/8, S 1/4, TS 1/2.
@@ -251,7 +264,12 @@ paper, one model 95.71 90.23 91.23       |       96.25             96.55 83.56  
   - **O1** (20 clip split-halves): the half-A pick leads G8 by +0.28 on its own half and by
     +0.21 on the other. Optimism is +0.07, so the honest dev margin is **+0.16**. The half-A
     pick was GS12 in 12 of 20 splits and GREEDY in 8. GREEDY on half A shrinks most (+0.33 →
-    +0.18 on average); GS12 barely shrinks (+0.25 → +0.22).
+    +0.18 on average); GS12 barely shrinks (+0.25 → +0.22 **[+0.23]**).
+    - **[review 2026-11-09]** Two corrections, both from `selection_dev.json` O1 splits:
+      - GREEDY's held-out value read "+0.17" when committed at `ee37d92`. Commit `9b842f6`
+        changed it to +0.18 after eval was scored, without a note. **+0.18 is correct** (mean
+        0.182 over its 8 splits). Only the wording changed; no number was recomputed.
+      - GS12's held-out mean is 0.226, so **+0.23**, as `fig3_selection.png` shows, not +0.22.
   - **O2** (seed halves): picking on H1 gives GS12, +0.24 on H1 and +0.31 rebuilt on H2.
     Picking on H2 gives GREEDY = G + S + TS + **PM**, +0.42 on H2 and +0.21 rebuilt on H1. The
     S effect replicates across seed halves; the greedy extras do not.
@@ -291,7 +309,7 @@ Seen single-member S1′ on eval, 4 paired seeds (`scores/members.csv`):
 - by machine: fan +0.2, pump +0.3, slider −0.7, ToyCar +0.15, ToyConveyor 0.0, valve −0.6.
 
 Eval references: G8 94.87, with pump 98.31, ToyCar 95.96 (id_05 86.83) and ToyConveyor 89.69.
-A8 is 94.78, and F1k is 95.26.
+A8 is 94.78, and F1k is 95.26 **[95.25]**.
 
 - **B1, GS12 on eval:**
   - Amean 94.93 [94.70, 95.15].
@@ -319,7 +337,7 @@ Source: `scores/scorecard_eval.txt`, `systems_eval.csv`, `x1_eval.csv`, `greedy_
 and unmodified.
 
 ```
-eval, E2′     n   AUC   pAUC  mAUC  Amean | fan   pump  slider ToyCar ToyConv valve  Δ vs A8 [paired 95%]   dev
+eval, E2′     n   AUC   pAUC  mAUC  Amean | fan   pump  slider ToyCar ToyConv valve  Δ vs A8: point [paired 95%]   dev
 G8            8  96.96 92.77 93.35 94.87 | 99.64 98.31 99.77 95.96 89.69 98.40   +0.09 [−0.05, +0.23]   94.97
 GA16         16  96.97 92.78 93.39 94.87 | 99.68 98.37 99.75 96.03 89.49 98.46   +0.10 [+0.02, +0.17]   94.93
 GS12  PICK   12  97.00 92.86 93.31 94.93 | 99.80 98.47 99.76 95.98 89.64 98.36   +0.16 [−0.02, +0.33]   95.21
@@ -357,6 +375,19 @@ F1k (bar)        A8 + B3 w 1       97.21 93.30 94.20 95.25 | 97.72  88.99       
   - **It is the new best system with external pretraining.** It needs fresh-seed confirmation
     like every phase-2 system. Its margin is small, and the lower CI bound sits at +0.02.
   - BEATs adds +0.49 [+0.36, +0.64] to GS12 on eval, mostly ToyCar (95.98 → 97.67).
+  - **[review 2026-11-09] Read D2 as "passes the pre-registered bar, thinly; pending
+    fresh-confirm".**
+    - *Thin.* An independent rerun of the bootstrap with rng 1 and rng 2 gives lower bounds
+      +0.018 and +0.008. P(Δ ≤ 0) is about 2%.
+    - *Clip noise only.* The CI resamples test clips. It does not cover seed or member
+      variance, which phase 1 puts at about 1 point of single-model eval AUC.
+    - *Seen members.* Every member's single-model eval score had been seen in phase 1. Only
+      the combination was new.
+    - *Mostly inherited from D1.* X1 − F1k (+0.17) is largely the GS12-vs-A8 swap in the
+      from-scratch block (+0.16), which D1 calls a tie. The BEATs block is the same in both.
+      Per machine on eval (Amean), X1 − F1k is fan +0.25, pump +0.19, slider +0.15,
+      **ToyCar +0.06**, ToyConveyor +0.52 and valve −0.14. So the X1 gain over F1k is fan,
+      pump and ToyConveyor, not BEATs' ToyCar.
 - **D4: no flag.** The honest dev margin over G8 is +0.16 > 0.
 - **D3, secondary (no claims; choosing among these on eval would be test-set selection):**
   - FAST42 has the highest eval Amean of all from-scratch candidates: 95.35, +0.57 vs A8. It

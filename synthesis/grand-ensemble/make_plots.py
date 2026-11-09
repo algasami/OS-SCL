@@ -279,14 +279,16 @@ def fig4_machines():
         ax.set_ylabel(f'Δ Amean per machine, X1 − F1k')
         ax.grid(axis='y')
         ax.legend(fontsize=7.5, loc='upper right')
-        ax.set_title('WITH EXTERNAL PRETRAINING: X1 − F1k', loc='left', fontsize=9.5)
+        ax.set_title('WITH EXTERNAL PRETRAINING: X1 − F1k\n(D2 passes, thinly; mostly the GS12-vs-A8 swap; pending fresh seeds)',
+                     loc='left', fontsize=9)
     sub = ''
     if se:
         dp = se[pick][('ToyCar', 'id_05')] - se['G8'][('ToyCar', 'id_05')]
         sub = f' Eval ToyCar id_05 AUC {se[pick][("ToyCar", "id_05")]:.2f} ({dp:+.2f} vs G8).'
     ttl = f'Where {pick} gains and loses vs G8, dev vs eval'
     if se:
-        ttl = f'{pick}\'s fan and pump gains hold on eval; its dev ToyConveyor gain reverses'
+        ttl = (f'{pick}\'s fan and pump gains hold on eval; its dev ToyConveyor gain reverses. '
+               f'X1 − F1k gains fan/pump/ToyConveyor, not ToyCar')
     fig.suptitle(ttl, x=0.02, ha='left', fontsize=10.5)
     fig.text(0.02, -0.03, 'Amean = mean(AUC, pAUC) per machine.' + sub, fontsize=7.5, color=INK_2)
     fig.tight_layout()
