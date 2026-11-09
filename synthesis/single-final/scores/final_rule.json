@@ -1,0 +1,42 @@
+{
+  "rule": "C1T",
+  "name": "C1ᵀ = zR0′ᵀ + zK′ᵀ + zGmean",
+  "network": "ao_nogain recipe (ablation/aug-ops: --wave_aug_ops noise,shift), EMA weights, eval mode",
+  "terms": {
+    "zR0p": "z-score of R0 = ArcFace CE of the clip's own machine-ID logit averaged over circular shifts 0, +1%, -1% of the 160,000-sample clip",
+    "zKp": "1-NN cosine distance of the pre-head 128-d embedding (mean over the 3 shifted copies of the L2-normalised embedding, re-normalised) to the ID's training-part clips; bank z-stats leave-one-out",
+    "zGmean": "1-NN cosine distance of gmean (512-d mean over the 8x20 grid of mobilefacenet.conv2 output, the input to linear7), UNshifted, to the ID's training-part clips; bank z-stats leave-one-out"
+  },
+  "bank": "per machine ID: training clips with valid == False (the replayed 95% the checkpoint trained on); the bank gets the same TTA as the test clips",
+  "z_statistics": "per ID, mean and population sd over the bank (K and G: each bank clip scored leave-one-out)",
+  "vectors": "L2-normalised, uncentred, float64",
+  "shifts": [
+    0.0,
+    0.01,
+    -0.01
+  ],
+  "shift_op": "torch.roll of the wave by round(f*160000) samples; mel recomputed from the rolled wave (ablation/tta/extract_tta.py); shift 0 uses the CPU mel",
+  "code": "synthesis/single-final/score.py: score_member(tr, te, tr_label, te_label, valid, rule)",
+  "decision": {
+    "gate_A": true,
+    "dev8_dAmean_pos": true,
+    "dev8_ge6_of_8_pos": true,
+    "conf_dev_dAmean_pos": true,
+    "eval8_dAmean_ge_0": true,
+    "adopt_C1T": true
+  },
+  "eight_seed_means": {
+    "dev": {
+      "AUC": 96.60761717092934,
+      "pAUC": 91.91455935826218,
+      "mAUC": 93.34785288359022,
+      "Amean": 94.26108826459576
+    },
+    "eval": {
+      "AUC": 96.44684729448713,
+      "pAUC": 91.75694570896636,
+      "mAUC": 92.61470411184808,
+      "Amean": 94.10189650172674
+    }
+  }
+}
