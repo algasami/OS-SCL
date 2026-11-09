@@ -1,6 +1,8 @@
 # fresh-confirm — do the final systems hold on seeds nobody has seen?
 
-> **Status: TRAINING (round 1 launched 2026-11-09).** `fc_nogain_s2060–2063` on GPUs 0/2/1.
+> **Status: TRAINING.** Round 1 `fc_nogain_s2060–2063` launched 2026-11-09 16:31; round 2
+> `fc_spec_s2060–2063` queued 2026-11-09 behind it (set by `../grand-ensemble`'s dev pick GS12,
+> `scores/dev_pick.json` at ee37d92, committed before that pick's eval score).
 > No fresh checkpoint has been scored under any rule. Scoring waits for
 > `../single-final` and `../grand-ensemble` to commit their final rules.
 
@@ -26,6 +28,10 @@ rule was ever tuned on, freeze every rule first, then score them once.
   Optionally 2–3 fresh BEATs seeds if the external-track pick contains BEATs
   (~19 h each; decided with the user).
 - ~11.3 h per run on GPUs 0/2, ~14.2 h on GPU 1 (x1 PCIe; CLAUDE.md).
+
+- **Round 2, decided:** `../grand-ensemble` picked GS12 (8 `ao_nogain` + 4 `sb_spec`) on dev, so
+  round 2 is 4 × `sb_spec` = the `ao_nogain` flags plus `--spec_branch 1` (`fc_spec_s2060–2063`).
+  The size-matched fresh ensemble is 4 G (weight 2) + 4 S (weight 1).
 
 ## Scoring (to be filled in before any fresh score exists)
 
