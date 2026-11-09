@@ -33,3 +33,14 @@ The rules come verbatim from the committed decisions of `../single-final` (singl
 network) and `../grand-ensemble` (ensemble, matched to the fresh set's size). The
 per-member bank, z statistics and TTA are exactly phase 1's (replayed 5 % split held out
 of the bank). The predictions and pass bars go here, committed before scoring.
+
+## Extraction (`extract.py`)
+
+One pass per split dumps, per clip, R0 and the pre-head embedding under `small` TTA shifts
+(0, +1 %, −1 %) plus the shift-0 time-mean / time-max of `mobilefacenet.conv2`'s map, i.e. the
+union of what `ablation/tta` and `ablation/pooled-knn` dumped. Reproduction test (2026-11-09,
+`ao_nogain_s2040`, first 640 dev clips, GPU 0 shared with a training run): against the phase-1
+dumps, max |ΔR0| 0.015 (0.14 % relative), max |Δpre| 0.013, max |Δgmean| 5e-4, rank correlation
+1.000. The phase-1 dumps agree with each other bit-exactly, so the gap is this pass, most likely
+cuDNN choosing other conv algorithms on a busy GPU (unverified). Fresh checkpoints are only ever
+scored from this extractor, so the gap never enters a comparison.
