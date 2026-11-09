@@ -90,8 +90,8 @@ def fig1():
         ax.scatter([j - 0.3], [np.mean(sp)], marker='_', s=120, color=ORANGE, lw=2)
     from matplotlib.lines import Line2D
     ax.legend(handles=[Line2D([], [], color=BLUE, marker='o', lw=2.2, label='C1ᵀ − C1: mean, 95% CI, seeds'),
-                       Line2D([], [], color=ORANGE, marker='_', ms=12, mew=2, lw=0, label='S1′ᵀ − C1: seed mean')],
-              loc='lower right', fontsize=7.5)
+                       Line2D([], [], color=ORANGE, lw=2.2, label='S1′ᵀ − C1: seed mean')],
+              loc='upper right', fontsize=7.5, handlelength=2.2)
     ax.axhline(0, color=MUTED, lw=0.8)
     ax.set_xticks(range(len(cells)))
     ax.set_xticklabels([c[0] for c in cells], fontsize=8)
@@ -131,9 +131,10 @@ def fig2():
         ax.set_title(f'{ds}, 8 seeds (bar = mean, dots = seeds)', loc='left', fontsize=9.5)
         ax.grid(axis='y')
     axes[0][0].set_ylabel('C1ᵀ − C1, AUC (points)')
-    fig.suptitle(f'Where TTA moves C1: ToyConveyor {cells[0][1]["per_machine_dAUC"]["ToyConveyor"]:+.2f} dev'
-                 + (f', {cells[1][1]["per_machine_dAUC"]["ToyConveyor"]:+.2f} eval' if len(cells) > 1 else ''),
-                 x=0.01, ha='left', fontsize=10)
+    pm = {ds: d['per_machine_dAUC'] for ds, d in cells}
+    neg = [f'{ds} {m} {v:+.2f}' for ds, p in pm.items() for m, v in p.items() if v < -0.05]
+    fig.suptitle('TTA on C1 helps ToyCar and ToyConveyor on ' + ('both sets' if len(cells) > 1 else 'dev')
+                 + ('; the one loss is ' + ', '.join(neg) if neg else ''), x=0.01, ha='left', fontsize=10)
     fig.tight_layout()
     save(fig, 'fig2_per_machine.png')
 
@@ -154,7 +155,7 @@ def fig3():
             ax.plot([j - 0.25, j + 0.25], [mu, mu], color=COL[r], lw=2.4)
             ax.text(j + 0.28, mu, f'{mu:.2f}', va='center', fontsize=8)
         ax.axhline(PAPER[ds], color=MUTED, lw=0.9, ls='--')
-        ax.text(len(rules) - 0.5, PAPER[ds], f'paper {PAPER[ds]:.2f}', fontsize=7.5, color=INK_2, va='bottom', ha='right')
+        ax.text(len(rules) - 0.5, PAPER[ds], (f'paper (AUC+pAUC)/2 {PAPER[ds]:.2f}' if ds == 'dev' else f'paper {PAPER[ds]:.2f}'), fontsize=7.5, color=INK_2, va='bottom', ha='right')
         ax.set_xticks(range(len(rules)))
         ax.set_xticklabels([NAME[r] for r in rules])
         ax.set_xlim(-0.5, len(rules) - 0.2)

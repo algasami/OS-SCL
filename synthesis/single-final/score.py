@@ -552,7 +552,40 @@ def stage_eval(ctx):
     open(os.path.join(SCORES, 'scorecard_eval.txt'), 'w').write(txt + '\n')
 
 
+def summary(_ctx=None):
+    """From scores/ only: 8-seed means per rule x set x machine, and per-ID C1ᵀ − C1 (summary.csv,
+    perid_delta.csv). Dev rows come from stage B (8 seeds), eval rows from the eval stage."""
+    M, P = {}, {}
+    for name, ds in (('stageB', 'dev'), ('eval', 'eval')):
+        for r in csv.DictReader(open(os.path.join(SCORES, f'metrics_{name}.csv'))):
+            M.setdefault((ds, r['rule'], r['machine']), []).append({k: float(r[k]) for k in KEYS})
+        for r in csv.DictReader(open(os.path.join(SCORES, f'perid_{name}.csv'))):
+            P.setdefault((ds, r['machine'], r['id'], r['rule']), {})[r['system']] = float(r['AUC'])
+    rows = []
+    for (ds, rule, m), v in sorted(M.items()):
+        assert len(v) == 8, (ds, rule, m, len(v))
+        mu = {k: np.mean([x[k] for x in v]) for k in KEYS}
+        base = {k: np.mean([x[k] for x in M[(ds, 'C1', m)]]) for k in KEYS}
+        rows.append([ds, rule, m] + [f'{mu[k]:.4f}' for k in KEYS] + [f'{mu[k] - base[k]:+.4f}' for k in KEYS])
+    write_csv(os.path.join(SCORES, 'summary.csv'),
+              ['dataset', 'rule', 'machine'] + [f'{k}_mean8' for k in KEYS] + [f'd_{k}_vs_C1' for k in KEYS], rows)
+    rows = []
+    for (ds, m, i, rule), v in sorted(P.items()):
+        if rule != 'C1T':
+            continue
+        b = P[(ds, m, i, 'C1')]
+        d = [v[k] - b[k] for k in sorted(v)]
+        rows.append([ds, m, i, f'{np.mean(list(b.values())):.3f}', f'{np.mean(list(v.values())):.3f}',
+                     f'{np.mean(d):+.3f}', sum(x > 0 for x in d), len(d)])
+    write_csv(os.path.join(SCORES, 'perid_delta.csv'),
+              ['dataset', 'machine', 'id', 'C1_AUC_mean8', 'C1T_AUC_mean8', 'dAUC', 'n_pos', 'n'], rows)
+    for r in rows:
+        print(*r)
+
+
 if __name__ == '__main__':
     os.makedirs(SCORES, exist_ok=True)
     stage = sys.argv[1]
+    if stage == 'summary':
+        sys.exit(summary())
     {'check': check, 'stageA': stageA, 'stageB': stageB, 'eval': stage_eval}[stage](Ctx())

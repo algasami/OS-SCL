@@ -6,6 +6,7 @@
 #   bash synthesis/single-final/run.sh stageA   # dev 2040-2043: C1ᵀ vs C1 (gate)
 #   bash synthesis/single-final/run.sh stageB   # dev 2044-2047 + 8-seed dev
 #   bash synthesis/single-final/run.sh eval     # eval x8, once; decision + scores/final_rule.json
+#   bash synthesis/single-final/run.sh summary  # from scores/ only: summary.csv, perid_delta.csv
 #   bash synthesis/single-final/run.sh plots
 #
 # Dumps: SF_TTA_EMB (default ../OS-SCL-tta/ablation/tta/results/emb, from ablation/tta/run.sh) and
@@ -22,8 +23,9 @@ sc() { for t in 1 2 3; do
          grep -q ABORT $D/results/score_$1.log && { tail -5 $D/results/score_$1.log; exit 1; }
          echo "score $1 crashed (try $t)"; done
        exit 1; }
-case ${1:?usage: run.sh check|stageA|stageB|eval|plots} in
+case ${1:?usage: run.sh check|stageA|stageB|eval|summary|plots} in
 check|stageA|stageB|eval) sc $1 ;;
+summary) $PY $D/score.py summary ;;
 plots) $BPY $D/make_plots.py ;;
 *) echo "unknown stage"; exit 1 ;;
 esac

@@ -1,8 +1,25 @@
 # single-final — does C1 + small TTA (C1ᵀ) beat C1 for one `ao_nogain` network?
 
-> **Status: PRE-REGISTERED 2026-11-09.** Design, predictions and decision rule below are
-> committed before any C1ᵀ number exists. The reproduction check (C1, S1′, S1′ᵀ, all already
-> seen) has been run and passes; see *Reproduction check*.
+> **Status: DONE 2026-11-09. D1 passes by the letter, so C1ᵀ = zR0′ᵀ + zK′ᵀ + zGmean replaces C1
+> as the single-model rule. The eval margin is +0.01 and is not resolved.**
+> - **Dev, 8 seeds:** C1ᵀ − C1 = **+0.10 Amean** [+0.01, +0.21], 8/8 seeds positive. The gate
+>   seeds (2040–2043) give +0.08 and the confirm seeds (2044–2047) +0.11.
+> - **Eval, 8 seeds, scored once:** **+0.014 Amean** [−0.024, +0.051], 5/8 seeds positive. The
+>   rule's bar was ≥ 0, so it passes; the CI includes 0.
+>   - That is TTA's usual dev-to-eval shrink: S1′ᵀ went from +0.11 to +0.05.
+> - **One `ao_nogain` net under C1ᵀ** (8-seed means): dev 96.61 / 91.91 / 93.35 (Amean 94.26);
+>   eval AUC 96.45, pAUC 91.76, Amean **94.10**. Paper: 95.71 / 90.23 / 91.23, eval 93.22. C1:
+>   dev 94.16, eval 94.09.
+> - **Where it moves:** ToyConveyor (+0.17 dev / +0.09 eval AUC) and ToyCar (+0.09 / +0.10;
+>   eval id_05 +0.25, 7/8 seeds). The one loss is eval valve (−0.09 AUC, −0.37 pAUC). It comes
+>   from pooling scores across valve IDs: every per-ID valve AUC is unchanged or up.
+> - **Reproduction:** C1, S1′ and S1′ᵀ reproduce every committed cell exactly (0.0 at 4 dp).
+> - **Faulty host RAM** corrupted scores mid-computation. Every score vector here was computed
+>   until two runs agreed bit for bit (see *Design*).
+> - Pre-registered at e4ebd98. Stage A was committed at e7d62a5 and stage B at 61432c5, each
+>   before the next stage was scored.
+> - **Cost:** 3 forward passes per clip, for the bank too. `fresh-confirm` (new seeds) is the
+>   real test of a +0.01 eval margin.
 
 ## Why this exists
 
@@ -216,12 +233,138 @@ C1     96.55  91.78  93.22  94.16    96.42  91.75  92.54  94.09
   rerun with verified per-member caching and more retries; no score from the aborted attempt was
   read.
 
+## Results — eval (2026-11-09, scored once after 61432c5)
+
+`scores/scorecard_eval.txt`, `eval.json`, `metrics_eval.csv`, `perid_eval.csv`; 8-seed summary
+over both sets in `summary.csv` and `perid_delta.csv`; the adopted rule in `final_rule.json`.
+
+```
+8-seed means       dev AUC  pAUC   mAUC   Amean  |  eval AUC  pAUC   mAUC   Amean
+S1′                 96.43  91.58  92.82  94.00   |     96.19  91.57  91.96  93.88
+S1′ᵀ                96.52  91.72  93.01  94.12   |     96.24  91.61  92.12  93.93
+C1                  96.55  91.78  93.22  94.16   |     96.42  91.75  92.54  94.09
+C1ᵀ (adopted)       96.61  91.91  93.35  94.26   |     96.45  91.76  92.61  94.10
+paper               95.71  90.23  91.23  92.97   |                          93.22
+```
+
+- **Eval C1ᵀ − C1:** Δ AUC +0.022, Δ pAUC +0.006, Δ Amean **+0.014** [−0.024, +0.051].
+  - 5/8 seeds positive (+0.05, +0.08, −0.06, −0.03, +0.01, +0.01, +0.08, −0.03).
+  - mAUC +0.07 (not read).
+- **Per machine, Δ AUC dev / eval (8 seeds):**
+
+  | machine | fan | pump | slider | ToyCar | ToyConveyor | valve |
+  |---|---|---|---|---|---|---|
+  | dev | −0.02 | +0.03 | +0.06 | +0.09 | **+0.17** | +0.01 |
+  | eval | +0.01 | +0.01 | +0.01 | **+0.10** | +0.09 | **−0.09** |
+
+- **Per ID** (`perid_delta.csv`, 8-seed mean, seeds positive):
+  - ToyConveyor gains on every ID on both sets: +0.09 to +0.23, 5–7/8 seeds each.
+  - ToyCar: dev id_01 +0.31 (8/8) and eval id_05 +0.25 (87.59 → 87.83, 7/8) gain. These are
+    the weakest IDs, the same ones C1 helped.
+  - Pump: dev id_00 +0.14 and id_02 +0.12; eval id_03 −0.04.
+  - Valve: every per-ID AUC is unchanged or up on eval (id_05 +0.06, 5/8). Yet pooled valve
+    AUC falls 0.09 and pAUC 0.37.
+    - So TTA shifts the per-ID score scales relative to each other on valve, and the pooled
+      ranking across IDs gets worse.
+    - That is a calibration effect of the z-scoring, not a detection loss inside any ID.
+- **S1′ᵀ against C1** is −0.05 on dev and −0.16 on eval. It loses 0.97 Amean on eval
+  ToyConveyor and 0.56 on ToyCar, and wins 0.43 on valve.
+  - So the pooled term and TTA are complementary: C1ᵀ keeps C1's ToyCar / ToyConveyor gains and
+    adds TTA's on top.
+  - On eval valve, C1 already lost to S1′ (`pooled-knn`: −0.35 AUC), and TTA does not recover it.
+
+## Decision
+
+| D1 condition | value | pass |
+|---|---|---|
+| gate A: stage-A dev Δ Amean > 0 | +0.083 (4/4) | yes |
+| dev 8-seed Δ Amean > 0 with ≥ 6/8 seeds positive | +0.098, 8/8 | yes |
+| confirm-seed (2044–2047) dev Δ Amean > 0 | +0.112 (4/4) | yes |
+| eval 8-seed Δ Amean ≥ 0 | +0.014 | yes (narrowly) |
+
+**C1ᵀ is the single-model rule** (`scores/final_rule.json`; `score.py: score_member`, default
+rule `C1T`).
+
+- Read it as "TTA's dev gain carries to C1, and eval does not contradict it". Eval does not show
+  a gain: the eval CI includes 0, and 3 of 8 seeds are negative.
+- The rule was fixed before eval, and it passes. `fresh-confirm` scores C1ᵀ and C1 on seeds no
+  rule has seen. If C1ᵀ falls below C1 there, that is the evidence to revert. A small eval
+  shortfall alone is not: C1 is the fallback, simpler and 3× cheaper.
+
+## Prediction check
+
+| prediction | outcome | held? |
+|---|---|---|
+| P0 reproduction ≤ 1e-3 | 0.0 at 4 dp on every cell | **yes** |
+| P1 gate A Δ +0.06 [−0.03, +0.15]; passes (70 %) | +0.083; passes | **yes** |
+| P2 dev8 Δ AUC +0.03 [−0.03, +0.10] | +0.057 | **yes** |
+| P2 dev8 Δ pAUC +0.08 [−0.05, +0.20] | +0.138 | **yes** |
+| P2 dev8 Δ Amean +0.06 [−0.02, +0.14] | +0.098 | **yes** (above central) |
+| P2 ≥ 6/8 seeds positive (60 %) | 8/8 | **yes** |
+| P2 95 % CI includes 0 (55 %) | [+0.006, +0.214] | **no** |
+| P3 confirm Δ > 0 (70 %); smaller than stage A (55 %) | +0.112 > +0.083 | yes; **no** (no winner's curse, as in `pooled-knn`) |
+| P4 eval Δ +0.03 [−0.05, +0.10]; ≥ 0 (65 %); CI includes 0 (65 %) | +0.014; ≥ 0; CI includes 0 | **yes** |
+| P5 ToyConveyor largest dev Δ AUC (50 %), central +0.15 | +0.17, largest | **yes** |
+| P5 fan, pump, slider \|Δ\| ≤ 0.05 dev | −0.02, +0.03, **+0.06** | **no** (slider, just) |
+| P5 ToyCar Δ AUC in [−0.10, +0.15] both sets | +0.09 / +0.10 | **yes** |
+| P5 valve \|Δ AUC\| ≤ 0.10 both sets | +0.01 / −0.09 | **yes** (just) |
+| P5 eval ToyCar id_05 \|Δ\| < 0.5 | +0.25 | **yes** |
+| P5 eval valve id_05 not repaired, \|Δ\| ≤ 0.2 | +0.06 (C1 94.62, S1′ᵀ 95.25) | **yes** |
+| P6 C1ᵀ above S1′ᵀ on dev and eval (85 %) | 94.26 vs 94.12; 94.10 vs 93.93 | **yes** |
+| P7 D1 passes (45 %); central call a narrow fail | passes, narrowly on eval | central call **wrong** |
+
+The dev effect came in near the top of the predicted range, not at "half of S1′'s gain". The
+three-term sum did not dilute TTA. On dev, C1ᵀ's gain over C1 (+0.10) equals TTA's gain over S1′
+(+0.11). On eval, the shrink was as large as predicted.
+
+## What does NOT replicate / what this cannot answer
+
+- **The dev gain does not carry to eval at strength.** +0.10 on dev against +0.01 on eval, 8/8
+  against 5/8 seeds. The same happened to S1′ᵀ (+0.11 → +0.05) and to most phase-1 dev gains.
+  Selection was dev-only, so this is not overfitting to eval. It may be dev-to-eval transfer
+  of a jitter-smoothing effect, or simply noise.
+- **Eval valve goes the other way** (−0.09 AUC pooled, with no per-ID loss). It is not
+  understood beyond "cross-ID calibration".
+- **zGmean was not shifted.** The roll-invariance argument makes that a small omission, but it
+  is untested. C1ᵀ with a shifted gmean would need a GPU dump.
+- **One recipe** (`ao_nogain`), 8 seeds that every earlier rule has also seen. `fresh-confirm` is
+  the out-of-sample check.
+- **Ensembles are not addressed.** `tta` found TTA useless or harmful on E2′ (G8 −0.05 eval).
+
+## Figures
+
+`/home/f74134118/anaconda3/bin/python synthesis/single-final/make_plots.py` reads `scores/` only
+(or `bash synthesis/single-final/run.sh plots`).
+
+| figure | shows |
+|---|---|
+| `plots/fig1_delta.png` | C1ᵀ − C1 Amean by stage (gate, confirm, dev 8, eval 8): per-seed dots, paired 95 % bootstrap, seeds positive; orange ticks are S1′ᵀ − C1. Dev +0.10 (8/8), eval +0.01 (5/8) |
+| `plots/fig2_per_machine.png` | C1ᵀ − C1 AUC per machine, dev and eval, with seed dots. ToyCar and ToyConveyor gain on both sets; eval valve −0.09 |
+| `plots/fig3_absolute.png` | 8-seed Amean of S1′, S1′ᵀ, C1, C1ᵀ on dev and eval, with seed dots and the paper line |
+
+## Using the adopted rule (for `fresh-confirm`)
+
+```python
+import importlib.util
+spec = importlib.util.spec_from_file_location('sf', 'synthesis/single-final/score.py')
+sf = importlib.util.module_from_spec(spec); spec.loader.exec_module(sf)
+# tr / te: dicts with 'ce' (n, K), 'pre' (n, K, 128), 'shifts' (K,) incl. 0, +0.01, -0.01
+#          (ablation/tta/extract_tta.py --shifts 0,0.01,-0.01), and 'gmean' (n, 512), unshifted
+#          (ablation/pooled-knn/extract.py); tr = all training clips in meta order.
+# tr_label / te_label: machine-ID class (meta.npz tr_label / te_label); valid: the run's replayed
+# 5 % held-out mask (pooled-knn train dump 'valid').
+score = sf.score_member(tr, te, tr_label, te_label, valid)            # rule = 'C1T' (final_rule.json)
+c1 = sf.score_member(tr, te, tr_label, te_label, valid, rule='C1')    # the fallback, uses shift 0 only
+```
+
+On smartlab1, compute each score twice and compare (`sf.twice(lambda: ...)`), as this study did.
+
 ## Files
 
 | file | what |
 |---|---|
 | `score.py` | CPU scorer. Stages `check`, `stageA`, `stageB`, `eval`, each gated on the previous one's committed output. Importable: `score_member(tr, te, tr_label, te_label, valid, rule=FINAL_RULE)`, `tta_reduce`, `member_terms` |
-| `run.sh` | stages `check`, `stageA`, `stageB`, `eval`, `plots`; resumable |
+| `run.sh` | stages `check`, `stageA`, `stageB`, `eval`, `summary`, `plots`; resumable (verified per-member score cache in `results/cache`, gitignored) |
 | `make_plots.py` | figures from `scores/` only |
-| `scores/` | committed record: `repro_check.json`, `metrics_*.csv`, `perid_*.csv`, `stage*.json`, `eval.json`, `final_rule.json`, `scorecard_*.txt` |
+| `scores/` | committed record: `repro_check.json`, `metrics_{check,stageA,stageB,eval}.csv` (per seed × rule × machine), `perid_*.csv`, `stageA.json`, `stageB.json`, `eval.json` (Δs, CIs, D1), `summary.csv` (8-seed means and Δ vs C1), `perid_delta.csv`, `final_rule.json`, `scorecard_*.txt` |
 | `results/` | logs only: gitignored scratch |
