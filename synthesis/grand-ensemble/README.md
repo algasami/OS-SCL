@@ -1,13 +1,21 @@
 # grand-ensemble — which ensemble of the whole member pool is best, picked on dev only?
 
-> **Status: STAGE A (dev) DONE 2026-11-09; eval not yet scored.**
-> - Pre-registered at `b5a7dec` (candidates, procedure, predictions, rules), before any new
->   combination was scored.
-> - **X0 dev pick: GS12** = 8 `ao_nogain` + 4 `sb_spec`, dev Amean 95.21 (+0.23 over G8). O1
->   optimism is +0.07, so the honest margin is +0.16.
-> - **X1 dev pick** (with external pretraining): GS12 + 3 BEATs at r = 3/8, dev 95.37.
-> - The size-matched form for fresh-confirm is **4 `ao_nogain` + 4 `sb_spec`**, weights 2 : 1
->   (`scores/dev_pick.json`).
+> **Status: DONE 2026-11-09.** Pre-registered at `b5a7dec`; dev pick committed at `ee37d92`,
+> before any eval score.
+> - **D1, from scratch: tie, so E2′[A8] stays.**
+>   - The dev pick is **GS12** = 8 `ao_nogain` + 4 `sb_spec`, all weights 1. On dev it scores
+>     95.21, +0.23 over G8 (O1 optimism +0.07, so the honest margin is +0.16).
+>   - On eval it scores **94.93**: **+0.16 [−0.02, +0.33]** vs A8 and +0.06 [−0.08, +0.21]
+>     vs G8. The CI touches 0, so D1 fails.
+> - **D2, with external pretraining: passes.**
+>   - X1 = GS12 + 3 BEATs (zK′, w 1.5 each) scores eval **95.42**, **+0.17 [+0.02, +0.32]**
+>     vs F1k, and dev 95.37 (+0.36).
+>   - It replaces F1k as the best system *with external pretraining*.
+> - **The dev/eval reversal of phase 1 returns.** Dilute pools rank near the bottom on dev and
+>   top on eval: FAST42 95.35 and ALL50 95.28, mostly from eval ToyCar +1.4. They were not dev
+>   picks, so this is secondary (D3).
+> - **For fresh-confirm:** 4 `ao_nogain` + 4 `sb_spec`, weights 2 : 1 (`scores/dev_pick.json`).
+>   On dev, existing members give 95.15, which is +0.33 over 4-G subsets.
 >
 > CPU only. Every member was already trained and dumped.
 
@@ -243,7 +251,7 @@ paper, one model 95.71 90.23 91.23       |       96.25             96.55 83.56  
   - **O1** (20 clip split-halves): the half-A pick leads G8 by +0.28 on its own half and by
     +0.21 on the other. Optimism is +0.07, so the honest dev margin is **+0.16**. The half-A
     pick was GS12 in 12 of 20 splits and GREEDY in 8. GREEDY on half A shrinks most (+0.33 →
-    +0.17 on average); GS12 barely shrinks (+0.25 → +0.22).
+    +0.18 on average); GS12 barely shrinks (+0.25 → +0.22).
   - **O2** (seed halves): picking on H1 gives GS12, +0.24 on H1 and +0.31 rebuilt on H2.
     Picking on H2 gives GREEDY = G + S + TS + **PM**, +0.42 on H2 and +0.21 rebuilt on H1. The
     S effect replicates across seed halves; the greedy extras do not.
@@ -303,6 +311,121 @@ A8 is 94.78, and F1k is 95.26.
 - **B5, secondary.** GREEDY and NG18 score within ±0.10 of GS12 on eval. FAST42 and ALL50 rank
   higher on eval than on dev (phase 1's F20g pattern).
 
+## Stage B results (eval, scored once, 2026-11-09)
+
+Source: `scores/scorecard_eval.txt`, `systems_eval.csv`, `x1_eval.csv`, `greedy_trace.csv`,
+`bootstrap_eval.json`, `decisions.json` and `type_corr_eval.csv`. The run started after
+`ee37d92`. `score.py eval` checks that `selection_dev.json` and `dev_pick.json` are committed
+and unmodified.
+
+```
+eval, E2′     n   AUC   pAUC  mAUC  Amean | fan   pump  slider ToyCar ToyConv valve  Δ vs A8 [paired 95%]   dev
+G8            8  96.96 92.77 93.35 94.87 | 99.64 98.31 99.77 95.96 89.69 98.40   +0.09 [−0.05, +0.23]   94.97
+GA16         16  96.97 92.78 93.39 94.87 | 99.68 98.37 99.75 96.03 89.49 98.46   +0.10 [+0.02, +0.17]   94.93
+GS12  PICK   12  97.00 92.86 93.31 94.93 | 99.80 98.47 99.76 95.98 89.64 98.36   +0.16 [−0.02, +0.33]   95.21
+GT12         12  96.89 92.82 93.15 94.85 | 99.65 98.37 99.79 95.66 89.40 98.46   +0.08 [−0.05, +0.21]   94.98
+GST16        16  96.95 92.95 93.22 94.95 | 99.79 98.47 99.78 95.76 89.44 98.47   +0.18 [+0.01, +0.33]   95.19
+GAST24       24  96.97 92.97 93.31 94.97 | 99.78 98.45 99.77 95.88 89.37 98.54   +0.19 [+0.08, +0.30]   95.14
+NG18         18  97.02 93.10 93.35 95.06 | 99.79 98.45 99.79 95.86 89.61 98.64   +0.28 [+0.12, +0.43]   95.21
+FAST42       42  97.28 93.41 94.34 95.35 | 99.78 98.51 99.79 97.32 89.44 98.86   +0.57 [+0.43, +0.70]   94.89
+ALL50        50  97.25 93.30 94.35 95.28 | 99.76 98.54 99.74 97.46 89.10 98.90   +0.50 [+0.35, +0.64]   94.75
+GREEDY       14  97.14 93.23 93.54 95.19 | 99.81 98.45 99.78 96.13 89.87 98.81   +0.41 [+0.21, +0.60]   95.24
+A8 (bar)      8  96.88 92.67 93.26 94.78 | 99.71 98.40 99.72 96.00 88.97 98.49                          94.77
+paper, one model                   93.22                                                    (per machine: AUC)
+
+WITH EXTERNAL PRETRAINING           AUC   pAUC  mAUC  Amean | ToyCar ToyConv   Δ vs F1k [paired 95%]   dev
+X1[r=3/8]  PICK  GS12 + B3 w 1.5   97.32 93.53 94.26 95.42 | 97.67  89.60     +0.17 [+0.02, +0.32]    95.37
+X1[r=3/4]        GS12 + B3 w 3     97.35 93.57 94.40 95.46 | 98.13  89.36     +0.21 [+0.07, +0.36]    95.30
+X1[r=3/2]        GS12 + B3 w 6     97.29 93.52 94.38 95.40 | 98.51  88.76     +0.15 [−0.01, +0.32]    95.09
+F1k (bar)        A8 + B3 w 1       97.21 93.30 94.20 95.25 | 97.72  88.99                             95.01
+```
+
+### Decisions
+
+- **D1, X0 replaces E2′[A8]: fails, so it is a tie.**
+  - GS12 is new, and its eval Δ vs A8 is +0.16, but the paired 95% CI is [−0.02, +0.33]:
+    the lower bound is not above 0.
+  - **E2′[A8] stays the reported best from-scratch ensemble.**
+  - Against G8, GS12 is +0.06 [−0.08, +0.21]. The +0.23 dev lead (honest +0.16) shrank to a
+    quarter on eval.
+  - GS12 still beats all four paper numbers: dev 97.38 / 93.03 / 94.71, eval 94.93 (paper
+    95.71 / 90.23 / 91.23 / 93.22).
+  - It is the first system above the paper's dev pump (96.59 vs 96.25).
+- **D2, X1 replaces F1k: passes.** X1 = GS12 + 3 BEATs nets at r = 3/8 (w 1.5 per BEATs
+  member, zK′).
+  - Eval Amean 95.42, +0.17 [+0.02, +0.32] vs F1k. Dev 95.37, +0.36 vs F1k.
+  - **It is the new best system with external pretraining.** It needs fresh-seed confirmation
+    like every phase-2 system. Its margin is small, and the lower CI bound sits at +0.02.
+  - BEATs adds +0.49 [+0.36, +0.64] to GS12 on eval, mostly ToyCar (95.98 → 97.67).
+- **D4: no flag.** The honest dev margin over G8 is +0.16 > 0.
+- **D3, secondary (no claims; choosing among these on eval would be test-set selection):**
+  - FAST42 has the highest eval Amean of all from-scratch candidates: 95.35, +0.57 vs A8. It
+    is 8th of 10 on dev.
+  - ALL50 is 95.28, and GREEDY 95.19.
+  - Their gain is eval ToyCar (97.3–97.5 vs 96.0) and valve. The weak types (plain, gate, eca,
+    PerMix, old) repair eval ToyCar exactly as `mixed-ensemble`'s F20 did, and dev never sees it.
+  - GREEDY's eval jump comes at its soup step: @2 (G + S) 94.83 → @3 (+ soup) 95.19. Both
+    trunks drew lucky eval seeds (`ablation/trunk-soup`), and they carry half-weight per
+    member here.
+
+### Stage B predictions, checked
+
+| | prediction | observed | verdict |
+|---|---|---|---|
+| B1 | GS12 eval 94.93 [94.70, 95.15] | 94.93 | holds |
+| | vs A8 +0.15, CI ≈ [−0.05, +0.35] → D1 tie | +0.16 [−0.02, +0.33], tie | holds |
+| | vs G8 +0.06, CI includes 0 | +0.06 [−0.08, +0.21] | holds |
+| B2 | pump +0.1 to +0.4 (AUC vs G8) | +0.16 | holds |
+| | slider and valve −0.3 to 0 | −0.01, −0.04 | holds |
+| | ToyConveyor within ±0.6 | −0.05 | holds |
+| | ToyCar within ±0.4, and id_05 within ±1.5 of 86.83 | +0.02; 86.91 | holds |
+| B3 | eval Δ vs G8 less than half the dev +0.23 | +0.06 | holds |
+| B4 | X1 eval 95.38 [95.10, 95.60] | 95.42 | holds |
+| | vs F1k +0.12, CI includes 0 → D2 tie | +0.17 [+0.02, +0.32] → **passes** | **fails** |
+| | BEATs adds +0.3 to +0.6 to GS12, mostly ToyCar | +0.49, ToyCar +1.69 AUC | holds |
+| B5 | GREEDY and NG18 within ±0.10 of GS12 | +0.26, +0.13 | **fails** |
+| | FAST42 and ALL50 rank higher on eval than on dev | 1st and 2nd (dev 8th and 10th) | holds |
+
+## What this means
+
+- **`sb_spec` is the only member type that adds on dev, and on eval it adds only to fan and
+  pump.**
+  - It is the least correlated strong type in the pool (fig2): about 0.90 with `ao_nogain`.
+    `tp`, the soups and `la_aug` sit at 0.98–0.99, and are near-copies as ensemble members.
+  - On dev, GS12 gains fan, pump (id_02 +2.6) and ToyConveyor. On eval, fan and pump hold
+    (+0.4 / +0.3 Amean). ToyConveyor reverses (−0.2), and so do slider and valve.
+- **Dev cannot see the eval ToyCar effect.** It decides every eval ranking here:
+  - Members that are weak on dev but different (plain, gate, eca, pm, old) lift eval ToyCar
+    by 1.4 AUC when pooled, and lose 0.1–0.3 on dev.
+  - Phase 1 saw this as F20 / F20g; here it is FAST42 / ALL50.
+  - A dev-only rule will keep missing it. Only a ToyCar-specific mechanism, or BEATs (+1.7 on
+    eval ToyCar), reaches it.
+- **Selection optimism was small and measurable.** O1 says +0.07 of the +0.23 dev lead is
+  selection. The rest, +0.16, is real on dev but mostly does not transfer to eval (+0.06).
+  The dev→eval gap is a domain shift, not selection noise. Split-half on dev cannot measure it.
+
+## What does not replicate / limits
+
+- **Fresh seeds.** Every member's single-model eval score had been seen in phase 1. Only the
+  combinations were new. The fresh-confirm study tests the size-matched GS12 (4 G + 4 S, 2 : 1)
+  on seeds 2060+.
+- **The X1 margin over F1k is thin**, with a CI lower bound of +0.02. The r = 3/4 option did
+  better on eval (+0.21), but it was not the dev pick, and reporting it would be eval
+  selection.
+- **`tp_s2041`'s committed timepool-head eval record is off by +0.08 AUC** in ToyConveyor
+  (see P0). This study uses the CRC-verified dump.
+- One soup per trunk stood in for 8 forks. The 4 forks of a trunk are near-copies, so a fork
+  ensemble would be about the same member.
+
+## Figures
+
+| figure | what it shows |
+|---|---|
+| `plots/fig1_candidates.png` | every candidate's Amean on dev and eval vs A8 (dashed) and G8 (dotted), with paired 95% CIs on eval. GS12 is the dev pick, a tie on eval; FAST42/ALL50 reverse from dev to eval |
+| `plots/fig2_diversity.png` | between-type score correlation (type-mean S1′ within machine ID, averaged), dev and eval. `sb_spec` is the least correlated strong type; BEATs is far from everything |
+| `plots/fig3_selection.png` | GREEDY's dev trace with its eval prefixes (descriptive), and O1's 20 split-halves: selection-half vs held-out Δ over G8, by half-A pick |
+| `plots/fig4_machines.png` | per-machine Δ Amean, dev vs eval: GS12 − G8 (from scratch) and X1 − F1k (with external pretraining) |
+
 ## Files
 
 | file | role |
@@ -311,3 +434,7 @@ A8 is 94.78, and F1k is 95.26.
 | `run.sh` | `repro`, `dev`, `eval` and `plots`; CPU only, 4 BLAS threads (the GPUs' dataloaders share the CPUs) |
 | `make_plots.py` | figures from `scores/` only |
 | `scores/reproduction.{txt,csv}`, `scores/members.csv` | P0, plus single-member S1′ dev/eval for the whole pool (all seen in phase 1) |
+| `scores/selection_dev.json`, `scorecard_dev.txt`, `systems_dev.csv`, `x1_dev.csv`, `bootstrap_dev.json` | stage A: candidates, GREEDY trace, picks, O1/O2, size-matched dev check |
+| `scores/dev_pick.json` | the X0/X1 picks and the size-matched build for fresh-confirm (weights, recipe, how to score) |
+| `scores/scorecard_eval.txt`, `systems_eval.csv`, `x1_eval.csv`, `greedy_trace.csv`, `bootstrap_eval.json`, `decisions.json` | stage B, scored once |
+| `scores/type_corr_{dev,eval}.csv` | between-type correlation (diversity diagnostic) |
