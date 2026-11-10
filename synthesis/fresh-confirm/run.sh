@@ -5,7 +5,9 @@
 #   bash synthesis/fresh-confirm/run.sh records     # config/wall -> scores/<run>/ (needed by extract.py)
 #   FC_GPU=0 bash synthesis/fresh-confirm/run.sh extract   # one-pass dumps -> results/emb (scratch)
 #   bash synthesis/fresh-confirm/run.sh selftest    # scorer reproduces committed phase-1 numbers
+#   bash synthesis/fresh-confirm/run.sh dryrun      # all of score() on seen phase-1 members -> results/dryrun_scores (scratch)
 #   bash synthesis/fresh-confirm/run.sh score       # ONCE: frozen rules -> scores/ (F1-F6)
+#       (dryrun and score repeat score.py in fresh processes until two outputs are byte-identical)
 #   FC_GPU=0 bash synthesis/fresh-confirm/run.sh evalpy    # eval.py CSVs + probe + curves (after score)
 #   nohup setsid bash synthesis/fresh-confirm/run.sh post > .../results/post.log 2>&1 < /dev/null &   # detached: wait, records, extract
 # Scoring is done by the frozen rules of ../single-final and ../grand-ensemble (README, Scoring).
@@ -16,6 +18,33 @@ SEEDS=${FC_SEEDS:-"2060 2061 2062 2063"}
 TYPES=${FC_TYPES:-"nogain"}
 PY=${PY:-/home/f74134118/anaconda3/envs/os-scl-cu124/bin/python}
 mkdir -p $D/results $D/scores
+
+# score.py <stage> as independent processes until two write byte-identical output; only that output is
+# copied to $2. One process cannot vouch for itself on this host: its RAM flips bits (2026-11-10: a dry
+# run needed up to 6 recomputations of one vector, and one bootstrap index came back with bit 52 set).
+# Edit this file only by writing a new one and renaming it over: `post` re-enters it with `bash $0`.
+replicated() {
+    local stage=$1 final=$2 k j
+    local base=$D/results/${stage}_tries
+    mkdir -p $base
+    for k in 1 2 3 4 5 6; do
+        rm -rf $base/$k
+        if ! OMP_NUM_THREADS=8 $PY $D/score.py $stage "$PWD/$base/$k" > $base/$k.log 2>&1; then
+            echo "try $k failed: $(tail -1 $base/$k.log | cut -c1-150)"; rm -rf $base/$k; continue
+        fi
+        for j in $(seq 1 $((k - 1))); do
+            if [ -d $base/$j ] && diff -rq $base/$j $base/$k > /dev/null; then
+                mkdir -p $final; cp -p $base/$k/* $final/
+                echo "tries $j and $k agree byte for byte -> $final ($(date))"
+                $PY -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1])), indent=1))" $final/decisions.json
+                return 0
+            fi
+        done
+        echo "try $k done, no agreeing partner yet"
+    done
+    echo "FAIL $stage: no two of 6 tries agreed; see $base/*.log"; return 1
+}
+
 case ${1:?usage: run.sh train|records} in
 train)
     echo "=== train start $(date) | types=$TYPES seeds=$SEEDS ==="
@@ -55,8 +84,8 @@ post)
     echo "READY_TO_SCORE $(date) (8/8 trained, records + extract done; next: run.sh score, ONCE)" > $st ;;
 selftest)
     OMP_NUM_THREADS=8 $PY $D/score.py selftest 2>&1 | tee $D/results/selftest.log ;;
-score)
-    OMP_NUM_THREADS=8 $PY $D/score.py score 2>&1 | tee $D/results/score.log ;;
+dryrun) replicated dryrun $D/scores/dryrun_p1 ;;
+score)  replicated score $D/scores ;;
 evalpy)
     for d in check_points/SCLTFSTgramMFN_fc_*; do
         [ -f "$d/done" ] || continue
