@@ -1,9 +1,11 @@
 # fresh-confirm — do the final systems hold on seeds nobody has seen?
 
-> **Status: TRAINING, NOT SCORED (2026-11-10 18:30).** Round 1 `fc_nogain_s2060–2063` is done; round 2
-> `fc_spec_s2060–2063` ends about 2026-11-11 03:15. No fresh checkpoint has been scored under any
-> rule, and no fresh `probe` line has been read. Rules and F1–F6 were frozen on 2026-11-09 (d3472f2).
-> The *Addendum of 2026-11-10* below was added before any fresh score: it changes no rule and no bar.
+> **Status: SCORED ONCE, 2026-11-11.** Rules and F1–F6 were frozen on 2026-11-09 (d3472f2); the
+> *Addendum of 2026-11-10* was committed before any fresh score (32740ba, 8d11e7d).
+> **The single-network rule C1ᵀ replicates** (94.02 dev / 94.23 eval Amean; every fresh seed beats
+> every paper number). **The ensemble level replicates** (GS8 94.92 / 94.90), **but `sb_spec` is not
+> shown to matter on eval** (GS8 − G4 = +0.09, CI includes 0; at equal size −0.09). BEATs fusion
+> replicates (+0.52 eval). See *Results* and *What does not replicate* below.
 
 ## Why this exists
 
@@ -208,3 +210,122 @@ So on seen seeds F4 is "confirmed" by its own bar while the type adds nothing on
 - **Editing `run.sh` while a stage runs:** write a new file and rename it over the old one. Bash reads
   a running script by byte offset, and `post` re-enters the file with `bash $0`.
 
+## Results — scored once, 2026-11-11
+
+All 8 runs finished 300 epochs with no crash, and no seed was dropped. `run.sh score` needed two
+processes and they agreed byte for byte; inside the second, one vector took a third computation to
+get two identical results (the host's RAM again). Six runs were extracted on 2026-11-10 on the idle GPU 1 as
+they finished and the last two by `post`; the extractor prints shapes only. After scoring, the only
+change to `make_plots.py` was the spacing of fig1's groups. Everything
+below is from `scores/` (`decisions.json`, `single.csv`, `ensembles.csv`, `bootstrap.json`,
+`f4b_subsets.csv`). Amean pools the IDs of a machine type, as everywhere in this repository; the
+per-ID figure is given beside it where a number is compared with the literature.
+
+### Against the frozen predictions
+
+| id | predicted (80 % interval) | fresh seeds 2060–2063 | bar | verdict |
+|---|---|---|---|---|
+| F1 | C1ᵀ mean dev 94.26 (93.9–94.6), eval 94.10 (93.5–94.7) | dev **94.02**, eval **94.23** (sd over seeds 0.15 / 0.19) | dev ≥ 93.88, eval ≥ 93.34 | **passes**; both inside the interval |
+| F2, C1ᵀ | all four paper numbers beaten on ≥ 3 of 4 seeds | AUC 4/4, pAUC 4/4, mAUC 4/4, eval Amean 4/4; all four at once on 4/4 | ≥ 3/4 on each | **passes** |
+| F2, R0 | dev yes, eval about 50/50 | dev AUC 2/4, pAUC 3/4, mAUC 2/4; eval Amean 2/4; all four at once on 1/4 | same | **fails**; the dev half of the prediction was wrong |
+| F3 | C1ᵀ − C1: dev +0.10, eval +0.01 | dev +0.12 (4/4 seeds positive), eval +0.03 (3/4) | dev Δ > 0 | replicates on dev |
+| F4 | GS8 − G4: dev +0.30 (0.15–0.45), eval +0.15 (−0.05–0.35) | dev +0.40, eval +0.09, eval CI [−0.08, +0.24] | both Δ > 0; "confirmed" if the CI excludes 0 | **passes, not confirmed** |
+| F4b | 2 G + 2 S − G4: dev +0.15 (0.00–0.30), eval 0.00 (−0.25–0.25) | dev +0.26, 36/36 subsets above G4; eval **−0.09**, 8/36 above | mean > 0 and ≥ 27/36 | type helps at equal size on dev, **not on eval** |
+| F5 | GS8 dev 95.1 (94.8–95.4), eval 94.85 (94.4–95.3) | dev 94.92, eval 94.90 | reported | inside both intervals |
+| F6 | X1 − GS8: dev +0.15, eval +0.45 | dev +0.21, eval +0.52, eval CI [+0.40, +0.67] | eval Δ > 0 | **passes** (external pretraining) |
+
+All eight interval predictions landed inside their 80 % intervals. With eight for eight the
+intervals were probably wider than 80 %, so this says little about calibration.
+
+### One network (`fc_nogain`, 4 seeds, mean ± sd over seeds)
+
+| rule | dev AUC / pAUC / mAUC | dev Amean (per ID) | eval AUC / pAUC / mAUC | eval Amean (per ID) |
+|---|---|---|---|---|
+| R0 (`eval.py`) | 95.83 / 90.66 / 91.46 | 93.24 ± 0.31 (93.42) | 95.34 / 91.34 / 89.53 | 93.34 ± 0.35 (93.34) |
+| C1 | 96.41 / 91.40 / 92.93 | 93.91 ± 0.14 (94.05) | 96.44 / 91.96 / 92.50 | 94.20 ± 0.23 (94.23) |
+| **C1ᵀ** (final rule) | **96.48 / 91.57 / 93.09** | **94.02 ± 0.15** (94.16) | **96.47 / 91.99 / 92.59** | **94.23 ± 0.19** (94.29) |
+| paper, one run | 95.71 / 90.23 / 91.23 | 92.97 | not given | 93.22 |
+| phase 1, C1ᵀ, 8 seen seeds | | 94.26 ± 0.31 | | 94.10 ± 0.62 |
+
+- **The final single-network rule holds on unseen seeds.** Each of the four fresh networks beats
+  every paper number under C1ᵀ. The margin over the paper is +1.05 dev and +1.01 eval Amean. The
+  worst fresh seed is 93.91 on dev and 93.96 on eval.
+- **The rule is what carries it.** Under the paper's own score (R0) the 4-seed mean is above the
+  paper on all four numbers, by 0.1 to 0.4, but a single seed beats all four only one time in four.
+  C1ᵀ adds 0.78 dev and 0.89 eval Amean to R0 on the same checkpoints, and 3.1 points of eval mAUC.
+- **Dev came out 0.24 below phase 1 and eval 0.13 above.** That is 1.3 and 0.3 standard errors of
+  the difference between a 4-seed and an 8-seed mean (0.19 dev, 0.38 eval). The eval number did not
+  shrink, which gives no sign that phase 1's single-network eval figure was inflated by selection.
+- TTA (F3) is again worth about 0.1 on dev and nothing measurable on eval.
+
+### Ensembles (one build each; brackets are the same build on seen seeds 2040–2043)
+
+| system | members | dev AUC / pAUC / mAUC | dev Amean (per ID) | eval AUC / pAUC / mAUC | eval Amean (per ID) |
+|---|---|---|---|---|---|
+| G4 | 4 `fc_nogain` | 96.98 / 92.06 / 93.86 | 94.52 (94.66) [94.84] | 96.76 / 92.85 / 92.88 | 94.80 (94.67) [94.62] |
+| GS8 | G4 + 4 `fc_spec` | 97.25 / 92.60 / 94.39 | 94.92 (95.07) [95.18] | 96.90 / 92.90 / 93.15 | 94.90 (94.69) [94.80] |
+| X1 | GS8 + 3 phase-1 BEATs | 97.37 / 92.89 / 94.77 | 95.13 (95.26) [95.34] | 97.24 / 93.60 / 94.19 | 95.42 (95.27) [95.32] |
+
+- **The from-scratch ensemble level replicates:** fresh GS8 is 94.92 dev / 94.90 eval against the
+  paper's single network at 92.97 / 93.22 and phase 1's A8 at 94.78 eval.
+- **`sb_spec` is not shown to be the reason.** On eval, GS8 is +0.09 over G4 and the interval
+  includes 0. At equal size (F4b) the mixed ensembles are 0.09 *below* four `fc_nogain` networks,
+  and only 8 of 36 are above. By the reading rule set before scoring: more members may help; the
+  member type is not shown to matter on eval. On dev the type effect is clear (+0.26, 36 of 36),
+  which is where `sb_spec` was picked. Under the per-ID convention GS8 − G4 on eval is +0.02.
+- **Four plain networks already give most of it.** Fresh G4 scores 94.80 on eval; the four extra
+  training runs of GS8 buy 0.09.
+- **BEATs fusion replicates** at +0.52 eval Amean, clear of 0. Almost all of it is ToyCar
+  (93.78 → 96.08) and slider (99.22 → 99.82). The BEATs networks are the phase-1 ones, so only the
+  from-scratch half of X1 is fresh.
+
+Per machine, fresh GS8 against fresh G4 (Amean): dev fan +1.09, ToyConveyor +0.57, valve +0.29,
+slider +0.26, pump +0.15, ToyCar +0.02; eval pump +0.54, fan +0.35, ToyCar +0.18, slider −0.08,
+ToyConveyor −0.12, valve −0.30.
+
+### What does not replicate
+
+- **The fresh `sb_spec` networks are weaker than the phase-1 ones.** Under S1′ the four `fc_spec`
+  seeds average 93.36 dev / 92.74 eval (sd 0.61 / 0.77); phase 1's four `sb_spec` seeds averaged
+  94.06 / 93.42 (sd 0.19 / 0.38). The loss is on valve (dev AUC 96.3–99.4 against 99.2–99.8) and on
+  eval slider (97.5–99.0 against 98.7–99.2) and valve. The recipe is the same: the two `config.json`
+  differ only in seed, GPU and name, and the training-code diff since the `sb_spec` runs
+  (permix, timepool-head, BEATs) is behind flags that are off. Four seeds against four cannot
+  separate bad luck now from good luck then, but `sb_spec` was chosen on those four phase-1 seeds,
+  so some regression was to be expected. Nothing was decided on these single-network numbers.
+- **F4 is not confirmed and F4b fails on eval** (above). The claim "adding `sb_spec` helps the
+  ensemble" stands on dev only.
+- **R0 does not reliably beat the paper on dev.** On seeds 2040–2043 `ao_nogain` under R0 was above
+  each of the paper's three dev numbers on 4 seeds of 4 (`scores/dryrun_p1/decisions.json`). On the
+  fresh seeds it is 2, 3 and 2 of 4 for AUC, pAUC and mAUC, although the 4-seed mean is still above.
+- **Dev ensembles are 0.2 to 0.3 lower than the same builds on seeds 2040–2043**, mostly
+  ToyConveyor (−1.1) and fan (G4 −0.5). Eval is 0.1 to 0.2 higher. Neither shift is outside seed
+  noise, and they point in opposite directions.
+
+### R0 cross-check against `eval.py`
+
+`crosscheck.py` compared the R0 column of `single.csv` with `eval.py` on all 8 checkpoints and both
+sets (`scores/r0_crosscheck.csv`). The largest gap in AUC, pAUC or mAUC is 0.0033 points, against
+0.004 on the dry run and a re-extraction threshold of 0.05. No dump was extracted again and nothing
+was rescored.
+
+### What this changes for `../final`
+
+- Single network: **C1ᵀ on `ao_nogain` is confirmed** — fresh 94.02 dev / 94.23 eval (per ID
+  94.16 / 94.29), every seed above every paper number.
+- From-scratch ensemble: report GS8 at its fresh level (94.92 / 94.90), and say that on eval a
+  same-size all-`nogain` ensemble is not shown to be worse. The `sb_spec` members are not a
+  confirmed ingredient.
+- External track: X1 at 95.13 / 95.42, with the BEATs half not fresh.
+
+## Figures
+
+`make_plots.py` (run with `/home/f74134118/anaconda3/bin/python`) reads `scores/` and phase-1
+`scores/` directories only.
+
+| figure | shows |
+|---|---|
+| `plots/fig1_single_seeds.png` | Amean of each network under R0, C1 and C1ᵀ, fresh seeds beside the 8 phase-1 seeds, with the F1 bar and the paper's number |
+| `plots/fig2_ensembles.png` | G4, GS8 and X1 on fresh seeds beside the same builds on seeds 2040–2043 |
+| `plots/fig3_f4b_type_vs_count.png` | the 36 count-matched 2 G + 2 S ensembles minus G4, fresh and phase 1, with GS8 marked |
+| `plots/fig4_machines.png` | per machine type, fresh C1ᵀ Amean minus the phase-1 mean |

@@ -132,7 +132,7 @@ def fig1_single():
     S, D = read(os.path.join(SRC, 'single.csv')), read_json(os.path.join(SRC, 'decisions.json'))
     if not S or not D:
         return print('skip fig1 (no single.csv / decisions.json)')
-    rules = ['R0', 'C1', 'C1T']
+    rules, GAP = ['R0', 'C1', 'C1T'], 1.4
     fig, axes = plt.subplots(1, 2, figsize=(9.2, 4.1), sharey=True)
     means = {}
     for ax, ds in zip(axes, ('dev', 'eval')):
@@ -140,18 +140,18 @@ def fig1_single():
             old = p1_single(ds, rule)
             new = [float(x['Amean']) for x in S if x['dataset'] == ds and x['rule'] == rule and is_g(x['run'])]
             if old:
-                dots(ax, i - 0.2, old, MUTED, size=26, label='phase 1, 8 seeds (seen)' if i == 0 else None)
-            means[(ds, rule)] = dots(ax, i + 0.2, new, COL[ds], label=f'fresh, {len(new)} seeds' if i == 0 else None)
-            ax.annotate(f'{means[(ds, rule)]:.2f}', (i + 0.2 + 0.15, means[(ds, rule)]), xytext=(4, 0),
+                dots(ax, i * GAP - 0.2, old, MUTED, size=26, label='phase 1, 8 seeds (seen)' if i == 0 else None)
+            means[(ds, rule)] = dots(ax, i * GAP + 0.2, new, COL[ds], label=f'fresh, {len(new)} seeds' if i == 0 else None)
+            ax.annotate(f'{means[(ds, rule)]:.2f}', (i * GAP + 0.2 + 0.15, means[(ds, rule)]), xytext=(4, 0),
                         textcoords='offset points', va='center', fontsize=8.5, color=INK)
         bar = D['F1'][f'bar_{ds}']
-        ax.plot([1.55, 2.62], [bar] * 2, color=INK, lw=1.2, ls=(0, (4, 2)))
+        ax.plot([2 * GAP - 0.42, 2 * GAP + 0.95], [bar] * 2, color=INK, lw=1.2, ls=(0, (4, 2)))
         ax.annotate(f'F1 bar\n{bar:.2f}', (1.0, bar), xycoords=('axes fraction', 'data'), xytext=(4, 1),
                     textcoords='offset points', va='bottom', fontsize=7.6, color=INK_2, annotation_clip=False)
         paper_line(ax, ds, 'one run')
-        ax.set_xticks(range(len(rules)))
+        ax.set_xticks([i * GAP for i in range(len(rules))])
         ax.set_xticklabels([RULE_LABEL[r] for r in rules])
-        ax.set_xlim(-0.5, 2.62)
+        ax.set_xlim(-0.5, 2 * GAP + 0.95)
         ax.grid(axis='y')
         ax.set_axisbelow(True)
         ax.set_title('dev test set' if ds == 'dev' else 'eval test set', loc='left', fontsize=9.5, color=INK_2)
