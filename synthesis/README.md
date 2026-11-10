@@ -4,6 +4,12 @@
 This phase asks no new questions about the model. It **combines adopted findings**,
 picks final systems by a rule fixed in advance, and checks them on seeds nobody has seen.
 
+> **Status 2026-11-11: closed.** All four studies are done; the answer is in `final/README.md`.
+> One `ao_nogain` network scored by C1ᵀ holds on fresh seeds (Amean 94.02 dev / 94.23 eval, paper
+> 92.97 / 93.22). A from-scratch ensemble reaches about 94.9 on eval; `sb_spec` members help on
+> dev and are not shown to help on eval. With BEATs (separate track) X1 reaches 95.42. The text below is the charter as
+> written on 2026-11-09 and is left unchanged.
+
 ## Where phase 1 ended (the incumbents)
 
 Amean = mean(AUC, pAUC), each pooled per machine as `eval.py` does, then averaged

@@ -280,7 +280,7 @@ intervals were probably wider than 80 %, so this says little about calibration.
   from-scratch half of X1 is fresh.
 
 Per machine, fresh GS8 against fresh G4 (Amean): dev fan +1.09, ToyConveyor +0.57, valve +0.29,
-slider +0.26, pump +0.15, ToyCar +0.02; eval pump +0.54, fan +0.35, ToyCar +0.18, slider −0.08,
+slider +0.26, pump +0.15, ToyCar +0.02; eval pump +0.53, fan +0.36, ToyCar +0.18, slider −0.09,
 ToyConveyor −0.12, valve −0.30.
 
 ### What does not replicate

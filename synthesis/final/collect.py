@@ -3,9 +3,10 @@
     python synthesis/final/collect.py
 
 Writes synthesis/final/scores/summary.csv (overall) and machines.csv (per machine).
-Every number is read from a committed record of the study that produced it; nothing is
-recomputed here except the 8-seed mean of eval.py's R0 rows. Fresh-confirm rows are
-skipped until synthesis/fresh-confirm/scores/ has them.
+Every number is read from a committed record of the study that produced it. Nothing is
+recomputed here except seed means: the 8-seed mean of eval.py's R0 rows and the 4-seed means
+of the fresh single-network rows. Fresh-confirm rows are skipped until
+synthesis/fresh-confirm/scores/ has them.
 """
 import csv
 import glob
@@ -104,8 +105,8 @@ ens = [('A8', 'E2′[A8] (8 la_aug)', 'reported best (from scratch)'),
        ('G8', 'E2′[G8] (8 ao_nogain)', 'phase-1 dev pick'),
        ('GS12', 'E2′[GS12] (8 ao_nogain + 4 sb_spec, equal weights)', 'phase-2 dev pick; ties A8 on eval'),
        ('NG18', 'E2′[NG18]', 'secondary (not dev pick)'),
-       ('FAST42', 'E2′[FAST42]', 'secondary (dev rank 8)'),
-       ('ALL50', 'E2′[ALL50]', 'secondary (dev rank 10)')]
+       ('FAST42', 'E2′[FAST42]', 'secondary (dev rank 8 of 10 fixed pools)'),
+       ('ALL50', 'E2′[ALL50]', 'secondary (dev rank 10 of 10 fixed pools)')]
 for sysname, label, status in ens:
     got = {}
     for ds in ('dev', 'eval'):

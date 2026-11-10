@@ -7,8 +7,8 @@ ensemble (from scratch),E2′[A8] (8 la_aug),8,reported best (from scratch),97.0
 ensemble (from scratch),E2′[G8] (8 ao_nogain),8,phase-1 dev pick,97.19,92.76,94.12,94.97,96.96,92.77,93.35,94.87,,,synthesis/grand-ensemble
 ensemble (from scratch),"E2′[GS12] (8 ao_nogain + 4 sb_spec, equal weights)",12,phase-2 dev pick; ties A8 on eval,97.38,93.03,94.71,95.21,97.00,92.86,93.31,94.93,,,synthesis/grand-ensemble
 ensemble (from scratch),E2′[NG18],18,secondary (not dev pick),97.38,93.04,94.67,95.21,97.02,93.10,93.35,95.06,,,synthesis/grand-ensemble
-ensemble (from scratch),E2′[FAST42],42,secondary (dev rank 8),97.11,92.66,93.95,94.89,97.28,93.41,94.34,95.35,,,synthesis/grand-ensemble
-ensemble (from scratch),E2′[ALL50],50,secondary (dev rank 10),97.02,92.48,93.67,94.75,97.25,93.30,94.35,95.28,,,synthesis/grand-ensemble
+ensemble (from scratch),E2′[FAST42],42,secondary (dev rank 8 of 10 fixed pools),97.11,92.66,93.95,94.89,97.28,93.41,94.34,95.35,,,synthesis/grand-ensemble
+ensemble (from scratch),E2′[ALL50],50,secondary (dev rank 10 of 10 fixed pools),97.02,92.48,93.67,94.75,97.25,93.30,94.35,95.28,,,synthesis/grand-ensemble
 WITH EXTERNAL PRETRAINING,F1k = E2′[A8] + ΣzK′[BEATs ×3],11,phase-1 external best,97.23,92.79,94.79,95.01,97.21,93.30,94.20,95.25,,,synthesis/grand-ensemble
 WITH EXTERNAL PRETRAINING,X1 = E2′[GS12] + 1.5·ΣzK′[BEATs ×3],15,FINAL external system,97.50,93.24,95.12,95.37,97.32,93.53,94.26,95.42,,,synthesis/grand-ensemble
 fresh seeds (2060+),"R0, fresh ao_nogain (mean of 4)",1,confirmation,95.83,90.66,91.46,93.24,95.34,91.34,89.53,93.34,93.42,93.34,synthesis/fresh-confirm

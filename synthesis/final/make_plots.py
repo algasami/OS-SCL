@@ -163,6 +163,7 @@ def fig3_fresh():
     p1 = next(x for x in S if x['system'].startswith('C1ᵀ'))
     paper = next(x for x in S if x['track'] == 'paper')
     fig, axs = plt.subplots(1, 2, figsize=(9.0, 3.3), sharey=True)
+    all_above = True
 
     def margin(ax, yv, text, colour):
         ax.annotate(text, (1.0, yv), xycoords=('axes fraction', 'data'), xytext=(4, 0), textcoords='offset points',
@@ -184,6 +185,7 @@ def fig3_fresh():
         pv = float(paper[f'{ds}_Amean'])
         ax.axhline(pv, color=INK, lw=1.0, ls=(0, (1, 2)))
         margin(ax, pv, f'paper, one run {pv:.2f}', INK_2)
+        all_above = all_above and min(v) > pv
         ax.set_xticks(range(len(v)))
         ax.set_xticklabels([r['run'].rsplit('_s', 1)[-1] for r in rs])
         ax.set_xlabel('training seed')
@@ -194,6 +196,7 @@ def fig3_fresh():
     axs[0].set_ylabel('C1ᵀ Amean, one network (%)')
     ok = dec.get('F1', {}).get('passed')
     fig.suptitle(('Every fresh network is above the paper under the frozen rule C1ᵀ, and the mean clears the F1 bar'
+                  if ok and all_above else 'Fresh networks under the frozen rule C1ᵀ: the mean clears the F1 bar'
                   if ok else 'Fresh networks under the frozen rule C1ᵀ: the mean does not clear the F1 bar'),
                  fontsize=10.5, x=0.02, ha='left', fontweight='bold')
     fig.tight_layout(w_pad=7.5)
