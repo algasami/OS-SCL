@@ -1,0 +1,123 @@
+{
+  "F1": {
+    "dev": 94.25858583430266,
+    "eval": 93.91640924915959,
+    "bar_dev": 93.88032908986861,
+    "bar_eval": 93.3406581797372,
+    "passed": true
+  },
+  "F2_C1T": {
+    "seeds_above": {
+      "AUC": 4,
+      "pAUC": 4,
+      "mAUC": 4,
+      "eval_mean": 3
+    },
+    "seeds_above_all4": 3,
+    "n": 4,
+    "passed": true
+  },
+  "F2_R0": {
+    "seeds_above": {
+      "AUC": 4,
+      "pAUC": 4,
+      "mAUC": 4,
+      "eval_mean": 2
+    },
+    "seeds_above_all4": 2,
+    "n": 4,
+    "passed": false
+  },
+  "F3": {
+    "dev": {
+      "delta": 0.08337259659538176,
+      "seeds_pos": 4
+    },
+    "eval": {
+      "delta": 0.008196026801670087,
+      "seeds_pos": 2
+    },
+    "replicates_on_dev": true
+  },
+  "F4": {
+    "delta": {
+      "dev": 0.3365790839803964,
+      "eval": 0.17866214074197728
+    },
+    "eval_ci": [
+      0.025931761338220484,
+      0.32379966948863154
+    ],
+    "n_S": 4,
+    "passed": true,
+    "confirmed": true
+  },
+  "F5": {
+    "dev": {
+      "AUC": 97.36327620003405,
+      "pAUC": 92.99481448351366,
+      "mAUC": 94.68642236447802,
+      "Amean": 95.17904534177386,
+      "AUC_perID": 97.39992518769706,
+      "pAUC_perID": 93.090326447663,
+      "Amean_perID": 95.24512581768003
+    },
+    "eval": {
+      "AUC": 96.88937863553127,
+      "pAUC": 92.71660593537946,
+      "mAUC": 93.0671175165402,
+      "Amean": 94.80299228545536,
+      "AUC_perID": 96.82637900342247,
+      "pAUC_perID": 92.4528189834532,
+      "Amean_perID": 94.63959899343783
+    }
+  },
+  "F6": {
+    "delta": {
+      "dev": 0.1651592222352889,
+      "eval": 0.5121741768225831
+    },
+    "eval_ci": [
+      0.3923728057921377,
+      0.653143529709239
+    ],
+    "passed": true,
+    "label": "WITH EXTERNAL PRETRAINING"
+  },
+  "F4b": {
+    "dev": {
+      "mean_delta": 0.17948001638880326,
+      "min": -0.015413987854444144,
+      "max": 0.399107861826991,
+      "n_pos": 34,
+      "n_subsets": 36
+    },
+    "eval": {
+      "mean_delta": 0.004219460160475326,
+      "min": -0.5305211348479446,
+      "max": 0.451518804829675,
+      "n_pos": 19,
+      "n_subsets": 36
+    },
+    "type_effect": {
+      "dev": true,
+      "eval": false
+    },
+    "note": "count-matched: 2 G (w 2) + 2 S (w 1) subsets minus the 4-G ensemble; reported only"
+  },
+  "seeds": {
+    "G": [
+      "SCLTFSTgramMFN_ao_nogain_s2040",
+      "SCLTFSTgramMFN_ao_nogain_s2041",
+      "SCLTFSTgramMFN_ao_nogain_s2042",
+      "SCLTFSTgramMFN_ao_nogain_s2043"
+    ],
+    "S": [
+      "SCLTFSTgramMFN_sb_spec_s2040",
+      "SCLTFSTgramMFN_sb_spec_s2041",
+      "SCLTFSTgramMFN_sb_spec_s2042",
+      "SCLTFSTgramMFN_sb_spec_s2043"
+    ],
+    "dropped": []
+  }
+}
