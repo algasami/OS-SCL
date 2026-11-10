@@ -74,11 +74,15 @@ def fig1_progression():
         if r:
             rows.append((short, fl(r['dev_Amean']), fl(r['eval_Amean']), r['track']))
     fresh = [x for x in S if x['track'] == 'fresh seeds (2060+)' or x['system'].startswith('fresh')]
+    FRESH = {'R0': 'single · R0 (eval.py)', 'C1': 'single · C1', 'C1T': 'single · C1ᵀ  [final]',
+             'G4': 'ensemble · G4 (4 nets)', 'GS8': 'ensemble · GS8 (8 nets)', 'X1': 'BEATs* · X1 (GS8 + 3)'}
+    n_seen = len(rows)
     for x in fresh:
-        rows.append(('fresh · ' + x['system'].replace('fresh ', '').split(',')[0], fl(x['dev_Amean']),
-                     fl(x['eval_Amean']), x['track']))
-    fig, ax = plt.subplots(figsize=(7.2, 0.36 * len(rows) + 1.1))
-    y = np.arange(len(rows))[::-1]
+        key = x['system'].replace('fresh ', '').split(',')[0]
+        rows.append((FRESH.get(key, key), fl(x['dev_Amean']), fl(x['eval_Amean']), x['track']))
+    fig, ax = plt.subplots(figsize=(7.2, 0.36 * (len(rows) + 1) + 1.1))
+    y = np.arange(len(rows))[::-1].astype(float)
+    y[:n_seen] += 1.0 if len(rows) > n_seen else 0.0     # one empty row between seen and fresh
     for yi, (lab, d, e, tr) in zip(y, rows):
         if d is not None and e is not None:
             ax.plot([d, e], [yi, yi], color=GRID, lw=2, zorder=1)
@@ -90,7 +94,13 @@ def fig1_progression():
                     ha='left' if (d is None or e >= d) else 'right', fontsize=7.5, color=INK_2)
     paper_eval = rows[0][2]
     ax.axvline(paper_eval, color=MUTED, lw=0.8, ls=(0, (3, 3)), zorder=0)
-    ax.text(paper_eval, y[0] + 0.62, 'paper eval 93.22', fontsize=7.5, color=MUTED, ha='center')
+    ax.text(paper_eval + 0.03, y[0] + 0.62, f'paper eval {paper_eval:.2f}', fontsize=7.5, color=MUTED, ha='left')
+    if len(rows) > n_seen:
+        yd = y[n_seen - 1] - 0.62
+        ax.axhline(yd, color=MUTED, lw=0.8)
+        ax.text(0.012, yd - 0.16, 'below: fresh seeds 2060–2063, rules frozen first, scored once'
+                '      above: seeds seen during development', transform=ax.get_yaxis_transform(),
+                fontsize=7.5, color=INK_2, ha='left', va='top')
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows])
     for t, r in zip(ax.get_yticklabels(), rows):
@@ -101,10 +111,17 @@ def fig1_progression():
     ax.set_ylim(y[-1] - 0.7, y[0] + 1.0)
     ax.scatter([], [], color=BLUE, s=34, label='dev')
     ax.scatter([], [], color=ORANGE, s=34, label='eval (labelled)')
-    ax.legend(loc='upper right', fontsize=8)
-    ax.set_title('Over the paper\'s eval mean: single net +0.9 (C1ᵀ), ensembles +1.6 to +1.7, '
-                 'with BEATs* +2.2;\neval.py\'s own score (R0) only ties it   (* external pretraining, separate track)',
-                 fontsize=9.5, loc='left')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.085), ncol=2, fontsize=8)
+    ev = {r[0]: r[2] for r in rows[:n_seen]}
+    fe = {r[0]: r[2] for r in rows[n_seen:]}
+    if fe:
+        ttl = (f"On eval, fresh seeds land where the seen ones did: one network {fe['single · C1ᵀ  [final]']:.1f} (C1ᵀ), "
+               f"from-scratch ensemble {fe['ensemble · GS8 (8 nets)']:.1f},\nwith BEATs* {fe['BEATs* · X1 (GS8 + 3)']:.1f}; "
+               f"the paper reports {paper_eval:.2f}   (* external pretraining, separate track)")
+    else:
+        ttl = (f"Over the paper's eval mean: one network {ev['single · C1ᵀ  [final]'] - paper_eval:+.1f} (C1ᵀ), "
+               f"with BEATs* {ev['BEATs* · X1  [final]'] - paper_eval:+.1f}   (* external pretraining, separate track)")
+    ax.set_title(ttl, fontsize=9.5, loc='left')
     save(fig, 'fig1_progression.png')
 
 
@@ -144,27 +161,42 @@ def fig3_fresh():
         return print('skip fig3 (fresh-confirm not scored yet)')
     S = read(os.path.join(SCORES, 'summary.csv'))
     p1 = next(x for x in S if x['system'].startswith('C1ᵀ'))
-    fig, axs = plt.subplots(1, 2, figsize=(7.4, 3.0), sharey=False)
+    paper = next(x for x in S if x['track'] == 'paper')
+    fig, axs = plt.subplots(1, 2, figsize=(9.0, 3.3), sharey=True)
+
+    def margin(ax, yv, text, colour):
+        ax.annotate(text, (1.0, yv), xycoords=('axes fraction', 'data'), xytext=(4, 0), textcoords='offset points',
+                    va='center', fontsize=7.5, color=colour, annotation_clip=False)
+
     for ax, ds, col in zip(axs, ('dev', 'eval'), (BLUE, ORANGE)):
         rs = sorted((r for r in single if r['rule'] == 'C1T' and r['dataset'] == ds and '_fc_nogain_' in r['run']),
                     key=lambda r: r['run'])
         v = [float(r['Amean']) for r in rs]
-        ax.scatter(range(len(v)), v, color=col, s=36, zorder=3)
-        ax.axhline(float(p1[f'{ds}_Amean']), color=MUTED, lw=0.9, ls=(0, (3, 3)))
-        ax.text(len(v) - 0.6, float(p1[f'{ds}_Amean']), 'phase-1 mean of 8', fontsize=7, color=MUTED, va='bottom', ha='right')
+        ax.scatter(range(len(v)), v, color=col, s=40, zorder=3, edgecolor=SURFACE, linewidth=1)
+        ax.axhline(float(np.mean(v)), color=col, lw=1.6, zorder=2)
+        ref = float(p1[f'{ds}_Amean'])
+        ax.axhline(ref, color=MUTED, lw=0.9, ls=(0, (3, 3)))
+        margin(ax, ref, f'seeds 2040–47 mean {ref:.2f}', INK_2)
         bar = dec.get('F1', {}).get(f'bar_{ds}')
         if bar is not None:
-            ax.axhline(bar, color=INK_2, lw=0.8)
-            ax.text(len(v) - 0.6, bar, 'F1 bar', fontsize=7, color=INK_2, va='top', ha='right')
-        ax.axhline(float(np.mean(v)), color=col, lw=1.2)
+            ax.axhline(bar, color=INK, lw=1.0, ls=(0, (5, 2)))
+            margin(ax, bar, f'F1 bar {bar:.2f}', INK_2)
+        pv = float(paper[f'{ds}_Amean'])
+        ax.axhline(pv, color=INK, lw=1.0, ls=(0, (1, 2)))
+        margin(ax, pv, f'paper, one run {pv:.2f}', INK_2)
         ax.set_xticks(range(len(v)))
         ax.set_xticklabels([r['run'].rsplit('_s', 1)[-1] for r in rs])
-        ax.set_title(f'{ds}: fresh mean {np.mean(v):.2f}', fontsize=9, loc='left')
+        ax.set_xlabel('training seed')
+        ax.set_xlim(-0.5, len(v) - 0.5)
+        ax.set_title(f'{ds} test set: fresh mean {np.mean(v):.2f} (solid line)', fontsize=9, loc='left', color=INK_2)
         ax.grid(axis='y')
+        ax.set_axisbelow(True)
     axs[0].set_ylabel('C1ᵀ Amean, one network (%)')
-    fig.suptitle('Fresh seeds under the frozen single-model rule C1ᵀ  (F1 ' +
-                 ('passes' if dec.get('F1', {}).get('passed') else 'fails') + ')', fontsize=9.5, x=0.02, ha='left')
-    fig.tight_layout()
+    ok = dec.get('F1', {}).get('passed')
+    fig.suptitle(('Every fresh network is above the paper under the frozen rule C1ᵀ, and the mean clears the F1 bar'
+                  if ok else 'Fresh networks under the frozen rule C1ᵀ: the mean does not clear the F1 bar'),
+                 fontsize=10.5, x=0.02, ha='left', fontweight='bold')
+    fig.tight_layout(w_pad=7.5)
     save(fig, 'fig3_fresh_single.png')
 
 

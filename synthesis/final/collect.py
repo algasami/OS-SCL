@@ -42,8 +42,11 @@ def num(r, keys=METRICS):
 summary, machines = [], []
 
 
-def add(track, system, members, status, source, dev=None, ev=None):
+def add(track, system, members, status, source, dev=None, ev=None, perid=None):
+    """perid = (dev, eval) per-ID Amean, the literature's convention; only fresh-confirm records carry it."""
     rec = dict(track=track, system=system, members=members, status=status, source=source)
+    for ds, v in zip(('dev', 'eval'), perid or (None, None)):
+        rec[f'{ds}_Amean_perID'] = '' if v is None else f'{v:.2f}'
     for ds, m in (('dev', dev), ('eval', ev)):
         for k in METRICS:
             rec[f'{ds}_{k}'] = '' if not m or m.get(k) is None else f'{m[k]:.2f}'
@@ -132,9 +135,10 @@ if os.path.exists(os.path.join(fc, 'single.csv')):
         got = {}
         for ds in ('dev', 'eval'):
             rs = [r for r in single if r['run'] in g_runs and r['rule'] == rule and r['dataset'] == ds]
-            got[ds] = {k: statistics.mean(float(r[k]) for r in rs) for k in METRICS} if rs else None
+            got[ds] = {k: statistics.mean(float(r[k]) for r in rs) for k in METRICS + ['Amean_perID']} if rs else None
         add('fresh seeds (2060+)', f'{rule}, fresh ao_nogain (mean of {len(g_runs)})', 1, 'confirmation',
-            'synthesis/fresh-confirm', dev=got['dev'], ev=got['eval'])
+            'synthesis/fresh-confirm', dev=got['dev'], ev=got['eval'],
+            perid=[got[ds] and got[ds]['Amean_perID'] for ds in ('dev', 'eval')])
 if os.path.exists(os.path.join(fc, 'ensembles.csv')):
     E = rows(os.path.join(fc, 'ensembles.csv'))
     n_fresh = {}
@@ -147,14 +151,15 @@ if os.path.exists(os.path.join(fc, 'ensembles.csv')):
         for ds in ('dev', 'eval'):
             rs = [r for r in E if r['system'] == sysname and r['dataset'] == ds]
             o = [r for r in rs if r['machine'] in ('all', 'overall', 'ALL', '')]
-            got[ds] = num(o[0]) if o else None
+            got[ds] = num(o[0], METRICS + ['Amean_perID']) if o else None
             add_machines(f'fresh {sysname}', ds, {r['machine']: num(r) for r in rs if r['machine'] in MACHINES})
         track = 'WITH EXTERNAL PRETRAINING' if 'X1' in sysname else 'fresh seeds (2060+)'
         add(track, f'fresh {sysname}', n_fresh.get(sysname, ''), 'confirmation', 'synthesis/fresh-confirm',
-            dev=got['dev'], ev=got['eval'])
+            dev=got['dev'], ev=got['eval'], perid=[got[ds] and got[ds]['Amean_perID'] for ds in ('dev', 'eval')])
 
 os.makedirs(OUT, exist_ok=True)
-cols = ['track', 'system', 'members', 'status'] + [f'{d}_{k}' for d in ('dev', 'eval') for k in METRICS] + ['source']
+cols = (['track', 'system', 'members', 'status'] + [f'{d}_{k}' for d in ('dev', 'eval') for k in METRICS]
+        + ['dev_Amean_perID', 'eval_Amean_perID', 'source'])
 with open(os.path.join(OUT, 'summary.csv'), 'w', newline='') as f:
     w = csv.DictWriter(f, cols)
     w.writeheader()

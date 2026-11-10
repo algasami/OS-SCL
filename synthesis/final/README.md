@@ -1,31 +1,61 @@
 # synthesis/final — the best systems this repository has to offer
 
-> **Status: DRAFT.** Everything below the fresh-seed section is final and read from committed
-> scores. The fresh-seed confirmation (`../fresh-confirm`, seeds 2060–2063, rules and
-> predictions F1–F6 frozen in d3472f2 before any fresh score) is still training; its rows
-> and fig3 appear when `collect.py` finds its `scores/`.
+> **Status: FINAL, 2026-11-11.** Every number is read from committed scores. The fresh-seed
+> confirmation (`../fresh-confirm`, seeds 2060–2063, rules and predictions frozen in d3472f2 before
+> any fresh score) was scored once on 2026-11-11 and is included below.
 
 ## Answer
 
 Amean = mean over the 6 machines of (AUC + pAUC) / 2, each pooled per machine as `eval.py`
-does. The paper reports dev AUC / pAUC / mAUC 95.71 / 90.23 / 91.23 and an eval mean of 93.22.
+does. The paper reports dev AUC / pAUC / mAUC 95.71 / 90.23 / 91.23 (Amean 92.97) and an eval
+mean of 93.22. "Seen" seeds were used while the rules were developed; "fresh" seeds were trained
+after every rule was frozen and scored once.
 
-| track | final system | dev AUC / pAUC / mAUC | dev Amean | eval Amean | vs paper eval |
-|---|---|---|---|---|---|
-| single network | `ao_nogain` scored by **C1ᵀ**, mean of 8 seeds | 96.61 / 91.91 / 93.35 | 94.26 | 94.10 | +0.88 |
-| ensemble, from scratch | **E2′[A8]** (8 `la_aug`), reported best | 97.05 / 92.48 / 94.10 | 94.77 | 94.78 | +1.56 |
-| ensemble, from scratch | E2′[GS12] (8 `ao_nogain` + 4 `sb_spec`, equal weights), dev pick, ties A8 | 97.38 / 93.03 / 94.71 | 95.21 | 94.93 | +1.71 |
-| **with external pretraining** | **X1** = E2′[GS12] + 1.5·ΣzK′[BEATs ×3] | 97.50 / 93.24 / 95.12 | 95.37 | 95.42 | +2.20 |
+| track | final system | seen seeds, dev / eval Amean | fresh seeds, dev / eval Amean | fresh vs paper eval |
+|---|---|---|---|---|
+| single network | `ao_nogain` scored by **C1ᵀ** | 94.26 / 94.10 (mean of 8) | **94.02 / 94.23** (mean of 4) | +1.01 |
+| ensemble, from scratch | Σ S1′ over 8 networks | A8 94.77 / 94.78; GS12 (12 nets) 95.21 / 94.93 | GS8 **94.92 / 94.90**; G4 (4 nets) 94.52 / 94.80 | +1.68 |
+| **with external pretraining** | **X1** = from-scratch ensemble + 1.5·ΣzK′[BEATs ×3] | 95.37 / 95.42 | **95.13 / 95.42** (BEATs networks not fresh) | +2.20 |
 
-- **One network beats every paper number.** Under C1ᵀ, an `ao_nogain` network beats the paper's
-  dev AUC, pAUC and mAUC and its eval mean, averaged over 8 seeds. Under `eval.py`'s own score
-  (R0), all three dev numbers pass (96.10 / 91.08 / 92.12) but eval only ties (93.14 vs 93.22).
-- **From scratch, A8 stays the reported best.** GS12 was picked on dev only, before its eval score
-  was seen. It is +0.16 over A8 on eval, but the CI [−0.02, +0.33] spans 0, so by the rule written
-  in advance it ties.
-- **With BEATs, X1 replaces F1k.** It is +0.17 [+0.02, +0.32] on eval, a thin pass that is mostly
-  inherited from swapping A8 for GS12. This number uses external pretraining and never enters a
-  from-scratch comparison.
+- **One network beats every paper number, and it holds on unseen seeds.** Under C1ᵀ the four fresh
+  `ao_nogain` networks average dev 96.48 / 91.57 / 93.09 and eval Amean 94.23. Each of the four is
+  above each of the paper's four numbers.
+- **The scoring rule carries that result, not the checkpoint alone.** Under `eval.py`'s own score
+  (R0) the fresh mean is 93.24 dev / 93.34 eval. That is above the paper on average by 0.1 to 0.4,
+  but only one fresh seed in four beats all four paper numbers. "Beats the paper" is claimed for
+  C1ᵀ, not for R0.
+- **From scratch, an ensemble reaches about 94.9 on eval, and the member mix is not resolvable.**
+  - Seen seeds: A8, G8 and GS12 score 94.78, 94.87 and 94.93. GS12 was the dev pick and ties A8
+    (CI [−0.02, +0.33]), so A8 stays the reported best by the rule written in advance.
+  - Fresh seeds: GS8 is 94.90, only +0.09 [−0.08, +0.24] over four plain networks (G4, 94.80).
+    At equal size, swapping two `ao_nogain` for two `sb_spec` networks is −0.09 on eval.
+  - So `sb_spec` is a dev-only ingredient. For a new build, an all-`ao_nogain` ensemble is the
+    simplest choice: it is one recipe and no result here shows it to be worse on eval. This is a
+    recommendation; an 8-network fresh `ao_nogain` ensemble was not trained.
+- **With BEATs, X1 holds at 95.42 on eval** with fresh from-scratch members, +0.52 [+0.40, +0.67]
+  over fresh GS8. It uses external pretraining and never enters a from-scratch comparison.
+
+### Against published numbers
+
+The literature computes AUC per machine ID and then averages; this repository pools the IDs of a
+type (`PUBLISHED.md` has the checked table and the caveats). Per-ID figures exist for the fresh
+systems only (`scores/summary.csv`, columns `*_Amean_perID`):
+
+| system | dev Amean, per ID | eval Amean, per ID |
+|---|---|---|
+| fresh single network, C1ᵀ (mean of 4 seeds) | 94.16 | 94.29 |
+| fresh GS8 (8 networks) | 95.07 | 94.69 |
+| fresh X1 (GS8 + 3 BEATs) | 95.26 | 95.27 |
+| OS-SCL paper, one run (convention not stated) | 92.97 | 93.22 |
+| PerMix, TFSTgram-MFN, mean of 3 seeds (from scratch) | 93.44 | 93.97 |
+| PerMix, BEATs fine-tuned, 3 seeds (external) | 94.49 | 95.58 |
+| AdaBEAM, 5 trials (external) | 95.6 | 96.2 |
+
+- The fresh single network is 0.7 dev / 0.3 eval above the only seeded from-scratch number we
+  found (PerMix). The two differ in network seeds, scoring rule and code, so this is not a
+  controlled comparison.
+- The external track is **not** state of the art: X1 is below AdaBEAM on both sets and below
+  PerMix's fine-tuned BEATs on eval.
 
 All rows, including the secondary pools, are in `scores/summary.csv`; per-machine rows are in
 `scores/machines.csv`.
@@ -46,9 +76,16 @@ All rows, including the secondary pools, are in `scores/summary.csv`; per-machin
 | ensemble, secondary | E2′[ALL50] (dev rank 10) | 50 | 97.02 | 92.48 | 93.67 | 94.75 | 97.25 | 93.30 | 94.35 | 95.28 | `grand-ensemble` |
 | *external* | F1k = E2′[A8] + ΣzK′[B3] | 11 | 97.23 | 92.79 | 94.79 | 95.01 | 97.21 | 93.30 | 94.20 | 95.25 | `grand-ensemble` (`ablation/beats`) |
 | *external* | **X1** = E2′[GS12] + 1.5·ΣzK′[B3] | 15 | 97.50 | 93.24 | 95.12 | 95.37 | 97.32 | 93.53 | 94.26 | 95.42 | `grand-ensemble` |
+| fresh single | R0, mean of 4 | 1 | 95.83 | 90.66 | 91.46 | 93.24 | 95.34 | 91.34 | 89.53 | 93.34 | `fresh-confirm` |
+| fresh single | C1, mean of 4 | 1 | 96.41 | 91.40 | 92.93 | 93.91 | 96.44 | 91.96 | 92.50 | 94.20 | `fresh-confirm` |
+| fresh single | **C1ᵀ**, mean of 4 | 1 | 96.48 | 91.57 | 93.09 | 94.02 | 96.47 | 91.99 | 92.59 | 94.23 | `fresh-confirm` |
+| fresh ensemble | G4 (4 `ao_nogain`) | 4 | 96.98 | 92.06 | 93.86 | 94.52 | 96.76 | 92.85 | 92.88 | 94.80 | `fresh-confirm` |
+| fresh ensemble | GS8 (4 `ao_nogain` w2 + 4 `sb_spec` w1) | 8 | 97.25 | 92.60 | 94.39 | 94.92 | 96.90 | 92.90 | 93.15 | 94.90 | `fresh-confirm` |
+| *external*, fresh from-scratch half | X1 = GS8 + 1.5·ΣzK′[B3] | 11 | 97.37 | 92.89 | 94.77 | 95.13 | 97.24 | 93.60 | 94.19 | 95.42 | `fresh-confirm` |
 
 The paper's dev Amean (92.97) is the mean of its reported AUC and pAUC; the paper reports no eval
-AUC, pAUC or mAUC separately.
+AUC, pAUC or mAUC separately. Rows above the fresh ones use seeds 2040–2047, which were seen while the
+rules were developed; the fresh rows use seeds 2060–2063.
 
 ## How each final system scores a clip
 
@@ -78,29 +115,56 @@ All systems use the EMA weights of networks trained with the fast recipe (`--amp
 | `single-final` | Does TTA add to C1 for one network? | Yes on dev (+0.10, 8/8 seeds). Flat on eval (+0.01, CI spans 0). **C1ᵀ adopted.** |
 | `grand-ensemble` | Best ensemble from ~60 existing members, picked on dev only? | GS12: +0.44 dev, +0.16 eval vs A8. **Tie**, so A8 stays the reported best. Selection optimism +0.07. |
 | `grand-ensemble` (external) | Does the GS12 swap carry over to the BEATs fusion? | X1 +0.17 [+0.02, +0.32] eval vs F1k. **Adopted** (thin). |
-| `fresh-confirm` | Do the frozen rules hold on seeds nobody has scored (2060+)? | *pending* |
+| `fresh-confirm` | Do the frozen rules hold on seeds nobody has scored (2060+)? | **C1ᵀ: yes** (4/4 seeds above every paper number). Ensemble level: yes (GS8 94.92 / 94.90). **`sb_spec` as an ingredient: dev only** (eval +0.09, CI spans 0; −0.09 at equal size). BEATs fusion: yes (+0.52 eval). R0 against the paper: no (1 seed of 4). |
 
 ## Caveats
 
 - **Valve, eval only.** Against R0, single-net C1ᵀ gains on 5 of 6 machines on eval but loses
-  1.9 Amean points on valve (pAUC 91.70 vs 94.46). On dev, C1ᵀ is better on valve (99.42 vs
-  99.23), so this is an eval-only effect and cannot be acted on without selecting on eval.
+  1.9 Amean points on valve (pAUC 91.70 vs 94.46) on the seen seeds. On dev, C1ᵀ is better on
+  valve (99.42 vs 99.23), so this is an eval-only effect and cannot be acted on without selecting
+  on eval.
   - Part of it is the kNN terms: C1 already lost to S1′ on eval valve (`pooled-knn`, −0.35 AUC).
   - TTA adds a little (pooled valve pAUC −0.37). `single-final` found every per-ID valve AUC flat
     or up, so this part is a calibration effect of per-ID z-scoring across IDs, not a detection loss.
   - The ensembles do not lose on valve (GS12 +0.31 vs R0).
+  - It repeats on the fresh seeds: C1ᵀ is 1.8 Amean below R0 on eval valve (94.76 against 96.58,
+    pooled) and 0.6 below per ID, and 0.3 above R0 on dev valve.
 - **The diluted pools FAST42 and ALL50 have the highest from-scratch eval** (95.35, 95.28), but
   they rank 8th and 10th on dev. Picking them would be selecting on eval, so they are reported as
   secondary only.
-- **Thin margins.** Every ensemble-vs-ensemble difference in this table is under 0.5 Amean. Only
-  X1 vs F1k has a bootstrap CI above 0. The phase-1 noise floors still apply: ~1 point of eval
-  AUC run to run, mAUC deltas under ~2 points unresolvable, ToyConveyor >4 points.
-- **External pretraining** (BEATs, AudioSet) is a separate track throughout.
+- **Thin margins.** Every difference between two from-scratch ensembles in this table is under
+  0.5 Amean, and none has a bootstrap CI above 0 on eval. Only the BEATs comparisons do (X1 vs F1k,
+  fresh X1 vs fresh GS8). The phase-1 noise floors still apply: ~1 point of eval AUC run to run,
+  mAUC deltas under ~2 points unresolvable, ToyConveyor >4 points.
+- **External pretraining** (BEATs, AudioSet) is a separate track throughout. In the fresh X1 only
+  the from-scratch members are new; the three BEATs networks and their weight are the phase-1 ones.
+- **The fresh `sb_spec` networks are weaker than the seen ones** (S1′ 93.36 dev / 92.74 eval against
+  94.06 / 93.42, same recipe). `sb_spec` was chosen on the seen seeds, so part of its phase-2 gain
+  was seed luck.
+- **Pooled against per-ID.** Our Amean pools IDs; on the fresh systems the per-ID figure is within
+  0.25 of it, higher on dev and lower on eval for the ensembles.
 
 ## Fresh-seed confirmation
 
-*Pending.* Seeds `fc_nogain_s2060–2063` (round 1) and `fc_spec_s2060–2063` (round 2) are training.
-Predictions F1–F6 are in `../fresh-confirm/README.md`.
+Eight networks on seeds nobody had scored: 4 × `ao_nogain` (`fc_nogain_s2060–2063`) and
+4 × `sb_spec` (`fc_spec_s2060–2063`). Rules, bars and predictions F1–F6 were committed first
+(d3472f2, addendum 32740ba). The scoring ran once, as two independent processes that agreed byte
+for byte. Details and figures are in `../fresh-confirm/README.md`.
+
+| id | claim | fresh result | verdict |
+|---|---|---|---|
+| F1 | one network under C1ᵀ replicates | 94.02 dev / 94.23 eval; bars 93.88 / 93.34 | passes |
+| F2 | C1ᵀ beats the paper | dev AUC, pAUC, mAUC and eval mean each on 4/4 seeds | passes |
+| F2 | R0 beats the paper | 2/4, 3/4, 2/4 on dev; 2/4 on eval | fails |
+| F3 | C1ᵀ ≥ C1 | +0.12 dev (4/4 seeds), +0.03 eval | replicates on dev |
+| F4 | adding `sb_spec` helps the ensemble | GS8 − G4: +0.40 dev, +0.09 eval [−0.08, +0.24] | passes, not confirmed |
+| F4b | the same at equal size (4 nets against 4) | +0.26 dev (36/36 subsets), −0.09 eval (8/36) | dev only |
+| F5 | GS8 level | 94.92 dev / 94.90 eval (predicted 95.1 / 94.85) | inside the intervals |
+| F6 | BEATs fusion helps | X1 − GS8: +0.21 dev, +0.52 eval [+0.40, +0.67] | passes |
+
+What did not replicate: the `sb_spec` contribution on eval, the level of the `sb_spec` single
+networks, and R0 beating the paper's dev numbers seed by seed. `eval.py` reproduces the R0 column
+of the fresh scores to 0.003 points on all 8 checkpoints.
 
 ## Reproduce
 
@@ -109,12 +173,13 @@ bash synthesis/final/run.sh            # collect.py -> scores/, make_plots.py ->
 ```
 
 `collect.py` reads only committed `scores/` from `ablation/aug-ops`, `synthesis/single-final`,
-`synthesis/grand-ensemble` and (when present) `synthesis/fresh-confirm`. Re-scoring a system from
+`synthesis/grand-ensemble` and `synthesis/fresh-confirm`. Re-scoring a system from
 checkpoints is `../fresh-confirm/run.sh extract` + `score` (see that README).
 
 ## Figures
 
 | figure | shows |
 |---|---|
-| ![](plots/fig1_progression.png) | Dev and eval Amean for each adopted system, from the paper to X1. C1ᵀ is +0.9 over the paper's eval mean, the ensembles +1.6 to +1.7, X1 +2.2. R0 only ties the paper. |
-| ![](plots/fig2_machines_eval.png) | Eval Amean gain over R0 per machine for C1ᵀ, GS12 and X1. Most of the gain is ToyConveyor and ToyCar. BEATs adds most on ToyCar. The single-net rule loses 1.9 points on valve. |
+| ![](plots/fig1_progression.png) | Dev and eval Amean of each adopted system on seen seeds (top) and of the fresh builds (bottom). On eval the fresh single network (94.23), ensemble (94.90) and BEATs fusion (95.42) land within 0.15 of the seen ones. |
+| ![](plots/fig2_machines_eval.png) | Seen seeds 2040–2047: eval Amean gain over R0 per machine for C1ᵀ, GS12 and X1. Most of the gain is ToyConveyor and ToyCar. BEATs adds most on ToyCar. The single-net rule loses 1.9 points on valve. |
+| ![](plots/fig3_fresh_single.png) | The four fresh networks under C1ᵀ, seed by seed, with the F1 bar, the seen-seed mean and the paper. Every seed is above the paper on both sets. |

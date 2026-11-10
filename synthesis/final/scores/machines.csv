@@ -131,3 +131,39 @@ X1[r=0.375],eval,slider,99.95,99.73,99.79,99.84
 X1[r=0.375],eval,ToyCar,97.67,94.62,92.52,96.14
 X1[r=0.375],eval,ToyConveyor,89.60,79.01,84.41,84.31
 X1[r=0.375],eval,valve,98.45,94.69,96.47,96.57
+fresh G4,dev,fan,98.55,94.53,94.86,96.54
+fresh G4,dev,pump,96.61,89.10,94.28,92.86
+fresh G4,dev,slider,99.69,98.35,98.49,99.02
+fresh G4,dev,ToyCar,98.44,94.63,93.81,96.54
+fresh G4,dev,ToyConveyor,88.75,76.67,82.15,82.71
+fresh G4,dev,valve,99.83,99.10,99.60,99.47
+fresh G4,eval,fan,99.66,98.41,98.89,99.04
+fresh G4,eval,pump,98.36,94.13,93.08,96.24
+fresh G4,eval,slider,99.78,98.83,99.03,99.30
+fresh G4,eval,ToyCar,95.72,91.48,86.32,93.60
+fresh G4,eval,ToyConveyor,88.68,79.49,83.27,84.08
+fresh G4,eval,valve,98.36,94.75,96.69,96.55
+fresh GS8,dev,fan,99.04,96.22,95.07,97.63
+fresh GS8,dev,pump,96.81,89.21,95.86,93.01
+fresh GS8,dev,slider,99.77,98.79,98.48,99.28
+fresh GS8,dev,ToyCar,98.42,94.70,93.69,96.56
+fresh GS8,dev,ToyConveyor,89.51,77.05,83.43,83.28
+fresh GS8,dev,valve,99.92,99.60,99.79,99.76
+fresh GS8,eval,fan,99.79,99.00,99.27,99.39
+fresh GS8,eval,pump,98.74,94.81,94.27,96.78
+fresh GS8,eval,slider,99.75,98.68,98.86,99.22
+fresh GS8,eval,ToyCar,95.91,91.64,86.69,93.78
+fresh GS8,eval,ToyConveyor,88.91,79.01,83.70,83.96
+fresh GS8,eval,valve,98.27,94.23,96.10,96.25
+fresh X1,dev,fan,99.02,96.20,95.00,97.61
+fresh X1,dev,pump,97.26,90.28,96.06,93.77
+fresh X1,dev,slider,99.75,98.67,98.68,99.21
+fresh X1,dev,ToyCar,98.80,95.56,95.04,97.18
+fresh X1,dev,ToyConveyor,89.40,76.66,83.83,83.03
+fresh X1,dev,valve,100.00,99.99,99.99,100.00
+fresh X1,eval,fan,99.76,98.85,99.23,99.31
+fresh X1,eval,pump,98.73,94.70,94.18,96.71
+fresh X1,eval,slider,99.94,99.70,99.67,99.82
+fresh X1,eval,ToyCar,97.67,94.49,92.54,96.08
+fresh X1,eval,ToyConveyor,88.96,79.54,83.33,84.25
+fresh X1,eval,valve,98.40,94.32,96.17,96.36
