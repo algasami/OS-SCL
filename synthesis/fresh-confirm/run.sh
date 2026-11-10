@@ -7,6 +7,7 @@
 #   bash synthesis/fresh-confirm/run.sh selftest    # scorer reproduces committed phase-1 numbers
 #   bash synthesis/fresh-confirm/run.sh score       # ONCE: frozen rules -> scores/ (F1-F6)
 #   FC_GPU=0 bash synthesis/fresh-confirm/run.sh evalpy    # eval.py CSVs + probe + curves (after score)
+#   nohup setsid bash synthesis/fresh-confirm/run.sh post > .../results/post.log 2>&1 < /dev/null &   # detached: wait, records, extract
 # Scoring is done by the frozen rules of ../single-final and ../grand-ensemble (README, Scoring).
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -33,6 +34,25 @@ extract)
         $PY $D/extract.py --gpu "${FC_GPU:-0}" --split $split --out $D/results/emb --runs $runs \
             >> $D/results/extract.log 2>&1 || { echo "FAIL extract $split"; exit 1; }
     done ;;
+post)
+    # Session-independent: waits for training to end, then records + extract (retried; faulty RAM).
+    # Stops before `score`, which is run once by hand. Status line -> results/post.status.
+    # pgrep patterns are anchored so shells that merely mention them in their command line don't match.
+    st=$D/results/post.status
+    echo "WAITING for training $(date)" > $st
+    while pgrep -f "^\S*python train\.py .*--desc fc_" > /dev/null \
+       || pgrep -f "^bash synthesis/fresh-confirm/run\.sh train" > /dev/null; do sleep 300; done
+    n=$(ls check_points/SCLTFSTgramMFN_fc_*/done 2>/dev/null | wc -l)
+    if [ "$n" -lt 8 ]; then echo "FAIL only $n/8 runs done $(date); see results/run_train*.log" > $st; exit 1; fi
+    echo "RECORDS $(date)" > $st
+    bash $0 records
+    for try in 1 2 3; do
+        echo "EXTRACT try $try $(date)" > $st
+        bash $0 extract && break
+        [ $try -eq 3 ] && { echo "FAIL extract after 3 tries $(date); see results/extract.log" > $st; exit 1; }
+        sleep 30
+    done
+    echo "READY_TO_SCORE $(date) (8/8 trained, records + extract done; next: run.sh score, ONCE)" > $st ;;
 selftest)
     OMP_NUM_THREADS=8 $PY $D/score.py selftest 2>&1 | tee $D/results/selftest.log ;;
 score)
