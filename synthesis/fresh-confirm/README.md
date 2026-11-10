@@ -136,7 +136,13 @@ the first fresh number is seen.
 Not covered: the extraction is a single pass. A flip while a dump sits in RAM before it is written
 passes the CRC (which is computed from the flipped data) and, if small, the range check. The damage
 is bounded to single clips out of 10,868 per set. As a check on the R0 path, `evalpy` recomputes R0
-with `eval.py` after scoring; the two are compared in the results.
+with `eval.py` after scoring and `crosscheck.py` compares the two (`scores/r0_crosscheck.csv`).
+
+- **Reference.** On the dry run's 8 seen networks the largest gap in AUC, pAUC or mAUC is 0.004 points
+  (`scores/dryrun_p1/r0_crosscheck.csv`).
+- **Rule, set before scoring.** If a fresh run differs from `eval.py` by more than 0.05 points on any of
+  the three, its dumps are deleted and extracted again and everything is rescored. Both scorings are
+  then reported. A smaller gap changes nothing.
 
 ### F4b — is it the `sb_spec` type, or just more members?
 
@@ -190,7 +196,7 @@ So on seen seeds F4 is "confirmed" by its own bar while the type adds nothing on
 ### Operations
 
 - **Order:** wait for `results/post.status` = `READY_TO_SCORE` → `bash synthesis/fresh-confirm/run.sh
-  score` → `FC_GPU=0 bash synthesis/fresh-confirm/run.sh evalpy` → results, `make_plots.py`.
+  score` → `FC_GPU=0 bash synthesis/fresh-confirm/run.sh evalpy` → `crosscheck.py` → results, `make_plots.py`.
 - **Figures:** `make_plots.py` reads `scores/` only and skips what is missing. Its layout was checked on
   the dry-run record; no figure is committed before the fresh scores exist.
 - **`FAIL extract`:** rerun `FC_GPU=0 bash synthesis/fresh-confirm/run.sh extract` (resumable).
