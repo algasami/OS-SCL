@@ -137,15 +137,21 @@ if os.path.exists(os.path.join(fc, 'single.csv')):
             'synthesis/fresh-confirm', dev=got['dev'], ev=got['eval'])
 if os.path.exists(os.path.join(fc, 'ensembles.csv')):
     E = rows(os.path.join(fc, 'ensembles.csv'))
+    n_fresh = {}
+    if os.path.exists(os.path.join(fc, 'decisions.json')):
+        with open(os.path.join(fc, 'decisions.json')) as f:
+            sd = json.load(f)['seeds']
+        n_fresh = {'G4': len(sd['G']), 'GS8': len(sd['G']) + len(sd['S']), 'X1': len(sd['G']) + len(sd['S']) + 3}
     for sysname in sorted({r['system'] for r in E}, key=lambda s: ('X1' in s, s)):
         got = {}
         for ds in ('dev', 'eval'):
             rs = [r for r in E if r['system'] == sysname and r['dataset'] == ds]
-            o = [r for r in rs if r['machine'] in ('overall', 'ALL', '')]
+            o = [r for r in rs if r['machine'] in ('all', 'overall', 'ALL', '')]
             got[ds] = num(o[0]) if o else None
             add_machines(f'fresh {sysname}', ds, {r['machine']: num(r) for r in rs if r['machine'] in MACHINES})
         track = 'WITH EXTERNAL PRETRAINING' if 'X1' in sysname else 'fresh seeds (2060+)'
-        add(track, f'fresh {sysname}', '', 'confirmation', 'synthesis/fresh-confirm', dev=got['dev'], ev=got['eval'])
+        add(track, f'fresh {sysname}', n_fresh.get(sysname, ''), 'confirmation', 'synthesis/fresh-confirm',
+            dev=got['dev'], ev=got['eval'])
 
 os.makedirs(OUT, exist_ok=True)
 cols = ['track', 'system', 'members', 'status'] + [f'{d}_{k}' for d in ('dev', 'eval') for k in METRICS] + ['source']
