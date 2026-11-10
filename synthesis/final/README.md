@@ -14,7 +14,7 @@ does. The paper reports dev AUC / pAUC / mAUC 95.71 / 90.23 / 91.23 and an eval 
 |---|---|---|---|---|---|
 | single network | `ao_nogain` scored by **C1ᵀ**, mean of 8 seeds | 96.61 / 91.91 / 93.35 | 94.26 | 94.10 | +0.88 |
 | ensemble, from scratch | **E2′[A8]** (8 `la_aug`), reported best | 97.05 / 92.48 / 94.10 | 94.77 | 94.78 | +1.56 |
-| ensemble, from scratch | E2′[GS12] (8 `ao_nogain` w2 + 4 `sb_spec` w1), dev pick, ties A8 | 97.38 / 93.03 / 94.71 | 95.21 | 94.93 | +1.71 |
+| ensemble, from scratch | E2′[GS12] (8 `ao_nogain` + 4 `sb_spec`, equal weights), dev pick, ties A8 | 97.38 / 93.03 / 94.71 | 95.21 | 94.93 | +1.71 |
 | **with external pretraining** | **X1** = E2′[GS12] + 1.5·ΣzK′[BEATs ×3] | 97.50 / 93.24 / 95.12 | 95.37 | 95.42 | +2.20 |
 
 - **One network beats every paper number.** Under C1ᵀ, an `ao_nogain` network beats the paper's
@@ -65,7 +65,9 @@ All systems use the EMA weights of networks trained with the fast recipe (`--amp
   - Each term is z-scored per ID on the training clips the network trained on.
 - **E2′[·]** (ensemble; `../grand-ensemble/score.py: ensemble_from_dumps`):
   - The score is the weighted sum of each member's S1′ = zR0′ + zK′, with no TTA and no Gmean.
-  - In GS12, `ao_nogain` members have weight 2 and `sb_spec` members weight 1.
+  - In GS12 all 12 members have weight 1 (`../grand-ensemble/scores/dev_pick.json`). Only the
+    size-matched fresh build (4 `ao_nogain` + 4 `sb_spec`) uses weights 2 : 1, which keeps GS12's
+    8 : 4 type ratio.
 - **X1** adds three BEATs members (`ablation/beats`, `bt_arc` s2040–2042) with weight 1.5 each.
   They contribute zK′ only, because their training CE sits at the fp32 floor.
 

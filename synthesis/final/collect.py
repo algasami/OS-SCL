@@ -99,7 +99,7 @@ for rule, name, status in (('C1', 'C1 = zR0′ + zK′ + zGmean', 'phase-1 singl
 ge = os.path.join(SYN, 'grand-ensemble', 'scores')
 ens = [('A8', 'E2′[A8] (8 la_aug)', 'reported best (from scratch)'),
        ('G8', 'E2′[G8] (8 ao_nogain)', 'phase-1 dev pick'),
-       ('GS12', 'E2′[GS12] (8 ao_nogain w2 + 4 sb_spec w1)', 'phase-2 dev pick; ties A8 on eval'),
+       ('GS12', 'E2′[GS12] (8 ao_nogain + 4 sb_spec, equal weights)', 'phase-2 dev pick; ties A8 on eval'),
        ('NG18', 'E2′[NG18]', 'secondary (not dev pick)'),
        ('FAST42', 'E2′[FAST42]', 'secondary (dev rank 8)'),
        ('ALL50', 'E2′[ALL50]', 'secondary (dev rank 10)')]
