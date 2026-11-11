@@ -109,6 +109,27 @@ and extracts the dumps of the four new runs with `../fresh-confirm/extract.py`; 
 dumps are linked, not re-extracted. `run.sh evalpy` (after `score`) writes `eval.py`'s own CSVs, the
 probe trace, the distilled curves and the R0 cross-check.
 
+## Dry run on seen seeds (2026-11-11, `scores/dryrun_p1/`)
+
+Run after the rules above were committed (10c845e) and before any fresh network of this study
+existed. Three independent processes wrote byte-identical output. All twelve committed reference
+numbers come back to four decimals (G4, GS8, X1 of `../fresh-confirm/scores/dryrun_p1`; G8, GS12,
+X1[r=0.375] of `../grand-ensemble`), and the C1 / C1ᵀ of seeds 2044–47 match `../single-final` exactly.
+
+| seen seeds 2040–47 | dev | eval | note |
+|---|---|---|---|
+| G4 (2040–43) / G4b (2044–47) | 94.84 / 94.80 | 94.62 / 94.84 | two draws of four networks differ by 0.21 on eval |
+| G8f | 94.97 | 94.87 | |
+| GS8 | 95.18 | 94.80 | |
+| GS12f | 95.21 | 94.93 | E2 would pick it |
+| GS12f − G8f | +0.23 | +0.06, CI [−0.08, +0.21] | E3: not confirmed |
+| 8 networks, 2 of them `sb_spec`, − G8f | +0.17 (168/168) | +0.04 (109/168) | type effect on dev only |
+| 8 networks, 4 of them `sb_spec`, − G8f | +0.20 (70/70) | −0.08 (16/70) | type effect on dev only |
+| XG8 / X1f | 95.19 / 95.37 | 95.36 / 95.42 | external |
+
+These are phase-1 numbers in a new arrangement, all seen before; they are a test of the code and the
+figure layout, not a result. The predictions above were written without them and are left as written.
+
 ## Results
 
 *Not scored yet.*

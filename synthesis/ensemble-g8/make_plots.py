@@ -123,7 +123,7 @@ def fig1():
     spread = max(c.values()) - min(c.values())
     seeds = 'seen seeds 2040–47 (dry run)' if DRY else 'fresh seeds'
     ax.set_title(f'{pick} has the highest dev Amean; on eval the three from-scratch candidates span {spread:.2f} points\n',
-                 loc='left', fontsize=10.5, fontweight='bold', x=-0.62 if False else 0)
+                 loc='left', fontsize=10.5, fontweight='bold')
     ax.text(1.0, 1.045, seeds, transform=ax.transAxes, ha='right', va='center', fontsize=8, color=MUTED)
     save(fig, 'fig1_ensembles.png')
 
@@ -177,8 +177,8 @@ def fig2():
     a2.set_xlabel('Δ Amean against G8f, every 8-network subset (bar = mean)')
     a2.set_title('Same size, same weights: 8 networks', loc='left', fontsize=9, color=INK_2)
     for ds, x in (('dev', 0.0), ('eval', 0.05)):
-        fig.text(0.125 + x, 0.93, '●', color=COL[ds], fontsize=10, va='center')
-        fig.text(0.139 + x, 0.93, ds, color=INK_2, fontsize=8.5, va='center')
+        fig.text(0.125 + x, 0.965, '●', color=COL[ds], fontsize=10, va='center')
+        fig.text(0.139 + x, 0.965, ds, color=INK_2, fontsize=8.5, va='center')
     e3 = D['E3']
     te = e3['type_effect']
     dev_yes = all(te[k]['dev'] for k in te)
@@ -189,7 +189,7 @@ def fig2():
         title = 'sb_spec networks raise the dev score at fixed size; on eval the same swap does not'
     else:
         title = 'sb_spec against ao_nogain members: paired differences and count-matched subsets'
-    fig.suptitle(title, x=0.125, y=1.02, ha='left', fontsize=10.5, fontweight='bold')
+    fig.suptitle(title, x=0.125, y=1.06, ha='left', fontsize=10.5, fontweight='bold')
     save(fig, 'fig2_sb_spec.png')
 
 
@@ -202,7 +202,7 @@ def fig3():
     kind = 'ao_nogain' if DRY else 'fc_nogain'
     rows = [dict(r, new=False) for r in old if f'_{kind}_' in r['run']] + [dict(r, new=True) for r in new]
     runs = sorted({r['run'] for r in rows})
-    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.7), sharey=False, gridspec_kw=dict(wspace=0.28))
+    fig, axes = plt.subplots(1, 2, figsize=(10.8, 3.7), sharey=False, gridspec_kw=dict(wspace=0.24))
     for ax, ds in zip(axes, ('dev', 'eval')):
         for rule, mk, off in (('R0', 'o', -0.14), ('C1T', 'D', 0.14)):
             vals = []
@@ -214,14 +214,14 @@ def fig3():
                            edgecolors=COL[ds] if rule == 'C1T' else MUTED,
                            facecolors=(COL[ds] if rule == 'C1T' else MUTED) if r['new'] else SURFACE)
             m = float(np.mean(vals))
-            ax.axhline(m, color=COL[ds] if rule == 'C1T' else MUTED, lw=1.1, alpha=0.8)
+            ax.plot([-0.5, len(runs) - 0.5], [m, m], color=COL[ds] if rule == 'C1T' else MUTED, lw=1.1, alpha=0.8)
             ax.text(len(runs) - 0.45, m, f' {"C1ᵀ" if rule == "C1T" else "R0"} mean {m:.2f}', va='center', fontsize=8,
                     color=INK_2)
-        ax.axhline(PAPER[ds], color=INK, lw=1, ls=(0, (1, 2)))
+        ax.plot([-0.5, len(runs) - 0.5], [PAPER[ds]] * 2, color=INK, lw=1, ls=(0, (1, 2)))
         ax.text(-0.45, PAPER[ds], f'paper {PAPER[ds]:.2f} ', va='bottom', ha='left', fontsize=8, color=INK)
         ax.set_xticks(range(len(runs)))
         ax.set_xticklabels([r[-4:] for r in runs])
-        ax.set_xlim(-0.5, len(runs) + 1.4)
+        ax.set_xlim(-0.5, len(runs) + 1.9)
         ax.set_xlabel('training seed')
         ax.set_ylabel(f'{ds} Amean (%)')
         ax.grid(axis='y')
