@@ -1,0 +1,8 @@
+Stage A (dev, seeds 2040-2043). 4-seed means AUC / pAUC / mAUC / Amean:
+    C1     96.57  91.78  93.32  94.18
+    S1pT   96.55  91.72  93.17  94.13
+    C1T    96.62  91.90  93.48  94.26
+sel dev: C1ᵀ − C1  ΔAUC +0.051 ΔpAUC +0.116 ΔmAUC +0.157 ΔAmean +0.083 [-0.001, +0.188]  seeds>0 4/4  | per seed +0.089 +0.064 +0.055 +0.125
+      ΔAUC by machine: fan -0.04 pump +0.03 slider +0.06 ToyCar +0.10 ToyConveyor +0.15 valve +0.02
+      (S1′ᵀ − C1 ΔAmean -0.041)
+Gate A (Δ Amean > 0): True

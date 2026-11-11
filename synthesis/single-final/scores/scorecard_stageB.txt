@@ -1,0 +1,11 @@
+Stage B (dev). 8-seed means AUC / pAUC / mAUC / Amean (paper dev {'AUC': 95.71, 'pAUC': 90.23, 'mAUC': 91.23}):
+    C1     96.55  91.78  93.22  94.16
+    S1pT   96.52  91.72  93.01  94.12
+    C1T    96.61  91.91  93.35  94.26
+confirm dev (2044-47): C1ᵀ − C1  ΔAUC +0.064 ΔpAUC +0.161 ΔmAUC +0.104 ΔAmean +0.112 [+0.007, +0.248]  seeds>0 4/4  | per seed +0.144 +0.083 +0.059 +0.162
+      ΔAUC by machine: fan -0.01 pump +0.04 slider +0.07 ToyCar +0.09 ToyConveyor +0.18 valve +0.01
+      (S1′ᵀ − C1 ΔAmean -0.053)
+dev 8 seeds: C1ᵀ − C1  ΔAUC +0.057 ΔpAUC +0.138 ΔmAUC +0.130 ΔAmean +0.098 [+0.006, +0.214]  seeds>0 8/8  | per seed +0.089 +0.064 +0.055 +0.125 +0.144 +0.083 +0.059 +0.162
+      ΔAUC by machine: fan -0.02 pump +0.03 slider +0.06 ToyCar +0.09 ToyConveyor +0.17 valve +0.01
+      (S1′ᵀ − C1 ΔAmean -0.047)
+D1 dev conditions: {"gate_A": true, "dev8_dAmean_pos": true, "dev8_ge6_of_8_pos": true, "conf_dev_dAmean_pos": true, "all": true}
