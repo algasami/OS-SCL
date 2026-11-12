@@ -6,7 +6,8 @@ Writes synthesis/final/scores/summary.csv (overall) and machines.csv (per machin
 Every number is read from a committed record of the study that produced it. Nothing is
 recomputed here except seed means: the 8-seed mean of eval.py's R0 rows and the 4-seed means
 of the fresh single-network rows. Fresh-confirm rows are skipped until
-synthesis/fresh-confirm/scores/ has them.
+synthesis/fresh-confirm/scores/ has them; so are the ensemble-g8 rows (seeds 2064-2067 and the
+8-seed systems), which are added after the fresh-confirm rows and never replace them.
 """
 import csv
 import glob
@@ -157,6 +158,42 @@ if os.path.exists(os.path.join(fc, 'ensembles.csv')):
         track = 'WITH EXTERNAL PRETRAINING' if 'X1' in sysname else 'fresh seeds (2060+)'
         add(track, f'fresh {sysname}', n_fresh.get(sysname, ''), 'confirmation', 'synthesis/fresh-confirm',
             dev=got['dev'], ev=got['eval'], perid=[got[ds] and got[ds]['Amean_perID'] for ds in ('dev', 'eval')])
+
+# ---- follow-up (synthesis/ensemble-g8): 4 more fresh ao_nogain seeds; the 4-seed rows above stay
+eg = os.path.join(SYN, 'ensemble-g8', 'scores')
+if os.path.exists(os.path.join(eg, 'single.csv')) and os.path.exists(os.path.join(fc, 'single.csv')):
+    single8 = ([r for r in rows(os.path.join(fc, 'single.csv')) if '_fc_nogain_' in r['run']]
+               + rows(os.path.join(eg, 'single.csv')))
+    runs8 = sorted({r['run'] for r in single8})
+    for rule in ('R0', 'C1', 'C1T'):
+        got = {}
+        for ds in ('dev', 'eval'):
+            rs = [r for r in single8 if r['rule'] == rule and r['dataset'] == ds]
+            assert len(rs) == len(runs8), (rule, ds, len(rs))
+            got[ds] = {k: statistics.mean(float(r[k]) for r in rs) for k in METRICS + ['Amean_perID']}
+        add('fresh seeds (2060+)', f'{rule}, fresh ao_nogain (mean of {len(runs8)})', 1,
+            'confirmation, seeds 2060-2067; supersedes the mean of 4', 'synthesis/ensemble-g8',
+            dev=got['dev'], ev=got['eval'], perid=[got[ds]['Amean_perID'] for ds in ('dev', 'eval')])
+if os.path.exists(os.path.join(eg, 'ensembles.csv')):
+    E = rows(os.path.join(eg, 'ensembles.csv'))
+    with open(os.path.join(eg, 'decisions.json')) as f:
+        dec = json.load(f)
+    status = {'G4b': 'second draw of 4 networks',
+              'G8f': 'recipe named for a new build (E4)',
+              'GS12f': 'REPORTED from-scratch ensemble (dev pick, E2)',
+              'XG8': 'external, on the simple build',
+              'X1f': 'REPORTED external system (E7)'}
+    assert dec['E2']['pick'] == 'GS12f', dec['E2']['pick']     # the labels above assume this outcome
+    for sysname in ('G4b', 'G8f', 'GS12f', 'XG8', 'X1f'):       # G4, GS8, X1 are fresh-confirm's rows
+        got, n = {}, ''
+        for ds in ('dev', 'eval'):
+            rs = [r for r in E if r['system'] == sysname and r['dataset'] == ds]
+            o = [r for r in rs if r['machine'] == 'all'][0]
+            got[ds], n = num(o, METRICS + ['Amean_perID']), o['members']
+            add_machines(f'fresh {sysname}', ds, {r['machine']: num(r) for r in rs if r['machine'] in MACHINES})
+        track = 'WITH EXTERNAL PRETRAINING' if sysname.startswith('X') else 'fresh seeds (2060+)'
+        add(track, f'fresh {sysname}', n, status[sysname], 'synthesis/ensemble-g8',
+            dev=got['dev'], ev=got['eval'], perid=[got[ds]['Amean_perID'] for ds in ('dev', 'eval')])
 
 os.makedirs(OUT, exist_ok=True)
 cols = (['track', 'system', 'members', 'status'] + [f'{d}_{k}' for d in ('dev', 'eval') for k in METRICS]

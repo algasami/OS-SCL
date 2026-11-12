@@ -136,7 +136,7 @@ def fig2():
         return print('skip fig2 (no decisions.json / bootstrap.json / subsets.csv)')
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(10.2, 3.9), gridspec_kw=dict(width_ratios=[1, 1.15], wspace=0.42))
     # left: paired differences against G8f with clip-bootstrap CIs
-    pairs = [('GS12f-G8f', '+ 4 sb_spec  (12 nets − 8)', 'GS12f_minus_G8f'), ('GS8-G8f', 'swap 4 ao_nogain for 4 sb_spec\n(GS8 − G8f)', 'GS8_minus_G8f')]
+    pairs = [('GS12f-G8f', '+ 4 sb_spec  (12 nets − 8)', 'GS12f_minus_G8f'), ('GS8-G8f', 'GS8 − G8f  (4 ao_nogain → 4 sb_spec,\nother four weighted ×2)', 'GS8_minus_G8f')]
     for i, (key, lab, dk) in enumerate(pairs):
         for j, ds in enumerate(('dev', 'eval')):
             pt = D['E3'][dk][ds]
@@ -230,7 +230,7 @@ def fig3():
     c = D['E6']['above_paper_C1T_fresh8']
     n = c['n']
     if D['E6']['passed'] and c['all4'] == n:
-        title = f'All {n} fresh networks beat every paper number under C1ᵀ; the new four repeat the first four'
+        title = f'All {n} fresh networks beat every paper number under C1ᵀ; the new four clear the replication bars again'
     elif D['E6']['passed']:
         title = f'The new four clear the replication bars; {c["all4"]} of {n} fresh networks beat all four paper numbers under C1ᵀ'
     else:

@@ -17,6 +17,7 @@ import numpy as np  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCORES = os.path.join(HERE, 'scores')
 FC = os.path.join(HERE, '..', 'fresh-confirm', 'scores')
+EG = os.path.join(HERE, '..', 'ensemble-g8', 'scores')
 PLOTS = os.path.join(HERE, 'plots')
 os.makedirs(PLOTS, exist_ok=True)
 
@@ -73,13 +74,24 @@ def fig1_progression():
         r = next((x for x in S if x['system'].startswith(key) and x['track'] != 'fresh seeds (2060+)'), None)
         if r:
             rows.append((short, fl(r['dev_Amean']), fl(r['eval_Amean']), r['track']))
-    fresh = [x for x in S if x['track'] == 'fresh seeds (2060+)' or x['system'].startswith('fresh')]
-    FRESH = {'R0': 'single · R0 (eval.py)', 'C1': 'single · C1', 'C1T': 'single · C1ᵀ  [final]',
-             'G4': 'ensemble · G4 (4 nets)', 'GS8': 'ensemble · GS8 (8 nets)', 'X1': 'BEATs* · X1 (GS8 + 3)'}
+    # Fresh block. Single-network rows take the largest seed count on record (8 once ensemble-g8 is
+    # in, else 4); G4b, the second four-network draw, is left to ensemble-g8's own fig1.
+    FRESH = [('R0, fresh', 'single · R0 (eval.py)'), ('C1, fresh', 'single · C1'), ('C1T, fresh', 'single · C1ᵀ  [final]'),
+             ('fresh G4', 'ensemble · G4 (4 nets)'), ('fresh G8f', 'ensemble · G8f (8 nets)'),
+             ('fresh GS8', 'ensemble · GS8 (8 nets)'), ('fresh GS12f', 'ensemble · GS12f (12 nets)  [reported]'),
+             ('fresh XG8', 'BEATs* · XG8 (G8f + 3)'), ('fresh X1', 'BEATs* · X1 (GS8 + 3)'),
+             ('fresh X1f', 'BEATs* · X1f (GS12f + 3)  [reported]')]
     n_seen = len(rows)
-    for x in fresh:
-        key = x['system'].replace('fresh ', '').split(',')[0]
-        rows.append((FRESH.get(key, key), fl(x['dev_Amean']), fl(x['eval_Amean']), x['track']))
+    n_single = 0
+    for key, short in FRESH:
+        hit = [x for x in S if (x['system'].startswith(key) if ',' in key else x['system'] == key)]
+        if not hit:
+            continue
+        x = hit[-1]                                   # collect.py appends the 8-seed rows after the 4-seed ones
+        if ',' in key:
+            n_single = int(x['system'].rsplit('mean of ', 1)[-1].rstrip(')'))
+        rows.append((short, fl(x['dev_Amean']), fl(x['eval_Amean']), x['track']))
+    g8 = any(r[0].startswith('ensemble · GS12f') for r in rows)
     fig, ax = plt.subplots(figsize=(7.2, 0.36 * (len(rows) + 1) + 1.1))
     y = np.arange(len(rows))[::-1].astype(float)
     y[:n_seen] += 1.0 if len(rows) > n_seen else 0.0     # one empty row between seen and fresh
@@ -98,13 +110,13 @@ def fig1_progression():
     if len(rows) > n_seen:
         yd = y[n_seen - 1] - 0.62
         ax.axhline(yd, color=MUTED, lw=0.8)
-        ax.text(0.012, yd - 0.16, 'below: fresh seeds 2060–2063, rules frozen first, scored once'
+        ax.text(0.012, yd - 0.16, f'below: fresh seeds 2060–{2067 if g8 else 2063}, rules frozen first, scored once'
                 '      above: seeds seen during development', transform=ax.get_yaxis_transform(),
                 fontsize=7.5, color=INK_2, ha='left', va='top')
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows])
     for t, r in zip(ax.get_yticklabels(), rows):
-        if '[final]' in r[0]:
+        if '[final]' in r[0] or '[reported]' in r[0]:
             t.set_fontweight('bold')
     ax.set_xlabel('Amean = mean over machines of (AUC + pAUC) / 2   (%)')
     ax.grid(axis='x')
@@ -114,7 +126,17 @@ def fig1_progression():
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.085), ncol=2, fontsize=8)
     ev = {r[0]: r[2] for r in rows[:n_seen]}
     fe = {r[0]: r[2] for r in rows[n_seen:]}
-    if fe:
+    if fe and g8:
+        ttl = (f"On eval, fresh seeds land within 0.3 of the seen ones: one network {fe['single · C1ᵀ  [final]']:.1f} "
+               f"(C1ᵀ, {n_single} seeds), from-scratch ensemble {fe['ensemble · GS12f (12 nets)  [reported]']:.1f},\n"
+               f"with BEATs* {fe['BEATs* · X1f (GS12f + 3)  [reported]']:.1f}; "
+               f"the paper reports {paper_eval:.2f}   (* external pretraining, separate track)")
+        seen_fresh = [('single · C1ᵀ  [final]', 'single · C1ᵀ  [final]'),
+                      ('ensemble · GS12 (12 nets)', 'ensemble · GS12f (12 nets)  [reported]'),
+                      ('BEATs* · X1  [final]', 'BEATs* · X1f (GS12f + 3)  [reported]')]
+        gap = max(abs(fe[b] - ev[a]) for a, b in seen_fresh)
+        assert gap <= 0.3, f'title says within 0.3, data say {gap:.2f}'
+    elif fe:
         ttl = (f"On eval, fresh seeds land where the seen ones did: one network {fe['single · C1ᵀ  [final]']:.1f} (C1ᵀ), "
                f"from-scratch ensemble {fe['ensemble · GS8 (8 nets)']:.1f},\nwith BEATs* {fe['BEATs* · X1 (GS8 + 3)']:.1f}; "
                f"the paper reports {paper_eval:.2f}   (* external pretraining, separate track)")
@@ -156,13 +178,16 @@ def fig2_machines():
 
 def fig3_fresh():
     single = read(os.path.join(FC, 'single.csv'))
+    more = read(os.path.join(EG, 'single.csv'))         # seeds 2064-2067 (ensemble-g8), if scored
+    if single and more:
+        single = single + more
     dec = json.load(open(os.path.join(FC, 'decisions.json'))) if os.path.exists(os.path.join(FC, 'decisions.json')) else None
     if not single or not dec:
         return print('skip fig3 (fresh-confirm not scored yet)')
     S = read(os.path.join(SCORES, 'summary.csv'))
     p1 = next(x for x in S if x['system'].startswith('C1ᵀ'))
     paper = next(x for x in S if x['track'] == 'paper')
-    fig, axs = plt.subplots(1, 2, figsize=(9.0, 3.3), sharey=True)
+    fig, axs = plt.subplots(1, 2, figsize=(11.4 if more else 9.0, 3.3), sharey=True)
     all_above = True
 
     def margin(ax, yv, text, colour):
@@ -173,11 +198,13 @@ def fig3_fresh():
         rs = sorted((r for r in single if r['rule'] == 'C1T' and r['dataset'] == ds and '_fc_nogain_' in r['run']),
                     key=lambda r: r['run'])
         v = [float(r['Amean']) for r in rs]
-        ax.scatter(range(len(v)), v, color=col, s=40, zorder=3, edgecolor=SURFACE, linewidth=1)
+        new = [bool(more) and r in more for r in rs]
+        ax.scatter(range(len(v)), v, s=40, zorder=3, linewidth=1.4,
+                   facecolor=[col if n or not more else SURFACE for n in new], edgecolor=col if more else SURFACE)
         ax.axhline(float(np.mean(v)), color=col, lw=1.6, zorder=2)
         ref = float(p1[f'{ds}_Amean'])
         ax.axhline(ref, color=MUTED, lw=0.9, ls=(0, (3, 3)))
-        margin(ax, ref, f'seeds 2040–47 mean {ref:.2f}', INK_2)
+        margin(ax, ref, f'seen seeds 2040–47 mean {ref:.2f}', INK_2)
         bar = dec.get('F1', {}).get(f'bar_{ds}')
         if bar is not None:
             ax.axhline(bar, color=INK, lw=1.0, ls=(0, (5, 2)))
@@ -187,14 +214,18 @@ def fig3_fresh():
         margin(ax, pv, f'paper, one run {pv:.2f}', INK_2)
         all_above = all_above and min(v) > pv
         ax.set_xticks(range(len(v)))
-        ax.set_xticklabels([r['run'].rsplit('_s', 1)[-1] for r in rs])
+        ax.set_xticklabels([r['run'].rsplit('_s', 1)[-1] for r in rs], fontsize=7.5 if more else 9)
         ax.set_xlabel('training seed')
         ax.set_xlim(-0.5, len(v) - 0.5)
-        ax.set_title(f'{ds} test set: fresh mean {np.mean(v):.2f} (solid line)', fontsize=9, loc='left', color=INK_2)
+        ax.set_title(f'{ds} test set: mean of {len(v)} fresh seeds {np.mean(v):.2f} (solid line)', fontsize=9, loc='left',
+                     color=INK_2)
         ax.grid(axis='y')
         ax.set_axisbelow(True)
     axs[0].set_ylabel('C1ᵀ Amean, one network (%)')
     ok = dec.get('F1', {}).get('passed')
+    if more:
+        axs[0].annotate('hollow = first four (fresh-confirm), filled = ensemble-g8', (0.0, -0.26), xycoords='axes fraction',
+                        fontsize=7.5, color=INK_2)
     fig.suptitle(('Every fresh network is above the paper under the frozen rule C1ᵀ, and the mean clears the F1 bar'
                   if ok and all_above else 'Fresh networks under the frozen rule C1ᵀ: the mean clears the F1 bar'
                   if ok else 'Fresh networks under the frozen rule C1ᵀ: the mean does not clear the F1 bar'),

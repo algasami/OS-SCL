@@ -9,6 +9,12 @@ picks final systems by a rule fixed in advance, and checks them on seeds nobody 
 > 92.97 / 93.22). A from-scratch ensemble reaches about 94.9 on eval; `sb_spec` members help on
 > dev and are not shown to help on eval. With BEATs (separate track) X1 reaches 95.42. The text below is the charter as
 > written on 2026-11-09 and is left unchanged.
+>
+> **Follow-up 2026-11-12 (`ensemble-g8`).** Four more fresh `ao_nogain` networks, rules committed
+> before scoring. One network under C1ᵀ: 94.11 dev / 94.37 eval over 8 fresh seeds, each above every
+> paper number (under `eval.py`'s own score, 4 of 8). Reported from-scratch ensemble: GS12f
+> (8 `ao_nogain` + 4 `sb_spec`), **95.01 / 95.03**; 8 `ao_nogain` networks alone reach 94.76 / 95.00,
+> so `sb_spec` is still not shown to help on eval. With BEATs: X1f, 95.19 / 95.51. `final/README.md` carries these as **[g8]** notes.
 
 ## Where phase 1 ended (the incumbents)
 

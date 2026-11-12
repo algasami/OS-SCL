@@ -17,3 +17,11 @@ fresh seeds (2060+),"C1T, fresh ao_nogain (mean of 4)",1,confirmation,96.48,91.5
 fresh seeds (2060+),fresh G4,4,confirmation,96.98,92.06,93.86,94.52,96.76,92.85,92.88,94.80,94.66,94.67,synthesis/fresh-confirm
 fresh seeds (2060+),fresh GS8,8,confirmation,97.25,92.60,94.39,94.92,96.90,92.90,93.15,94.90,95.07,94.69,synthesis/fresh-confirm
 WITH EXTERNAL PRETRAINING,fresh X1,11,confirmation,97.37,92.89,94.77,95.13,97.24,93.60,94.19,95.42,95.26,95.27,synthesis/fresh-confirm
+fresh seeds (2060+),"R0, fresh ao_nogain (mean of 8)",1,"confirmation, seeds 2060-2067; supersedes the mean of 4",95.84,90.80,91.52,93.32,95.37,91.46,89.77,93.41,93.49,93.44,synthesis/ensemble-g8
+fresh seeds (2060+),"C1, fresh ao_nogain (mean of 8)",1,"confirmation, seeds 2060-2067; supersedes the mean of 4",96.43,91.55,92.96,93.99,96.52,92.17,92.68,94.34,94.14,94.33,synthesis/ensemble-g8
+fresh seeds (2060+),"C1T, fresh ao_nogain (mean of 8)",1,"confirmation, seeds 2060-2067; supersedes the mean of 4",96.51,91.71,93.11,94.11,96.55,92.19,92.77,94.37,94.23,94.39,synthesis/ensemble-g8
+fresh seeds (2060+),fresh G4b,4,second draw of 4 networks,96.96,92.37,93.51,94.66,96.83,92.99,92.96,94.91,94.79,94.74,synthesis/ensemble-g8
+fresh seeds (2060+),fresh G8f,8,recipe named for a new build (E4),97.09,92.44,93.90,94.76,96.89,93.11,93.08,95.00,94.89,94.82,synthesis/ensemble-g8
+fresh seeds (2060+),fresh GS12f,12,"REPORTED from-scratch ensemble (dev pick, E2)",97.28,92.74,94.38,95.01,96.98,93.07,93.31,95.03,95.15,94.80,synthesis/ensemble-g8
+WITH EXTERNAL PRETRAINING,fresh XG8,11,"external, on the simple build",97.27,92.75,94.63,95.01,97.23,93.67,94.13,95.45,95.15,95.30,synthesis/ensemble-g8
+WITH EXTERNAL PRETRAINING,fresh X1f,15,REPORTED external system (E7),97.40,92.98,94.84,95.19,97.30,93.72,94.31,95.51,95.35,95.35,synthesis/ensemble-g8
