@@ -6,6 +6,11 @@
 > every paper number). **The ensemble level replicates** (GS8 94.92 / 94.90), **but `sb_spec` is not
 > shown to matter on eval** (GS8 − G4 = +0.09, CI includes 0; at equal size −0.09). BEATs fusion
 > replicates (+0.52 eval). See *Results* and *What does not replicate* below.
+>
+> **Extended 2026-11-12 by `../ensemble-g8`** (four more `ao_nogain` seeds, 2064–2067; nothing here
+> was rescored). **[n=8]** single network under C1ᵀ: 94.11 / 94.37 (was 94.02 / 94.23 at n=4).
+> The untrained option named below, an 8-network fresh `ao_nogain` ensemble, scores 94.76 / 95.00;
+> the 12-network mix GS12f scores 95.01 / 95.03. The `sb_spec` verdict is unchanged.
 
 ## Why this exists
 

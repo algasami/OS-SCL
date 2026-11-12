@@ -1,0 +1,248 @@
+# ensemble-g8: which fresh ensemble do we report?
+
+**Status: DONE 2026-11-12. Scored once.** The predictions and decision rules below were committed
+(10c845e) before any of the four new networks was scored or any of their probe lines read; they are
+left as written. Results are at the end.
+
+**Answer.** The from-scratch ensemble to report is **GS12f: 8 `ao_nogain` + 4 `sb_spec` networks,
+equal weights, dev Amean 95.01, eval 95.03** (chosen on dev; eval read once). Eight `ao_nogain`
+networks alone reach **94.76 / 95.00**: the same eval level with two thirds of the training and one
+recipe, and by rule E4 that is the recipe named for a new build. The `sb_spec` networks raise dev and
+are again not shown to help on eval. With the three BEATs networks the pick becomes X1f,
+**95.19 / 95.51**.
+
+## Question
+
+`../final` reports one network (C1ᵀ) and says of the ensemble only that it sits at about 94.9 eval
+Amean, and that the `sb_spec` members "are not shown to help on eval". The ensemble will be reported
+beside the single network, because N networks cost N times the training but stay cheap at inference.
+That needs one named build, and `../fresh-confirm` left the choice open:
+
+- fresh GS8 (4 `ao_nogain` at weight 2 + 4 `sb_spec` at weight 1) beat fresh G4 (4 `ao_nogain`) by
+  +0.40 dev but only +0.09 eval, CI [−0.08, +0.24];
+- that comparison gives GS8 twice the networks. Count-matched (2 G + 2 S against 4 G) the mix was
+  +0.26 on dev (36 of 36 subsets) and −0.09 on eval (8 of 36);
+- so the eval gain of GS8 may be the gain of *any* four extra networks. The direct test, eight fresh
+  `ao_nogain` networks against the mix, was never run. This study runs it.
+
+## What is trained
+
+Four more `ao_nogain` networks, seeds **2064–2067**, with `../fresh-confirm/run_one.sh`'s `nogain`
+recipe flag for flag (`run.sh train_one`): 300 epochs, fast recipe, `--lean 1`,
+`--wave_aug 1 --wave_aug_ops noise,shift`, `--num_workers 8`. They are named `fc_nogain_s2064…67` and
+live beside the first four. Nothing else is trained; the four fresh `sb_spec` networks and the three
+phase-1 BEATs networks are reused as they are.
+
+No seed is dropped, replaced or rerun after scoring. If a run cannot be finished (three crash-resume
+attempts fail) the study stops and reports that; G8f is not rebuilt from seven networks.
+
+## Systems
+
+All are Σ S1′ over members (`../grand-ensemble/score.py: ensemble_from_dumps`), the rule frozen in
+phase 1. No rule, weight or member list is fitted here.
+
+| name | members (weight each) | n | status |
+|---|---|---|---|
+| G4 | `fc_nogain` 2060–63 (1) | 4 | scored in `../fresh-confirm`; recomputed here and asserted equal |
+| G4b | `fc_nogain` 2064–67 (1) | 4 | new; a second draw of G4 |
+| **G8f** | `fc_nogain` 2060–67 (1) | 8 | new; phase 1's G8 on fresh seeds |
+| **GS8** | `fc_nogain` 2060–63 (2) + `fc_spec` 2060–63 (1) | 8 | scored in `../fresh-confirm`; recomputed, asserted equal |
+| **GS12f** | `fc_nogain` 2060–67 (1) + `fc_spec` 2060–63 (1) | 12 | new; GS12's exact recipe (the phase-2 dev pick) |
+| X1 | GS8 + BEATs ×3 (1.5) | 11 | external; scored in `../fresh-confirm`; recomputed, asserted equal |
+| X1f | GS12f + BEATs ×3 (1.5) | 15 | external; X1's exact recipe |
+| XG8 | G8f + BEATs ×3 (1.0) | 11 | external; the same BEATs share (0.375 of the from-scratch weight) |
+
+The three bold systems are the candidates for "the from-scratch ensemble we report".
+
+## Decision rules (fixed before scoring)
+
+Amean = mean over machine types of (pooled AUC + pooled pAUC)/2, as everywhere in `synthesis/`. CIs are
+the paired clip bootstrap of `../grand-ensemble` (2000 resamples, seed 0), 2.5–97.5 %.
+
+| id | rule |
+|---|---|
+| E1 | **Level.** Dev and eval of G4b, G8f, GS12f are reported once each, pooled and per-ID. |
+| E2 | **The reported from-scratch ensemble** is the candidate (G8f, GS8, GS12f) with the highest *dev* Amean (exact tie: the earlier in that order). Its eval number is the reported one. Eval never enters the choice. |
+| E3 | **`sb_spec` on eval.** "Confirmed" only if the GS12f − G8f eval CI excludes 0 from above. Otherwise the standing wording stays: not shown to help on eval. The count-matched families (8 networks, equal weights, 2 or 4 of them `sb_spec`, every subset, against G8f) are reported with one fixed reading: a *type effect* on a set needs mean Δ > 0 **and** ≥ 75 % of subsets above G8f. |
+| E4 | **Simplest build not shown worse.** If E2 picks G8f, it is also this. If E2 picks a mix, the mix is "the recommended recipe" only if its eval CI against G8f excludes 0; otherwise both are printed and G8f (one recipe, no spectrum branch) is named as the recipe for a new build. |
+| E5 | **4 → 8 networks.** G8f − G4 and G8f − G4b, dev and eval, with eval CIs. Reported. G4b − G4 is printed as one draw of the seed noise of a four-network ensemble. |
+| E6 | **Single network, second replication.** The four new networks under C1ᵀ must clear `../fresh-confirm`'s F1 bars again: dev ≥ 93.88, eval ≥ 93.34 (phase-1 mean − 2·se, 4 against 8 seeds). The eight fresh seeds together replace the n = 4 row in `../final` by annotation, with paper counts per seed for C1ᵀ and R0. |
+| E7 | **External.** The system reported "with external pretraining" is the E2 pick + BEATs at the fixed share (G8f → XG8, GS8 → X1, GS12f → X1f). Both X1f and XG8 are printed. It is never mixed into the from-scratch rows. |
+
+What this study cannot say: anything about more than four `sb_spec` networks, about a best *N*, or
+about a weighting other than the two frozen ones. The four `fc_spec` networks are the ones
+`../fresh-confirm` found weaker than phase 1's (S1′ 93.36 / 92.74 against 94.06 / 93.42), so a null
+here is a null for these four networks.
+
+## Predictions (80 % intervals)
+
+Anchors. Seen seeds: G8 94.97 / 94.87, GS12 95.21 / 94.93 (GS12 − G8: +0.24 / +0.06), G4 → G8
++0.13 dev / +0.25 eval. Fresh: G4 94.52 / 94.80, GS8 94.92 / 94.90, X1 95.13 / 95.42; single C1ᵀ
+94.02 / 94.23 against 94.26 / 94.10 seen, so fresh networks have run lower on dev and level on eval.
+
+| quantity | dev | eval |
+|---|---|---|
+| new four, C1ᵀ mean | 94.10 (93.85–94.35) | 94.15 (93.70–94.60) |
+| G4b | 94.60 (94.35–94.85) | 94.70 (94.40–95.00) |
+| G8f | 94.65 (94.45–94.85) | 94.95 (94.75–95.15) |
+| GS12f | 94.95 (94.75–95.15) | 94.97 (94.80–95.15) |
+| GS12f − G8f | +0.28 (+0.15 to +0.40) | +0.02 (−0.12 to +0.15) |
+| G8f − GS8 | −0.27 (−0.45 to −0.10) | +0.05 (−0.12 to +0.22) |
+| G8f − G4 | +0.13 (0.00 to +0.25) | +0.15 (0.00 to +0.30) |
+| X1f | 95.15 (95.00–95.30) | 95.45 (95.30–95.60) |
+| XG8 | 94.95 (94.75–95.15) | 95.45 (95.25–95.65) |
+
+Predicted outcomes: E2 picks GS12f (0.70; GS8 0.25, G8f 0.05). E3 not confirmed (0.80); count-matched
+type effect on dev yes, on eval no. E4 names G8f (0.75). E6 passes (0.90). So the expected headline is
+"report GS12f at about 95.0 eval, and say that eight `ao_nogain` networks reach the same eval level".
+The outcome that would change the write-up most is a G8f eval clearly *below* GS8: that would mean the
+mix does carry eval information after all, and `../final`'s "not shown to help" would have been too
+cautious in the other direction.
+
+## Scoring (`score.py`, `run.sh`)
+
+`score.py` adds no rule. It imports `../fresh-confirm/score.py` and uses its machinery unchanged:
+single networks through `../single-final`'s `score_member`, ensembles through `ensemble_from_dumps`,
+every vector computed twice from separate CRC-checked reads. It refuses to write anything unless G4,
+GS8 and X1 come out within 0.0005 Amean of `../fresh-confirm/scores/ensembles.csv`.
+
+`run.sh score` runs it in fresh processes until two outputs are byte-identical (smartlab1's RAM flips
+bits) and is run **once**. `run.sh dryrun` runs the same code on seen seeds (`ao_nogain_s2040–43` as
+"old", `2044–47` as "new", `sb_spec_s2040–43`) and must reproduce the committed G8, GS12 and
+X1[r=0.375] of `../grand-ensemble` and the committed C1 / C1ᵀ of `../single-final`.
+
+`run.sh post` (detached) waits for training, copies `config.json` / `wall.csv` into `scores/<run>/`
+and extracts the dumps of the four new runs with `../fresh-confirm/extract.py`; the eight existing
+dumps are linked, not re-extracted. `run.sh evalpy` (after `score`) writes `eval.py`'s own CSVs, the
+probe trace, the distilled curves and the R0 cross-check.
+
+## Dry run on seen seeds (2026-11-11, `scores/dryrun_p1/`)
+
+Run after the rules above were committed (10c845e) and before any fresh network of this study
+existed. Three independent processes wrote byte-identical output. All twelve committed reference
+numbers come back to four decimals (G4, GS8, X1 of `../fresh-confirm/scores/dryrun_p1`; G8, GS12,
+X1[r=0.375] of `../grand-ensemble`), and the C1 / C1ᵀ of seeds 2044–47 match `../single-final` exactly.
+
+| seen seeds 2040–47 | dev | eval | note |
+|---|---|---|---|
+| G4 (2040–43) / G4b (2044–47) | 94.84 / 94.80 | 94.62 / 94.84 | two draws of four networks differ by 0.21 on eval |
+| G8f | 94.97 | 94.87 | |
+| GS8 | 95.18 | 94.80 | |
+| GS12f | 95.21 | 94.93 | E2 would pick it |
+| GS12f − G8f | +0.23 | +0.06, CI [−0.08, +0.21] | E3: not confirmed |
+| 8 networks, 2 of them `sb_spec`, − G8f | +0.17 (168/168) | +0.04 (109/168) | type effect on dev only |
+| 8 networks, 4 of them `sb_spec`, − G8f | +0.20 (70/70) | −0.08 (16/70) | type effect on dev only |
+| XG8 / X1f | 95.19 / 95.37 | 95.36 / 95.42 | external |
+
+These are phase-1 numbers in a new arrangement, all seen before; they are a test of the code and the
+figure layout, not a result. The predictions above were written without them and are left as written.
+
+## Results (2026-11-12, scored once)
+
+All four runs finished on the first attempt (no crash, no dropped seed; 11.2–11.7 h on GPUs 0 and 2,
+13.8 h on GPU 1). `run.sh score` wrote byte-identical output from two independent processes. G4, GS8
+and X1 came back within 0.00005 Amean of `../fresh-confirm`'s record. `eval.py` reproduces the R0 column of
+the four new networks to 0.005 points on AUC, pAUC and mAUC (`scores/r0_crosscheck.csv`).
+
+### Ensembles
+
+Pooled-ID AUC / pAUC / mAUC and Amean as in `eval.py`; "per-ID" is the literature's Amean.
+
+| system | n | dev AUC / pAUC / mAUC | dev Amean (per-ID) | eval AUC / pAUC / mAUC | eval Amean (per-ID) |
+|---|---|---|---|---|---|
+| G4 (first four) | 4 | 96.98 / 92.06 / 93.86 | 94.52 (94.66) | 96.76 / 92.85 / 92.88 | 94.80 (94.67) |
+| G4b (new four) | 4 | 96.96 / 92.37 / 93.51 | 94.66 (94.79) | 96.83 / 92.99 / 92.96 | 94.91 (94.74) |
+| **G8f** | 8 | 97.09 / 92.44 / 93.90 | 94.76 (94.89) | 96.89 / 93.11 / 93.08 | **95.00** (94.82) |
+| GS8 | 8 | 97.25 / 92.60 / 94.39 | 94.92 (95.07) | 96.90 / 92.90 / 93.15 | 94.90 (94.69) |
+| **GS12f** ← dev pick | 12 | 97.28 / 92.74 / 94.38 | **95.01** (95.15) | 96.98 / 93.07 / 93.31 | **95.03** (94.80) |
+| *with BEATs:* XG8 | 11 | 97.27 / 92.75 / 94.63 | 95.01 (95.15) | 97.23 / 93.67 / 94.13 | 95.45 (95.30) |
+| *with BEATs:* X1 | 11 | 97.37 / 92.89 / 94.77 | 95.13 (95.26) | 97.24 / 93.60 / 94.19 | 95.42 (95.27) |
+| *with BEATs:* **X1f** | 15 | 97.40 / 92.98 / 94.84 | 95.19 (95.35) | 97.30 / 93.72 / 94.31 | **95.51** (95.35) |
+
+Paper (one network, one run): dev 95.71 / 90.23 / 91.23, Amean 92.97; eval Amean 93.22.
+
+### Decisions
+
+| id | outcome |
+|---|---|
+| E1 | Levels as in the table. |
+| E2 | **GS12f** has the highest dev Amean (95.01; GS8 94.92, G8f 94.76). Reported from-scratch ensemble: dev 95.01, **eval 95.03**. |
+| E3 | **Not confirmed.** GS12f − G8f: dev +0.25 (CI +0.11 to +0.39), eval **+0.02 (CI −0.15 to +0.18)**; per-ID eval −0.01. Count-matched at 8 networks, type effect on dev only: with 2 `sb_spec`, dev +0.20 (168 of 168 subsets above G8f), eval +0.00 (85 of 168); with 4 `sb_spec`, dev +0.19 (70 of 70), eval **−0.17 (0 of 70)**. |
+| E4 | The pick is a mix and its eval CI against G8f includes 0, so **G8f is the recipe named for a new build**; both are printed. |
+| E5 | G8f − G4: dev +0.24, eval +0.20 (CI +0.09 to +0.30). G8f − G4b: dev +0.10, eval +0.09 (CI −0.01 to +0.19). G4b − G4, one draw of seed noise at four networks: dev +0.14, eval +0.11. |
+| E6 | **Passes.** New four under C1ᵀ: dev 94.20 (bar 93.88), eval 94.51 (bar 93.34). All eight fresh networks beat all four paper numbers under C1ᵀ; under R0 four of eight do. |
+| E7 | External system = **X1f**: dev 95.19, eval 95.51. XG8: 95.01 / 95.45. X1f − XG8 eval +0.06 (CI −0.10 to +0.19). BEATs adds +0.49 eval to GS12f (CI +0.36 to +0.63) and +0.45 to G8f (CI +0.33 to +0.58). |
+
+### What the numbers say
+
+1. **Report GS12f at 95.01 / 95.03.** It is +2.04 dev and +1.81 eval above the paper's Amean, and
+   +0.90 / +0.66 above one fresh network under C1ᵀ (94.11 / 94.37, below). Every eval number here was
+   read once, after the dev choice.
+2. **Eight `ao_nogain` networks give the same eval score.** 95.00 against 95.03; on the per-ID
+   convention G8f is the higher of the two (94.82 against 94.80). The dev rule picks the mix, eval
+   cannot tell them apart.
+3. **`sb_spec` is a dev effect.** At a fixed eight networks, swapping `ao_nogain` for `sb_spec`
+   raises dev in every one of 238 subsets. On eval it does nothing with two swapped, and with four
+   swapped it is below G8f in all 70 subsets (−0.05 to −0.29). Those 70 are not independent: only
+   four `sb_spec` networks exist, so every one contains the same four, and the family has no CI.
+   The one swap that has a CI is GS8 − G8f, −0.10 (CI −0.28 to +0.06), and GS8 also doubles the
+   weight of its four `ao_nogain` networks, so it is not a pure swap. The dev gain is mostly one
+   machine: GS12f − G8f is +0.86 on dev fan and at most +0.28 elsewhere. On eval the mix gains on
+   fan (+0.40) and pump (+0.56) and loses on valve (−0.42) and ToyConveyor (−0.38).
+4. **More networks still help, slowly.** Four to eight `ao_nogain` networks is worth about +0.15 on
+   eval (+0.20 from one half, CI +0.09 to +0.30; +0.09 from the other, CI −0.01 to +0.19), the same size as the difference between two
+   four-network draws (0.11). An ensemble quoted to 0.1 Amean is quoted to its seed noise.
+5. **BEATs is the only member type with a clear eval gain**, about +0.45 to +0.5, on either build.
+   The other differences whose eval CI excludes 0 come from adding networks of a type already
+   present (G8f − G4 +0.20, GS12f − GS8 +0.13) and are a third of that size.
+
+### Single network, eight fresh seeds (E6)
+
+| rule | dev AUC / pAUC / mAUC | dev Amean (per-ID) | eval AUC / pAUC / mAUC | eval Amean (per-ID) | seeds above all four paper numbers |
+|---|---|---|---|---|---|
+| R0 (`eval.py`) | 95.84 / 90.80 / 91.52 | 93.32 (93.49) | 95.37 / 91.46 / 89.77 | 93.41 (93.44) | 4 of 8 |
+| C1 | 96.43 / 91.55 / 92.96 | 93.99 (94.14) | 96.52 / 92.17 / 92.68 | 94.34 (94.33) | — |
+| **C1ᵀ** | 96.51 / 91.71 / 93.11 | **94.11** (94.23) | 96.55 / 92.19 / 92.77 | **94.37** (94.39) | **8 of 8** |
+
+Means over seeds 2060–67; the first four are `../fresh-confirm`'s rows, unchanged. Seed-to-seed sd of
+C1ᵀ Amean: 0.16 dev, 0.26 eval (phase 1's eight seen seeds: 0.31, 0.62). Under R0 the eight-seed mean
+is above the paper on all four numbers, but per seed it is not: dev AUC 5 of 8, pAUC 7, mAUC 5, eval
+Amean 6. The valve caveat of `../final` holds on the new seeds too: C1ᵀ is 1.1 to 1.6 Amean below R0
+on eval valve for each of them.
+
+### Predictions against outcomes
+
+All 18 predicted numbers fell inside their 80 % intervals, which suggests the intervals were too
+wide (about 14 of 18 was the target; the 18 are correlated, so this is weak evidence). The five
+predicted outcomes (E2 GS12f, E3 not confirmed, type effect on dev and not on eval, E4 G8f, E6 pass)
+all occurred. Largest misses, both on the high side: new-four C1ᵀ eval 94.51 against 94.15
+predicted, and G4b eval 94.91 against 94.70. Closest to an interval edge: G8f − G4 on dev, +0.24
+against an interval of 0.00 to +0.25. Not predicted: the count-matched eval result with four `sb_spec`
+is negative in *every* subset; on seen seeds it was negative in 54 of 70.
+
+### What does not follow
+
+- Not "the mix is better". Its dev lead is real (CI excludes 0) and is not shown to transfer.
+- Not "`sb_spec` hurts". GS12f − G8f on eval is +0.02 with a CI of ±0.16. The half-and-half swap at
+  fixed size is below G8f in every subset, but every subset holds the same four `fc_spec` networks,
+  and those are the four that `../fresh-confirm` found weaker than phase 1's.
+- Not "95.0 is the ceiling". Eight to twelve networks is where this study stops.
+- X1f's 95.51 uses three BEATs networks trained in phase 1 on the same data; they are not fresh, and
+  the row is not a from-scratch result.
+
+## Figures
+
+`/home/f74134118/anaconda3/bin/python make_plots.py` (reads `scores/` and `../fresh-confirm/scores/`).
+
+| figure | shows |
+|---|---|
+| `plots/fig1_ensembles.png` | dev and eval Amean of every system; the dev pick; the BEATs systems apart |
+| `plots/fig2_sb_spec.png` | left: GS12f − G8f and GS8 − G8f with bootstrap CIs; right: every count-matched 8-network subset against G8f |
+| `plots/fig3_singles.png` | the eight fresh networks under R0 and C1ᵀ against the paper's Amean |
+
+## Record
+
+`scores/ensembles.csv` (all systems, per machine), `single.csv` / `single_machines.csv` (the four new
+networks), `subsets.csv` (238 count-matched subsets × 2 sets), `bootstrap.json`, `decisions.json`,
+`r0_crosscheck.csv`, `dryrun_p1/` (the dry run), and per run `config.json`, `wall.csv`, `probe.csv`, `eval_dev.csv`,
+`eval_eval.csv`, `curve.csv`.
