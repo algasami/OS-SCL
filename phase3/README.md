@@ -22,7 +22,7 @@ Paper: dev AUC / pAUC / mAUC 95.71 / 90.23 / 91.23, eval mean 93.22.
 
 | study | question | compute | branch / worktree |
 |---|---|---|---|
-| `beats-router/` | Can X1f run its BEATs block only on some machine types, chosen on dev, and keep its accuracy at a fraction of the inference cost? | CPU (existing dumps) + a short GPU timing | `phase3/beats-router` / `../OS-SCL-p3-router` |
+| `beats-router/` | Can X1f run its BEATs block only on some machine types, chosen on dev, and keep its accuracy at a fraction of the inference cost? **Done 2026-11-22: no.** The dev pick R\* saves 42 % of FLOPs but loses 0.11 [−0.22, −0.03] eval Amean to X1f; dev and eval disagree on where BEATs helps. X1f stays. | CPU (existing dumps) + a short GPU timing | `phase3/beats-router` / `../OS-SCL-p3-router` |
 
 ## Rules of this phase (not optional)
 

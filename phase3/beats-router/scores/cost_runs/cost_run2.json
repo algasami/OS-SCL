@@ -1,0 +1,89 @@
+{
+ "_doc": "members: per-clip network forward only, 10 s @ 16 kHz. flops = torch.utils.flop_counter total on CPU at batch 1 (counter convention: 2 per MAC), flops_b4_per_clip = batch 4 / 4 (check). params = all parameters of the net as loaded (lean nets have no dead modules). lat_*_ms = median ms of 50 timed runs after 10 warm-up, GPU 0, fp32, eval, no_grad, synchronize; *_iqr = 75th-25th percentile; b32 values are per clip (batch time / 32). fc_* b1 uses TFgram train=False (eval.py), b32 train=True (extract.py); beats timed on a precomputed fbank. frontends are EXCLUDED from the primary cost: Log-Mel CPU ms/clip (torchaudio Wave2Mel), BEATs Kaldi fbank CPU ms/clip and GPU ms/clip at b32. clips: test wav counts per machine type for dev and eval. x1f = 8 fc_nogain + 4 fc_spec + 3 BEATs: flops_total and lat_b32_ms_per_clip_total sum over members; beats_share_* = BEATs part of that total. Latency is never compared across GPUs.",
+ "members": {
+  "fc_nogain": {
+   "lean": true,
+   "params": 1377535,
+   "flops": 4503466496,
+   "flops_b4_per_clip": 4503466496.0,
+   "lat_b1_ms": 3.4343041479587555,
+   "lat_b1_iqr": 0.014940742403268814,
+   "lat_b32_ms_per_clip": 1.4756869204575196,
+   "lat_b32_iqr": 0.004630557668861002,
+   "note": "b1 uses TFgram train=False (as eval.py); b32 uses train=True (as extract.py)"
+  },
+  "fc_spec": {
+   "lean": true,
+   "params": 2959615,
+   "flops": 4674990592,
+   "flops_b4_per_clip": 4674990592.0,
+   "lat_b1_ms": 4.0473029948771,
+   "lat_b1_iqr": 0.016862526535987854,
+   "lat_b32_ms_per_clip": 1.538920114398934,
+   "lat_b32_iqr": 0.0036709971027448773,
+   "note": "b1 uses TFgram train=False (as eval.py); b32 uses train=True (as extract.py)"
+  },
+  "beats": {
+   "params": 90908144,
+   "flops": 89929165056,
+   "flops_b4_per_clip": 89929165056.0,
+   "lat_b1_ms": 17.615763004869223,
+   "lat_b1_iqr": 0.1585481222718954,
+   "lat_b32_ms_per_clip": 16.28015706955921,
+   "lat_b32_iqr": 0.729440049326513
+  }
+ },
+ "frontends": {
+  "fc_nogain": {
+   "logmel_cpu_ms_per_clip": 1.0095690377056599,
+   "logmel_cpu_iqr": 0.018221093341708183,
+   "cpu_threads": 20
+  },
+  "fc_spec": {
+   "logmel_cpu_ms_per_clip": 0.7567810826003551,
+   "logmel_cpu_iqr": 0.013357028365135193,
+   "cpu_threads": 20
+  },
+  "beats": {
+   "fbank_cpu_ms_per_clip": 1.371476799249649,
+   "fbank_cpu_iqr": 0.025177141651511192,
+   "cpu_threads": 20,
+   "fbank_gpu_ms_per_clip_b32": 0.3191036230418831
+  }
+ },
+ "clips": {
+  "dev": {
+   "fan": 1875,
+   "pump": 856,
+   "slider": 1290,
+   "ToyCar": 2459,
+   "ToyConveyor": 3509,
+   "valve": 879
+  },
+  "eval": {
+   "fan": 1342,
+   "pump": 777,
+   "slider": 834,
+   "ToyCar": 1545,
+   "ToyConveyor": 1665,
+   "valve": 940
+  }
+ },
+ "x1f": {
+  "composition": {
+   "fc_nogain": 8,
+   "fc_spec": 4,
+   "beats": 3
+  },
+  "flops_total": 324515189504,
+  "beats_share_flops": 0.8313555232356068,
+  "lat_b32_ms_per_clip_total": 66.80164702993352,
+  "beats_share_lat_b32": 0.7311267518118593
+ },
+ "host": {
+  "gpu_name": "NVIDIA RTX A4000",
+  "gpu_index": 0,
+  "torch": "2.6.0+cu124",
+  "date": "2026-11-22"
+ }
+}
