@@ -74,7 +74,9 @@ Loss (`utils.os_scl`): mixup-interpolated ArcFace CE + `SupConLoss` on the embed
 
 ## Ablations
 
-Each ablation is a self-contained directory, `ablation/<name>/`:
+Studies are grouped by phase, each with the same per-study layout: `ablation/` (phase 1,
+closed 2026-11-08), `synthesis/` (phase 2, closed 2026-11-12), `phase3/` (everything after;
+charter in `phase3/README.md`). Each ablation is a self-contained directory, `ablation/<name>/`:
 
 ```
 ablation/<name>/
