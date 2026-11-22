@@ -1,0 +1,716 @@
+{
+  "systems": {
+    "X1f": {
+      "dev": {
+        "AUC": 97.3995,
+        "pAUC": 92.9848,
+        "mAUC": 94.8429,
+        "Amean": 95.1922,
+        "AUC_perID": 97.4419,
+        "pAUC_perID": 93.254,
+        "Amean_perID": 95.348
+      },
+      "eval": {
+        "AUC": 97.2999,
+        "pAUC": 93.7223,
+        "mAUC": 94.3131,
+        "Amean": 95.5111,
+        "AUC_perID": 97.2663,
+        "pAUC_perID": 93.4413,
+        "Amean_perID": 95.3538
+      }
+    },
+    "GS12f": {
+      "dev": {
+        "AUC": 97.2773,
+        "pAUC": 92.7385,
+        "mAUC": 94.3787,
+        "Amean": 95.0079,
+        "AUC_perID": 97.3221,
+        "pAUC_perID": 92.9685,
+        "Amean_perID": 95.1453
+      },
+      "eval": {
+        "AUC": 96.9765,
+        "pAUC": 93.0738,
+        "mAUC": 93.3071,
+        "Amean": 95.0251,
+        "AUC_perID": 96.8966,
+        "pAUC_perID": 92.7094,
+        "Amean_perID": 94.803
+      }
+    },
+    "Rstar": {
+      "dev": {
+        "AUC": 97.4362,
+        "pAUC": 93.0922,
+        "mAUC": 94.7765,
+        "Amean": 95.2642,
+        "AUC_perID": 97.463,
+        "pAUC_perID": 93.2877,
+        "Amean_perID": 95.3753
+      },
+      "eval": {
+        "AUC": 97.274,
+        "pAUC": 93.5209,
+        "mAUC": 94.2683,
+        "Amean": 95.3975,
+        "AUC_perID": 97.2291,
+        "pAUC_perID": 93.1634,
+        "Amean_perID": 95.1962
+      }
+    },
+    "Rci": {
+      "dev": {
+        "AUC": 97.4362,
+        "pAUC": 93.0922,
+        "mAUC": 94.7765,
+        "Amean": 95.2642,
+        "AUC_perID": 97.463,
+        "pAUC_perID": 93.2877,
+        "Amean_perID": 95.3753
+      },
+      "eval": {
+        "AUC": 97.274,
+        "pAUC": 93.5209,
+        "mAUC": 94.2683,
+        "Amean": 95.3975,
+        "AUC_perID": 97.2291,
+        "pAUC_perID": 93.1634,
+        "Amean_perID": 95.1962
+      }
+    }
+  },
+  "Rstar": {
+    "types": [
+      "pump",
+      "ToyCar",
+      "valve"
+    ],
+    "mask": "010101",
+    "rule": "M = {m : dev Amean_m(X1f) - Amean_m(GS12f) > 0}",
+    "minus_X1f": {
+      "dev": 0.07200000000000273,
+      "eval": -0.11360000000000525
+    },
+    "minus_GS12f": {
+      "dev": 0.256299999999996,
+      "eval": 0.37239999999999895
+    },
+    "dev_rank_of_64": 1,
+    "eval_rank_of_64": 28
+  },
+  "Rci": {
+    "types": [
+      "pump",
+      "ToyCar",
+      "valve"
+    ],
+    "mask": "010101",
+    "note": "R_ci equals R*; its pairs are the R* pairs",
+    "dev_ci_by_machine": {
+      "fan": [
+        -0.027867975022289215,
+        -0.11906233273863229,
+        0.0493938447814489
+      ],
+      "pump": [
+        0.7683518005540293,
+        0.3960843721144972,
+        1.1912302343028789
+      ],
+      "slider": [
+        -0.12139266706091689,
+        -0.39511993642814713,
+        0.026389710230631636
+      ],
+      "ToyCar": [
+        0.5978615092973314,
+        0.41367068521160244,
+        0.8076928333581804
+      ],
+      "ToyConveyor": [
+        -0.28304428251774993,
+        -0.5672869810421683,
+        -0.03329507355582068
+      ],
+      "valve": [
+        0.1716157565102634,
+        0.02615097242062312,
+        0.39063015053290007
+      ]
+    }
+  },
+  "cost": {
+    "flops": {
+      "per_member": {
+        "fc_nogain": 4503466496.0,
+        "fc_spec": 4674990592.0,
+        "beats": 89929165056.0
+      },
+      "X1f_total": 324515189504.0,
+      "GS12f_total": 54727694336.0,
+      "beats_share_of_X1f": 0.8313555232356068,
+      "Rstar": {
+        "type_weighted": 0.5843222383821967,
+        "clip_weighted": {
+          "dev": 0.4894675412150865,
+          "eval": 0.5504383267988223
+        }
+      },
+      "Rci": {
+        "type_weighted": 0.5843222383821967,
+        "clip_weighted": {
+          "dev": 0.4894675412150865,
+          "eval": 0.5504383267988223
+        }
+      }
+    },
+    "lat_b32_ms_per_clip": {
+      "per_member": {
+        "fc_nogain": 1.4911856706021354,
+        "fc_spec": 1.5538992593064904,
+        "beats": 16.846968210302293
+      },
+      "X1f_total": 68.68598703294992,
+      "GS12f_total": 18.145082402043045,
+      "beats_share_of_X1f": 0.7358255564801228,
+      "Rstar": {
+        "type_weighted": 0.6320872217599386,
+        "clip_weighted": {
+          "dev": 0.5481321527467483,
+          "eval": 0.6020968657693718
+        }
+      },
+      "Rci": {
+        "type_weighted": 0.6320872217599386,
+        "clip_weighted": {
+          "dev": 0.5481321527467483,
+          "eval": 0.6020968657693718
+        }
+      }
+    },
+    "lat_b1_ms": {
+      "per_member": {
+        "fc_nogain": 3.4370827488601208,
+        "fc_spec": 4.0447283536195755,
+        "beats": 17.89554674178362
+      },
+      "X1f_total": 97.36221563071012,
+      "GS12f_total": 43.67557540535927,
+      "beats_share_of_X1f": 0.551411447218719,
+      "Rstar": {
+        "type_weighted": 0.7242942763906405,
+        "clip_weighted": {
+          "dev": 0.6613801988647653,
+          "eval": 0.7018201648927074
+        }
+      },
+      "Rci": {
+        "type_weighted": 0.7242942763906405,
+        "clip_weighted": {
+          "dev": 0.6613801988647653,
+          "eval": 0.7018201648927074
+        }
+      }
+    },
+    "params": {
+      "per_member": {
+        "fc_nogain": 1377535.0,
+        "fc_spec": 2959615.0,
+        "beats": 90908144.0
+      },
+      "X1f_total": 295583172.0,
+      "GS12f_total": 22858740.0,
+      "beats_share_of_X1f": 0.9226656245505073,
+      "Rstar": {
+        "type_weighted": 0.5386671877247464,
+        "clip_weighted": {
+          "dev": 0.43339433398508603,
+          "eval": 0.5010617114038436
+        }
+      },
+      "Rci": {
+        "type_weighted": 0.5386671877247464,
+        "clip_weighted": {
+          "dev": 0.43339433398508603,
+          "eval": 0.5010617114038436
+        }
+      }
+    }
+  },
+  "cost_source": "scores/cost.json",
+  "D1": {
+    "a": {
+      "metric": "flops",
+      "Rstar_type_weighted_fraction": 0.5843222383821967,
+      "threshold": 0.7,
+      "passed": true,
+      "Rstar_clip_weighted_fraction": {
+        "dev": 0.4894675412150865,
+        "eval": 0.5504383267988223
+      }
+    },
+    "b": {
+      "eval_ci_Rstar_minus_X1f": [
+        -0.11366436231099745,
+        -0.2212756363516391,
+        -0.030845650040510732
+      ],
+      "lower_bound": -0.2212756363516391,
+      "threshold": -0.2,
+      "passed": false
+    },
+    "c": {
+      "eval_ci_Rstar_minus_GS12f": [
+        0.37362375709491524,
+        0.2782523985027211,
+        0.47371265835813176
+      ],
+      "lower_bound": 0.2782523985027211,
+      "passed": true
+    },
+    "passed": false,
+    "dev_ci": {
+      "Rstar_minus_X1f": [
+        0.07273375080588534,
+        0.017216733564896104,
+        0.13775787017656901
+      ],
+      "Rstar_minus_GS12f": [
+        0.25623769630676946,
+        0.17577974526651624,
+        0.33869386794054157
+      ]
+    }
+  },
+  "D2": {
+    "eval_ci_Rstar_minus_X1f": [
+      -0.11366436231099745,
+      -0.2212756363516391,
+      -0.030845650040510732
+    ],
+    "passed": false
+  },
+  "D3": {
+    "frac_dev_draws_delta_pos": {
+      "fan": 0.258,
+      "pump": 1.0,
+      "slider": 0.19,
+      "ToyCar": 1.0,
+      "ToyConveyor": 0.012,
+      "valve": 0.9995
+    },
+    "decided_ge_90pct": {
+      "fan": false,
+      "pump": true,
+      "slider": false,
+      "ToyCar": true,
+      "ToyConveyor": true,
+      "valve": true
+    },
+    "passed": false,
+    "frac_dev_draws_set_equals_Rstar": 0.5995,
+    "eval_descriptive": {
+      "frac_eval_draws_delta_pos": {
+        "fan": 0.0205,
+        "pump": 0.2715,
+        "slider": 0.9995,
+        "ToyCar": 1.0,
+        "ToyConveyor": 0.9755,
+        "valve": 0.755
+      },
+      "frac_eval_draws_set_equals_dev_Rstar": 0.0,
+      "eval_observed_set": [
+        "slider",
+        "ToyCar",
+        "ToyConveyor",
+        "valve"
+      ],
+      "frac_eval_draws_set_equals_eval_observed": 0.529
+    }
+  },
+  "machine_delta": {
+    "dev": {
+      "fan": {
+        "delta": -0.027867975022289215,
+        "boot_mean": -0.0293669603033007,
+        "lo": -0.11906233273863229,
+        "hi": 0.0493938447814489,
+        "frac_pos": 0.258
+      },
+      "pump": {
+        "delta": 0.7683518005540293,
+        "boot_mean": 0.7662544508887349,
+        "lo": 0.3960843721144972,
+        "hi": 1.1912302343028789,
+        "frac_pos": 1.0
+      },
+      "slider": {
+        "delta": -0.12139266706091689,
+        "boot_mean": -0.12272314828503852,
+        "lo": -0.39511993642814713,
+        "hi": 0.026389710230631636,
+        "frac_pos": 0.19
+      },
+      "ToyCar": {
+        "delta": 0.5978615092973314,
+        "boot_mean": 0.5963426697054256,
+        "lo": 0.41367068521160244,
+        "hi": 0.8076928333581804,
+        "frac_pos": 1.0
+      },
+      "ToyConveyor": {
+        "delta": -0.28304428251774993,
+        "boot_mean": -0.28431239624697424,
+        "lo": -0.5672869810421683,
+        "hi": -0.03329507355582068,
+        "frac_pos": 0.012
+      },
+      "valve": {
+        "delta": 0.1716157565102634,
+        "boot_mean": 0.17482905724645634,
+        "lo": 0.02615097242062312,
+        "hi": 0.39063015053290007,
+        "frac_pos": 0.9995
+      }
+    },
+    "eval": {
+      "fan": {
+        "delta": -0.09594800637059109,
+        "boot_mean": -0.09527267272496107,
+        "lo": -0.22399733179130407,
+        "hi": -0.002379119774732949,
+        "frac_pos": 0.0205
+      },
+      "pump": {
+        "delta": -0.1013829122071428,
+        "boot_mean": -0.09690575232630806,
+        "lo": -0.4088045717017973,
+        "hi": 0.20554498142632427,
+        "frac_pos": 0.2715
+      },
+      "slider": {
+        "delta": 0.5082462711084759,
+        "boot_mean": 0.5152512730797035,
+        "lo": 0.11142322097377644,
+        "hi": 1.086913972665739,
+        "frac_pos": 0.9995
+      },
+      "ToyCar": {
+        "delta": 2.270908087829625,
+        "boot_mean": 2.2749907359593946,
+        "lo": 1.8654415756371896,
+        "hi": 2.7168115414321976,
+        "frac_pos": 1.0
+      },
+      "ToyConveyor": {
+        "delta": 0.2695000411827664,
+        "boot_mean": 0.2620075735112427,
+        "lo": 0.0013891977596522055,
+        "hi": 0.5297906885758986,
+        "frac_pos": 0.9755
+      },
+      "valve": {
+        "delta": 0.06463815789471994,
+        "boot_mean": 0.06365755893640346,
+        "lo": -0.17163993969297273,
+        "hi": 0.2497001781798147,
+        "frac_pos": 0.755
+      }
+    }
+  },
+  "bootstrap_pairs": {
+    "dev": {
+      "Rstar-X1f": {
+        "AUC": [
+          0.036506927338601315,
+          0.001097815976546102,
+          0.07239916565875254
+        ],
+        "pAUC": [
+          0.10896057427316963,
+          0.019497678916805226,
+          0.215046952165218
+        ],
+        "mAUC": [
+          -0.06719220221399437,
+          -0.18107196455348387,
+          0.03811138271035362
+        ],
+        "mean_AUC_pAUC": [
+          0.07273375080588534,
+          0.017216733564896104,
+          0.13775787017656901
+        ]
+      },
+      "Rstar-GS12f": {
+        "AUC": [
+          0.15914721769451357,
+          0.1155939350151403,
+          0.2069782182937537
+        ],
+        "pAUC": [
+          0.3533281749190252,
+          0.22890607061977483,
+          0.48871159041091966
+        ],
+        "mAUC": [
+          0.3875778555980753,
+          0.14640727328231265,
+          0.6736788858663858
+        ],
+        "mean_AUC_pAUC": [
+          0.25623769630676946,
+          0.17577974526651624,
+          0.33869386794054157
+        ]
+      },
+      "X1f-GS12f": {
+        "AUC": [
+          0.12264029035591224,
+          0.06582138313595606,
+          0.1822641926963534
+        ],
+        "pAUC": [
+          0.24436760064585547,
+          0.08538812274947212,
+          0.405659725091675
+        ],
+        "mAUC": [
+          0.4547700578120697,
+          0.18266502797082254,
+          0.7812261074780472
+        ],
+        "mean_AUC_pAUC": [
+          0.1835039455008841,
+          0.08196567260476861,
+          0.2843378369851571
+        ]
+      }
+    },
+    "eval": {
+      "Rstar-X1f": {
+        "AUC": [
+          -0.02612731142034349,
+          -0.07003555060977326,
+          0.013460757372492008
+        ],
+        "pAUC": [
+          -0.20120141320165097,
+          -0.3814635521417301,
+          -0.06182173281749577
+        ],
+        "mAUC": [
+          -0.04961367048194329,
+          -0.3009743983184496,
+          0.10913308005547101
+        ],
+        "mean_AUC_pAUC": [
+          -0.11366436231099745,
+          -0.2212756363516391,
+          -0.030845650040510732
+        ]
+      },
+      "Rstar-GS12f": {
+        "AUC": [
+          0.3000689532560275,
+          0.23286288088895296,
+          0.37548383997204765
+        ],
+        "pAUC": [
+          0.44717856093380304,
+          0.30013655855769555,
+          0.5955255342233873
+        ],
+        "mAUC": [
+          0.9688956391231146,
+          0.7306302370317752,
+          1.2377091664579492
+        ],
+        "mean_AUC_pAUC": [
+          0.37362375709491524,
+          0.2782523985027211,
+          0.47371265835813176
+        ]
+      },
+      "X1f-GS12f": {
+        "AUC": [
+          0.32619626467637103,
+          0.24670579605142393,
+          0.41160495122750895
+        ],
+        "pAUC": [
+          0.6483799741354539,
+          0.4400808978121226,
+          0.8827799219710107
+        ],
+        "mAUC": [
+          1.018509309605058,
+          0.7119219346470409,
+          1.377225495048057
+        ],
+        "mean_AUC_pAUC": [
+          0.48728811940591266,
+          0.35705915016226975,
+          0.6340454641968697
+        ]
+      }
+    }
+  },
+  "crossbase": {
+    "X1f-GS12f": {
+      "n_sign_agree": 3,
+      "sign_agree": {
+        "fan": true,
+        "pump": false,
+        "slider": false,
+        "ToyCar": true,
+        "ToyConveyor": false,
+        "valve": true
+      },
+      "own_dev_set": [
+        "pump",
+        "ToyCar",
+        "valve"
+      ],
+      "Rstar_applied_eval": 95.39749142762345,
+      "Rstar_applied_dev": 95.26420681649819,
+      "ext_eval": 95.51112447861024,
+      "base_eval": 95.02513087203727,
+      "Rstar_applied_minus_ext_eval": -0.11363305098679177,
+      "own_dev_set_applied_eval": 95.39749142762345
+    },
+    "XG8-G8f": {
+      "n_sign_agree": 3,
+      "sign_agree": {
+        "fan": false,
+        "pump": false,
+        "slider": true,
+        "ToyCar": true,
+        "ToyConveyor": false,
+        "valve": true
+      },
+      "own_dev_set": [
+        "fan",
+        "pump",
+        "slider",
+        "ToyCar",
+        "valve"
+      ],
+      "Rstar_applied_eval": 95.37891809868259,
+      "Rstar_applied_dev": 95.0261880724326,
+      "ext_eval": 95.45209383070136,
+      "base_eval": 95.00037560255977,
+      "Rstar_applied_minus_ext_eval": -0.07317573201876826,
+      "own_dev_set_applied_eval": 95.4239412897245
+    },
+    "X1-GS8": {
+      "n_sign_agree": 3,
+      "sign_agree": {
+        "fan": true,
+        "pump": false,
+        "slider": false,
+        "ToyCar": true,
+        "ToyConveyor": false,
+        "valve": true
+      },
+      "own_dev_set": [
+        "pump",
+        "ToyCar",
+        "valve"
+      ],
+      "Rstar_applied_eval": 95.28664878842159,
+      "Rstar_applied_dev": 95.18873525155027,
+      "ext_eval": 95.42083684316766,
+      "base_eval": 94.89589244413563,
+      "Rstar_applied_minus_ext_eval": -0.1341880547460761,
+      "own_dev_set_applied_eval": 95.28664878842159
+    }
+  },
+  "predictions": {
+    "P1": {
+      "predicted": "95 % [88, 99]",
+      "outcome": 83.13555232356067,
+      "inside_80pct": false
+    },
+    "P2": {
+      "predicted": "0.53 [0.50, 0.62]",
+      "outcome": 0.5843222383821967,
+      "inside_80pct": true
+    },
+    "P3": {
+      "predicted": "0.58 [0.50, 0.75]",
+      "metric": "lat_b32_ms_per_clip",
+      "outcome": 0.6320872217599386,
+      "inside_80pct": true
+    },
+    "P4": {
+      "predicted": "lower bound -0.26 [-0.36, -0.17]; D1(b) fails (60 %)",
+      "outcome": -0.2212756363516391,
+      "inside_80pct": true,
+      "D1b_failed": true
+    },
+    "P5": {
+      "predicted": "eval CI of R* - GS12f excludes 0 from above: yes (85 %)",
+      "outcome": true,
+      "ci": [
+        0.37362375709491524,
+        0.2782523985027211,
+        0.47371265835813176
+      ]
+    },
+    "P6": {
+      "predicted": "pump, ToyCar on in >= 95 % of dev draws; fan in 40-75 %; D3 fails (75 %)",
+      "pump": 1.0,
+      "ToyCar": 1.0,
+      "fan": 0.258,
+      "pump_ToyCar_ge_95": true,
+      "fan_in_40_75": false,
+      "D3_failed": true
+    },
+    "P7": {
+      "predicted": "{pump, ToyCar} (55 %); {pump} (25 %)",
+      "outcome": [
+        "pump",
+        "ToyCar",
+        "valve"
+      ],
+      "matches": "neither"
+    },
+    "P8": {
+      "predicted": "3 of 6 machines per base [2, 4]",
+      "outcome": {
+        "X1f-GS12f": 3,
+        "XG8-G8f": 3,
+        "X1-GS8": 3
+      },
+      "inside_80pct": {
+        "X1f-GS12f": true,
+        "XG8-G8f": true,
+        "X1-GS8": true
+      }
+    }
+  },
+  "checks": {
+    "max_abs_diff_vs_ensemble_g8": 4.400426863071516e-05,
+    "separability_max_abs": 0.0,
+    "Rstar_direct_vs_mixed": {
+      "dev": {
+        "direct": 95.26420681649819,
+        "mixed": 95.26420681649819,
+        "readme": 95.264,
+        "max_abs_diff_all_cols": 0.0
+      },
+      "eval": {
+        "direct": 95.39749142762345,
+        "mixed": 95.39749142762345,
+        "readme": 95.397,
+        "max_abs_diff_all_cols": 0.0
+      }
+    },
+    "X1f_bootstrap_vs_ensemble_g8": 0.0,
+    "note": "per-machine bootstrap pass reproduces paired_boot for R*-X1f, R*-GS12f, X1f-GS12f to 1e-9; identity resample = unresampled metrics"
+  },
+  "post_hoc": "every network and every eval score here was seen before this study (phase-3 rule 2); the point estimates are arithmetic from ensemble-g8 (README)"
+}
