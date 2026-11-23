@@ -2,7 +2,7 @@
 
 > **Post hoc (phase-3 rule 2).** No network is trained. Every member's eval scores have been seen,
 > and the closest earlier result is also seen: adding one BEATs seed to E2′[A8] gave eval
-> +0.10 / +0.18 / +0.24, against +0.37 for all three (`ablation/beats`). The systems below have
+> +0.10 / +0.18 / +0.24, against +0.37 for all three (`ablation/beats`). **[Results: those are F1, which scores BEATs with S1′; the zK′ analogue is F1k, +0.26 / +0.25 / +0.29 vs +0.48.]** The systems below have
 > **not** been scored: unlike `../beats-router`, swapping BEATs members changes every machine's
 > scores, so the point estimates are not arithmetic and the predictions are real.
 
@@ -74,13 +74,14 @@ It is called "diminishing returns" if mean(k=2) − mean(k=1) > X1f − mean(k=2
 
 ## Results
 
-> **Verdict: one BEATs network is enough. D1_1 passes, so X1f-lite = X1f-1 = GS12f + BEATs s2040
-> at block weight 4.5.**
+> **Verdict: one BEATs network keeps X1f's eval Amean within the pre-registered 0.20 margin. D1_1
+> passes, so X1f-lite = X1f-1 = GS12f + BEATs s2040 at block weight 4.5.**
 > - It uses 0.446 of X1f's forward FLOPs (0.51 of batch-32 latency) and scores eval 95.44 against
 >   X1f's 95.51: Δ −0.07 [−0.15, +0.01].
 > - The CI includes 0, and the loss is under the ~0.15 seed-noise floor.
-> - All three single-BEATs choices land within 0.09 of X1f on eval, so the result does not depend
->   on which seed is kept.
+> - All three single-BEATs choices land within 0.09 of X1f on eval, and each would pass (a): lower
+>   bounds −0.155, −0.158, −0.187. With 3 seeds, that is weak evidence that the choice of seed does
+>   not matter, and B1's loss is resolved (CI below 0).
 > - **X1f stays the reported accuracy number.** X1f-lite is its low-cost variant.
 
 The dev picks were committed before eval was scored (7fc9609); eval was scored once, in 2c5147c.
@@ -92,11 +93,11 @@ k = 3 under both weightings is bit-identical to X1f.
 | BEATs nets | subset | block weight 4.5 (primary) | 1.5 per net (secondary) | FLOPs vs X1f |
 |---|---|---|---|---|
 | 0 | GS12f | 95.01 / 95.03 | — | 0.169 |
-| 1 | **B0 = X1f-1** (dev pick) | 95.20 / **95.44** | 95.18 / 95.30 | 0.446 |
+| 1 | **B0 = X1f-1** (dev pick) | 95.20 / **95.44** | 95.18 / 95.29 | 0.446 |
 | 1 | B1 | 95.12 / 95.42 | 95.15 / 95.28 | 0.446 |
-| 1 | B2 | 95.18 / 95.46 | 95.14 / 95.32 | 0.446 |
+| 1 | B2 | 95.17 / 95.46 | 95.14 / 95.32 | 0.446 |
 | 2 | **B01 = X1f-2** (dev pick, tie rule) | 95.19 / **95.48** | 95.19 / 95.42 | 0.723 |
-| 2 | B02 | 95.20 / 95.51 | 95.20 / 95.46 | 0.723 |
+| 2 | B02 | 95.20 / 95.51 | 95.19 / 95.46 | 0.723 |
 | 2 | B12 | 95.17 / 95.48 | 95.18 / 95.43 | 0.723 |
 | 3 | X1f | 95.19 / 95.51 | (same) | 1 |
 
@@ -123,25 +124,28 @@ B02 was the highest on dev by 0.009.
 | block | 95.03 | 95.44 | 95.49 | 95.51 | +0.05 | +0.02 |
 | member | 95.03 | 95.30 | 95.43 | 95.51 | +0.14 | +0.08 |
 
-- Under block weighting, the first BEATs network brings 85 % of the full gain of +0.49.
-- Every later step is under the noise floor.
+- Under block weighting, the first BEATs network brings about 85 % of the full gain of +0.49 (B0: 0.415 of 0.486).
+- Every later step is under the ~0.15 noise floor (block +0.05, +0.02; member +0.14, +0.08).
 
-### What makes one network enough: the block weight
+### Why one network holds up: the block weight
 
-- **Keeping BEATs' total share is what makes one network enough.** At 1.5 per net, one network loses
-  about 0.14 more on eval than at 4.5: B0 is −0.22 below X1f instead of −0.07. The ratio picked on
-  dev in `grand-ensemble` (r = 0.375 of the from-scratch weight) works for the block, whatever its size.
-- This also explains why `ablation/beats`' one-seed additions looked weaker. They added one network
-  at the per-net weight (+0.10 to +0.24 vs +0.37 for three), which corresponds to the secondary
-  weighting here.
+- **Keeping BEATs' total share is what lets one network hold up.** At 1.5 per net, one network loses
+  on average 0.14 more on eval than at 4.5 (B0: −0.22 below X1f instead of −0.07). The ratio picked
+  on dev in `grand-ensemble` (r = 0.375 of the from-scratch weight) works for blocks of 1, 2 and 3 networks.
+- **This matches `ablation/beats`' CE-free secondary F1k.** There, one zK′ seed added at the same per-net
+  ratio (1/8) gave eval +0.26 / +0.25 / +0.29, against +0.48 for three. The secondary weighting here
+  gives +0.27 / +0.26 / +0.29 against +0.49. The one-seed F1 numbers (+0.10 to +0.24) scored BEATs
+  with S1′ and do not compare directly.
 
 ### Per machine, eval (fig2)
 
-- **X1f-1 gives up ToyCar.** It is −0.39 on ToyCar, BEATs' strongest machine, and +0.24 on ToyConveyor.
-  It is within ±0.13 elsewhere.
-- **X1f-2 is the same, smaller:** ToyCar −0.25, pump +0.15.
-- More BEATs networks average out the noise in ToyCar's BEATs scores. The overall loss is small
-  because the other machines barely move.
+- **X1f-1 gives up ToyCar.** It is −0.39 on ToyCar (BEATs' strongest machine on eval) and +0.24 on
+  ToyConveyor. It is within ±0.13 elsewhere.
+- **X1f-2 also loses ToyCar, by less:** −0.25, with pump +0.15. It is within ±0.05 elsewhere.
+- **Which machine a single BEATs network gives up depends on the seed.**
+  - B0: ToyCar −0.39. B1: ToyConveyor −0.59. B2: pump −0.46, while ToyCar is +0.18.
+  - With two networks the per-machine swings shrink: −0.29 to +0.18, against −0.59 to +0.25 at k = 1.
+  - Why single seeds swing is not tested.
 
 ### Predictions
 
@@ -149,7 +153,7 @@ B02 was the highest on dev by 0.009.
 |---|---|---|---|
 | Q1 | k=1 mean eval 95.30 [95.15, 95.45] | 95.44 | hit, at the top edge |
 | Q2 | k=2 mean eval 95.44 [95.33, 95.53] | 95.49 | hit |
-| Q3 | X1f-1 CI lower bound −0.32 [−0.45, −0.18]; D1_1 fails | −0.155; passes | **miss**: I anchored on `ablation/beats`' one-seed additions, made at the per-net weight |
+| Q3 | X1f-1 CI lower bound −0.32 [−0.45, −0.18]; D1_1 fails | −0.155; passes | **miss**: I anchored on `ablation/beats`' one-seed F1 additions (S1′, per-net weight); the block weight triples the per-net weight at k = 1 |
 | Q4 | X1f-2 CI lower bound −0.17 [−0.25, −0.08]; D1_2 passes | −0.095; passes | hit |
 | Q5 | diminishing returns | yes, both weightings | hit |
 | Q6 | member − block, k=1 mean −0.05 [−0.20, +0.10] | −0.14 | hit |
@@ -157,23 +161,26 @@ B02 was the highest on dev by 0.009.
 
 ## What this means
 
-- **To make X1f cheaper, drop BEATs networks, not machine types.**
-  - X1f-lite (one BEATs network, block weight kept) costs 0.45 of X1f's FLOPs and loses 0.07 on eval.
+- **For a cheaper X1f, dropping BEATs networks is at least as good as routing by machine type.**
+  - X1f-lite costs 0.45 of X1f's FLOPs and loses 0.07, with a CI that includes 0.
   - `../beats-router`'s R\* costs 0.58 and loses 0.11, with a CI entirely below 0.
-  - Routing by machine type fails because dev and eval disagree on where BEATs helps. Dropping
-    networks changes nothing per machine, so it doesn't have that problem.
-- **Training cost falls too.** A new build needs one BEATs run (~19 h) instead of three.
+  - The two were not compared head to head, and the 0.04 gap is under the noise floor.
+  - Dropping networks does not pick machine types on dev, so dev/eval disagreement about where
+    BEATs helps cannot hurt it the same way. It still moves individual machines (X1f-1: ToyCar −0.39,
+    ToyConveyor +0.24).
+- **BEATs training cost falls by about two thirds:** one run (~18–23 GPU-hours) instead of three
+  (~56–62). Wall-clock is unchanged if three GPUs are free, and the from-scratch block's cost is unchanged.
 - **Caveats.**
   - The study is post hoc: all members were seen.
   - There are only 3 BEATs seeds, so "any single seed works" rests on 3 draws.
-  - The k = 1 networks are the phase-1 BEATs runs, not fresh ones.
+  - The k = 1 networks are the phase-1 BEATs runs. A freshly trained single BEATs network is untested.
 
 ## Figures
 
 | file | shows |
 |---|---|
-| `plots/fig1_count.png` | dev and eval Amean against the number of BEATs networks (and FLOPs), subsets as dots, means as lines, both weightings. Under block weight, one network gets most of the way to X1f |
-| `plots/fig2_machine_delta.png` | per-machine Δ vs X1f for X1f-1 and X1f-2, eval beside dev. The loss is concentrated on ToyCar |
+| `plots/fig1_count.png` | dev and eval Amean against the number of BEATs networks (and FLOPs), subsets as dots, means as lines, both weightings. Under block weight, one network gets most of the way to X1f. Blue = block weight here, but dev in fig2 |
+| `plots/fig2_machine_delta.png` | per-machine Δ vs X1f for X1f-1 and X1f-2, eval beside dev. For both picks the loss is concentrated on ToyCar |
 
 ## Reproduce
 
