@@ -1,0 +1,89 @@
+{
+  "picks": {
+    "X1f-1": {
+      "subset": "B0",
+      "system": "B0_block",
+      "w_per_beats": 4.5,
+      "beats_seeds": [
+        2040
+      ],
+      "dev_Amean_block": {
+        "B0": 95.19583019921214,
+        "B1": 95.1234911646787,
+        "B2": 95.17465880015979
+      },
+      "best_dev_Amean": 95.19583019921214,
+      "tied_within_0p05": [
+        "B0",
+        "B2"
+      ],
+      "decided_by_tie_rule": false
+    },
+    "X1f-2": {
+      "subset": "B01",
+      "system": "B01_block",
+      "w_per_beats": 2.25,
+      "beats_seeds": [
+        2040,
+        2041
+      ],
+      "dev_Amean_block": {
+        "B01": 95.18794632040456,
+        "B02": 95.19733859690558,
+        "B12": 95.17228230200715
+      },
+      "best_dev_Amean": 95.19733859690558,
+      "tied_within_0p05": [
+        "B01",
+        "B02",
+        "B12"
+      ],
+      "decided_by_tie_rule": true
+    }
+  },
+  "rule": "per k in {1, 2}: the subset with the highest dev Amean under the primary weighting (BEATs block 4.5, per net 4.5 / k); a tie within 0.05 goes to the lower seed numbers",
+  "dev_systems_csv_sha256": "8c702627dc5bb43952abb03ce7407425cc929072e87c99b7e5239147953a7a90",
+  "checks": {
+    "dev_max_abs_diff_vs_ensemble_g8": 4.400426863071516e-05,
+    "construction": {
+      "B0_block": "direct == GS12f + w * singles, bit for bit",
+      "B0_member": "direct == GS12f + w * singles, bit for bit",
+      "B1_block": "direct == GS12f + w * singles, bit for bit",
+      "B1_member": "direct == GS12f + w * singles, bit for bit",
+      "B2_block": "direct == GS12f + w * singles, bit for bit",
+      "B2_member": "direct == GS12f + w * singles, bit for bit",
+      "B01_block": "direct == GS12f + w * singles, bit for bit",
+      "B01_member": "direct == GS12f + w * singles, bit for bit",
+      "B02_block": "direct == GS12f + w * singles, bit for bit",
+      "B02_member": "direct == GS12f + w * singles, bit for bit",
+      "B12_block": "direct == GS12f + w * singles, bit for bit",
+      "B12_member": "direct == GS12f + w * singles, bit for bit",
+      "X1f": "k = 3 at 4.5/3 and at 1.5, built as GS12f + w * singles, equals X1f bit for bit"
+    }
+  },
+  "members": {
+    "G": [
+      "SCLTFSTgramMFN_fc_nogain_s2060",
+      "SCLTFSTgramMFN_fc_nogain_s2061",
+      "SCLTFSTgramMFN_fc_nogain_s2062",
+      "SCLTFSTgramMFN_fc_nogain_s2063",
+      "SCLTFSTgramMFN_fc_nogain_s2064",
+      "SCLTFSTgramMFN_fc_nogain_s2065",
+      "SCLTFSTgramMFN_fc_nogain_s2066",
+      "SCLTFSTgramMFN_fc_nogain_s2067"
+    ],
+    "S": [
+      "SCLTFSTgramMFN_fc_spec_s2060",
+      "SCLTFSTgramMFN_fc_spec_s2061",
+      "SCLTFSTgramMFN_fc_spec_s2062",
+      "SCLTFSTgramMFN_fc_spec_s2063"
+    ],
+    "B": [
+      "BEATsASD_bt_arc_s2040",
+      "BEATsASD_bt_arc_s2041",
+      "BEATsASD_bt_arc_s2042"
+    ]
+  },
+  "preregistration": "4b3613c",
+  "note": "computed on dev only; no eval metric exists at this point. Commit this file and dev_systems.csv before `score.py eval`, which refuses to run otherwise."
+}
