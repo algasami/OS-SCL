@@ -1,0 +1,448 @@
+{
+  "selection": {
+    "picks": {
+      "X1f-1": "B0_block",
+      "X1f-2": "B01_block"
+    },
+    "selection_commit_at_eval": "7fc9609e666d2d708e86c59546329b5b6d5eff2c"
+  },
+  "systems": {
+    "GS12f": {
+      "subset": "",
+      "k": 0,
+      "weighting": "none",
+      "w_per_beats": 0.0,
+      "dev": 95.00790197210458,
+      "eval": 95.02513087203727,
+      "minus_X1f": {
+        "dev": -0.18425402362679222,
+        "eval": -0.4859936065729755
+      },
+      "minus_GS12f": {
+        "dev": 0.0,
+        "eval": 0.0
+      }
+    },
+    "X1f": {
+      "subset": "B012",
+      "k": 3,
+      "weighting": "both",
+      "w_per_beats": 1.5,
+      "dev": 95.19215599573137,
+      "eval": 95.51112447861024,
+      "minus_X1f": {
+        "dev": 0.0,
+        "eval": 0.0
+      },
+      "minus_GS12f": {
+        "dev": 0.18425402362679222,
+        "eval": 0.4859936065729755
+      }
+    },
+    "B0_block": {
+      "subset": "B0",
+      "k": 1,
+      "weighting": "block",
+      "w_per_beats": 4.5,
+      "dev": 95.19583019921214,
+      "eval": 95.44002536841721,
+      "minus_X1f": {
+        "dev": 0.0036742034807701884,
+        "eval": -0.07109911019303183
+      },
+      "minus_GS12f": {
+        "dev": 0.1879282271075624,
+        "eval": 0.4148944963799437
+      }
+    },
+    "B0_member": {
+      "subset": "B0",
+      "k": 1,
+      "weighting": "member",
+      "w_per_beats": 1.5,
+      "dev": 95.17742803915957,
+      "eval": 95.29457546752388,
+      "minus_X1f": {
+        "dev": -0.014727956571803702,
+        "eval": -0.21654901108635727
+      },
+      "minus_GS12f": {
+        "dev": 0.16952606705498852,
+        "eval": 0.26944459548661825
+      }
+    },
+    "B1_block": {
+      "subset": "B1",
+      "k": 1,
+      "weighting": "block",
+      "w_per_beats": 4.5,
+      "dev": 95.1234911646787,
+      "eval": 95.42294797831977,
+      "minus_X1f": {
+        "dev": -0.06866483105267207,
+        "eval": -0.08817650029047286
+      },
+      "minus_GS12f": {
+        "dev": 0.11558919257412015,
+        "eval": 0.39781710628250266
+      }
+    },
+    "B1_member": {
+      "subset": "B1",
+      "k": 1,
+      "weighting": "member",
+      "w_per_beats": 1.5,
+      "dev": 95.15251314429884,
+      "eval": 95.28314247784188,
+      "minus_X1f": {
+        "dev": -0.03964285143253221,
+        "eval": -0.22798200076836395
+      },
+      "minus_GS12f": {
+        "dev": 0.14461117219426,
+        "eval": 0.2580116058046116
+      }
+    },
+    "B2_block": {
+      "subset": "B2",
+      "k": 1,
+      "weighting": "block",
+      "w_per_beats": 4.5,
+      "dev": 95.17465880015979,
+      "eval": 95.45950020408802,
+      "minus_X1f": {
+        "dev": -0.017497195571579027,
+        "eval": -0.05162427452222573
+      },
+      "minus_GS12f": {
+        "dev": 0.1667568280552132,
+        "eval": 0.4343693320507498
+      }
+    },
+    "B2_member": {
+      "subset": "B2",
+      "k": 1,
+      "weighting": "member",
+      "w_per_beats": 1.5,
+      "dev": 95.14290332364233,
+      "eval": 95.3166744203364,
+      "minus_X1f": {
+        "dev": -0.049252672089039606,
+        "eval": -0.1944500582738442
+      },
+      "minus_GS12f": {
+        "dev": 0.1350013515377526,
+        "eval": 0.2915435482991313
+      }
+    },
+    "B01_block": {
+      "subset": "B01",
+      "k": 2,
+      "weighting": "block",
+      "w_per_beats": 2.25,
+      "dev": 95.18794632040456,
+      "eval": 95.47528047903896,
+      "minus_X1f": {
+        "dev": -0.004209675326805495,
+        "eval": -0.03584399957128426
+      },
+      "minus_GS12f": {
+        "dev": 0.18004434829998672,
+        "eval": 0.45014960700169127
+      }
+    },
+    "B01_member": {
+      "subset": "B01",
+      "k": 2,
+      "weighting": "member",
+      "w_per_beats": 1.5,
+      "dev": 95.19208419582411,
+      "eval": 95.4188817193521,
+      "minus_X1f": {
+        "dev": -7.17999072605835e-05,
+        "eval": -0.0922427592581414
+      },
+      "minus_GS12f": {
+        "dev": 0.18418222371953163,
+        "eval": 0.3937508473148341
+      }
+    },
+    "B02_block": {
+      "subset": "B02",
+      "k": 2,
+      "weighting": "block",
+      "w_per_beats": 2.25,
+      "dev": 95.19733859690558,
+      "eval": 95.50622352268681,
+      "minus_X1f": {
+        "dev": 0.005182601174212209,
+        "eval": -0.004900955923432093
+      },
+      "minus_GS12f": {
+        "dev": 0.18943662480100443,
+        "eval": 0.48109265064954343
+      }
+    },
+    "B02_member": {
+      "subset": "B02",
+      "k": 2,
+      "weighting": "member",
+      "w_per_beats": 1.5,
+      "dev": 95.19459911047952,
+      "eval": 95.45517856270563,
+      "minus_X1f": {
+        "dev": 0.002443114748146513,
+        "eval": -0.05594591590461562
+      },
+      "minus_GS12f": {
+        "dev": 0.18669713837493873,
+        "eval": 0.4300476906683599
+      }
+    },
+    "B12_block": {
+      "subset": "B12",
+      "k": 2,
+      "weighting": "block",
+      "w_per_beats": 2.25,
+      "dev": 95.17228230200715,
+      "eval": 95.48378113121024,
+      "minus_X1f": {
+        "dev": -0.019873693724221653,
+        "eval": -0.02734334740000577
+      },
+      "minus_GS12f": {
+        "dev": 0.16438032990257057,
+        "eval": 0.45865025917296975
+      }
+    },
+    "B12_member": {
+      "subset": "B12",
+      "k": 2,
+      "weighting": "member",
+      "w_per_beats": 1.5,
+      "dev": 95.18195581038896,
+      "eval": 95.42771592644029,
+      "minus_X1f": {
+        "dev": -0.010200185342412738,
+        "eval": -0.08340855216995635
+      },
+      "minus_GS12f": {
+        "dev": 0.17405383828437948,
+        "eval": 0.40258505440301917
+      }
+    }
+  },
+  "D1_1": {
+    "system": "B0_block",
+    "a": {
+      "eval_ci_minus_X1f": [
+        -0.07124913919621537,
+        -0.1549147694631042,
+        0.00862590728730942
+      ],
+      "lower_bound": -0.1549147694631042,
+      "threshold": -0.2,
+      "passed": true
+    },
+    "b": {
+      "eval_delta_vs_X1f": {
+        "B0_block": -0.07109911019303183,
+        "B1_block": -0.08817650029047286,
+        "B2_block": -0.05162427452222573
+      },
+      "n_ge_threshold": 3,
+      "threshold": -0.1,
+      "passed": true
+    },
+    "c": {
+      "eval_ci_minus_GS12f": [
+        0.4160389802096973,
+        0.26441041610429894,
+        0.5633874132536993
+      ],
+      "lower_bound": 0.26441041610429894,
+      "passed": true
+    },
+    "passed": true,
+    "dev_ci": {
+      "minus_X1f": [
+        0.0038256934715501386,
+        -0.05062800147557702,
+        0.06822399431524423
+      ],
+      "minus_GS12f": [
+        0.18732963897243426,
+        0.10071387885808178,
+        0.28010308537339557
+      ]
+    }
+  },
+  "D1_2": {
+    "system": "B01_block",
+    "a": {
+      "eval_ci_minus_X1f": [
+        -0.036058255618387255,
+        -0.09464562441623699,
+        0.030392551950638582
+      ],
+      "lower_bound": -0.09464562441623699,
+      "threshold": -0.2,
+      "passed": true
+    },
+    "b": {
+      "eval_delta_vs_X1f": {
+        "B01_block": -0.03584399957128426,
+        "B02_block": -0.004900955923432093,
+        "B12_block": -0.02734334740000577
+      },
+      "n_ge_threshold": 3,
+      "threshold": -0.1,
+      "passed": true
+    },
+    "c": {
+      "eval_ci_minus_GS12f": [
+        0.45122986378752544,
+        0.31427142050434786,
+        0.5962963577430649
+      ],
+      "lower_bound": 0.31427142050434786,
+      "passed": true
+    },
+    "passed": true,
+    "dev_ci": {
+      "minus_X1f": [
+        -0.004408294408741177,
+        -0.04653842801275552,
+        0.056660681284130286
+      ],
+      "minus_GS12f": [
+        0.17909565109214293,
+        0.08288655017169795,
+        0.27597525900242487
+      ]
+    }
+  },
+  "recommendation": {
+    "X1f_lite": "X1f-1",
+    "system": "B0_block",
+    "k": 1,
+    "note": "X1f stays the reported accuracy number"
+  },
+  "D2": {
+    "block": {
+      "mean_by_k": {
+        "dev": {
+          "0": 95.00790197210458,
+          "3": 95.19215599573137,
+          "1": 95.16466005468355,
+          "2": 95.18585573977244
+        },
+        "eval": {
+          "0": 95.02513087203727,
+          "3": 95.51112447861024,
+          "1": 95.44082451694165,
+          "2": 95.48842837764533
+        }
+      },
+      "eval_gain_1_to_2": 0.04760386070368838,
+      "eval_gain_2_to_3": 0.022696100964907373,
+      "diminishing_returns": true,
+      "rule": "diminishing returns if mean(k=2) - mean(k=1) > X1f - mean(k=2) (eval)"
+    },
+    "member": {
+      "mean_by_k": {
+        "dev": {
+          "0": 95.00790197210458,
+          "3": 95.19215599573137,
+          "1": 95.15761483570024,
+          "2": 95.18954637223085
+        },
+        "eval": {
+          "0": 95.02513087203727,
+          "3": 95.51112447861024,
+          "1": 95.29813078856739,
+          "2": 95.43392540283266
+        }
+      },
+      "eval_gain_1_to_2": 0.13579461426526507,
+      "eval_gain_2_to_3": 0.07719907577758534,
+      "diminishing_returns": true,
+      "rule": "diminishing returns if mean(k=2) - mean(k=1) > X1f - mean(k=2) (eval)"
+    }
+  },
+  "predictions": {
+    "Q1": {
+      "quantity": "mean over k=1 subsets, eval Amean, primary",
+      "predicted": "95.30 [95.15, 95.45]",
+      "outcome": 95.44082451694165,
+      "hit": true
+    },
+    "Q2": {
+      "quantity": "mean over k=2 subsets, eval Amean, primary",
+      "predicted": "95.44 [95.33, 95.53]",
+      "outcome": 95.48842837764533,
+      "hit": true
+    },
+    "Q3": {
+      "quantity": "X1f-1 - X1f eval CI lower bound",
+      "predicted": "-0.32 [-0.45, -0.18]; D1_1 fails (70 %)",
+      "outcome": -0.1549147694631042,
+      "hit": false,
+      "D1_1_failed": false,
+      "outcome_hit": false
+    },
+    "Q4": {
+      "quantity": "X1f-2 - X1f eval CI lower bound",
+      "predicted": "-0.17 [-0.25, -0.08]; D1_2 passes (55 %)",
+      "outcome": -0.09464562441623699,
+      "hit": true,
+      "D1_2_passed": true,
+      "outcome_hit": true
+    },
+    "Q5": {
+      "quantity": "D2 diminishing returns (primary)",
+      "predicted": "yes (70 %)",
+      "outcome": true,
+      "hit": true
+    },
+    "Q6": {
+      "quantity": "secondary minus primary weighting, k=1 mean eval",
+      "predicted": "-0.05 [-0.20, +0.10]",
+      "outcome": -0.14269372837425465,
+      "hit": true
+    },
+    "Q7": {
+      "quantity": "the dev pick for k=1 is also the best k=1 subset on eval",
+      "predicted": "40 % (chance is 33 %)",
+      "outcome": false,
+      "dev_pick": "B0_block",
+      "eval_best": "B2_block",
+      "hit": false,
+      "note": "hit = the stated event occurred; it was stated at 40 %, i.e. as less likely than not, so the Brier term is the fairer score",
+      "brier": 0.16000000000000003
+    }
+  },
+  "checks": {
+    "dev_max_abs_diff_vs_ensemble_g8": 4.400426863071516e-05,
+    "eval_max_abs_diff_vs_ensemble_g8": 3.08720372714788e-05,
+    "X1f_minus_GS12f_bootstrap_vs_ensemble_g8": 0.0,
+    "construction": {
+      "B0_block": "direct == GS12f + w * singles, bit for bit",
+      "B0_member": "direct == GS12f + w * singles, bit for bit",
+      "B1_block": "direct == GS12f + w * singles, bit for bit",
+      "B1_member": "direct == GS12f + w * singles, bit for bit",
+      "B2_block": "direct == GS12f + w * singles, bit for bit",
+      "B2_member": "direct == GS12f + w * singles, bit for bit",
+      "B01_block": "direct == GS12f + w * singles, bit for bit",
+      "B01_member": "direct == GS12f + w * singles, bit for bit",
+      "B02_block": "direct == GS12f + w * singles, bit for bit",
+      "B02_member": "direct == GS12f + w * singles, bit for bit",
+      "B12_block": "direct == GS12f + w * singles, bit for bit",
+      "B12_member": "direct == GS12f + w * singles, bit for bit",
+      "X1f": "k = 3 at 4.5/3 and at 1.5, built as GS12f + w * singles, equals X1f bit for bit"
+    },
+    "dev_rows_equal_committed_dev_systems_csv": true,
+    "picks_rederived_from_dev": true
+  },
+  "post_hoc": "every network and every eval score of the members was seen before this study (phase-3 rule 2); the subset systems themselves had not been scored"
+}
