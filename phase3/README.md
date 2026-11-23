@@ -23,7 +23,7 @@ Paper: dev AUC / pAUC / mAUC 95.71 / 90.23 / 91.23, eval mean 93.22.
 | study | question | compute | branch / worktree |
 |---|---|---|---|
 | `beats-router/` | Can X1f run its BEATs block only on some machine types, chosen on dev, and keep its accuracy at a fraction of the inference cost? **Done 2026-11-22: no.** The dev pick R\* saves 42 % of FLOPs but loses 0.11 [−0.22, −0.03] eval Amean to X1f; dev and eval disagree on where BEATs helps. X1f stays. | CPU (existing dumps) + a short GPU timing | `phase3/beats-router` / `../OS-SCL-p3-router` |
-| `beats-count/` | Does X1f keep its eval accuracy with 1 or 2 BEATs networks instead of 3 (0.45 / 0.72 of its FLOPs)? | CPU (existing dumps) | `phase3/beats-count` / `../OS-SCL-p3-bcount` |
+| `beats-count/` | Does X1f keep its eval accuracy with 1 or 2 BEATs networks instead of 3 (0.45 / 0.72 of its FLOPs)? **Done 2026-11-23: yes, within margin.** X1f-lite = GS12f + 1 BEATs at block weight 4.5: 0.45 of FLOPs, eval 95.44, −0.07 [−0.15, +0.01] vs X1f (post hoc). X1f stays the accuracy number. | CPU (existing dumps) | `phase3/beats-count` / `../OS-SCL-p3-bcount` |
 
 ## Rules of this phase (not optional)
 
