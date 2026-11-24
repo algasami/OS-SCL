@@ -1,0 +1,371 @@
+{
+  "D0": {
+    "a": {
+      "rule": "n dev IDs with proxyAUC >= 0.999 under BOTH GS12f-kNN and X1f-kNN < 23/2",
+      "n_saturated": 23,
+      "of": 23,
+      "passed": false,
+      "ids": [
+        "fan-00",
+        "fan-02",
+        "fan-04",
+        "fan-06",
+        "pump-00",
+        "pump-02",
+        "pump-04",
+        "pump-06",
+        "slider-00",
+        "slider-02",
+        "slider-04",
+        "slider-06",
+        "ToyCar-01",
+        "ToyCar-02",
+        "ToyCar-03",
+        "ToyCar-04",
+        "ToyConveyor-01",
+        "ToyConveyor-02",
+        "ToyConveyor-03",
+        "valve-00",
+        "valve-02",
+        "valve-04",
+        "valve-06"
+      ]
+    },
+    "b": {
+      "rule": "Spearman rho(pi, Delta) >= 0.40",
+      "rho": -0.2520920866827581,
+      "passed": false
+    },
+    "c": {
+      "rule": "95 % bootstrap CI over IDs (2000 draws, default_rng(0)) lower bound > 0",
+      "ci": [
+        -0.4833538468951009,
+        -0.05929918141606401
+      ],
+      "passed": false,
+      "n_nan_draws": 238
+    },
+    "passed": false,
+    "stage2": "not opened: the study ends at stage 1"
+  },
+  "rho_pi_delta": {
+    "rho": -0.2520920866827581,
+    "ci_lo": -0.4833538468951009,
+    "ci_hi": -0.05929918141606401,
+    "boot_mean": -0.2587205332732889,
+    "n_draws": 2000,
+    "n_nan_draws": 238,
+    "n_distinct_x": 3
+  },
+  "descriptive": {
+    "within_type": {
+      "rho": -0.24152332154445805,
+      "ci_lo": -0.5021901141975526,
+      "ci_hi": 0.08077152548645646,
+      "boot_mean": -0.22669550754066276,
+      "n_draws": 2000,
+      "n_nan_draws": 0,
+      "n_distinct_x": 5
+    },
+    "pi_b": {
+      "rho": -0.13255438366756553,
+      "ci_lo": -0.3196206334971174,
+      "ci_hi": -0.02363658712773507,
+      "boot_mean": -0.1602612305539096,
+      "n_draws": 2000,
+      "n_nan_draws": 675,
+      "n_distinct_x": 2
+    },
+    "pi_pAUC": {
+      "rho": null,
+      "ci_lo": null,
+      "ci_hi": null,
+      "boot_mean": null,
+      "n_draws": 2000,
+      "n_nan_draws": 2000,
+      "n_distinct_x": 1
+    },
+    "pi_b_pAUC": {
+      "rho": null,
+      "ci_lo": null,
+      "ci_hi": null,
+      "boot_mean": null,
+      "n_draws": 2000,
+      "n_nan_draws": 2000,
+      "n_distinct_x": 1
+    },
+    "pearson_pi_delta": -0.10152379471419729,
+    "sign_agreement": {
+      "n": 8,
+      "of": 23
+    },
+    "eval_ids_saturated": {
+      "n": 18,
+      "of": 18,
+      "ids": [
+        "fan-01",
+        "fan-03",
+        "fan-05",
+        "pump-01",
+        "pump-03",
+        "pump-05",
+        "slider-01",
+        "slider-03",
+        "slider-05",
+        "ToyCar-05",
+        "ToyCar-06",
+        "ToyCar-07",
+        "ToyConveyor-04",
+        "ToyConveyor-05",
+        "ToyConveyor-06",
+        "valve-01",
+        "valve-03",
+        "valve-05"
+      ]
+    },
+    "median_proxyAUC": {
+      "GS12f_kNN": {
+        "dev": 1.0,
+        "eval": 1.0
+      },
+      "X1f_kNN": {
+        "dev": 1.0,
+        "eval": 1.0
+      },
+      "scratch_block": {
+        "dev": 1.0,
+        "eval": 1.0
+      },
+      "beats_block": {
+        "dev": 1.0,
+        "eval": 1.0
+      }
+    },
+    "min_proxyAUC": {
+      "GS12f_kNN": {
+        "dev": 0.9999999999999999,
+        "eval": 1.0
+      },
+      "X1f_kNN": {
+        "dev": 0.9999999999999999,
+        "eval": 1.0
+      },
+      "scratch_block": {
+        "dev": 0.9999999999999999,
+        "eval": 1.0
+      },
+      "beats_block": {
+        "dev": 1.0,
+        "eval": 0.9999999999999999
+      }
+    },
+    "n_ids_proxyAUC_exactly_1": {
+      "GS12f_kNN": {
+        "dev": 22,
+        "eval": 18
+      },
+      "X1f_kNN": {
+        "dev": 22,
+        "eval": 18
+      },
+      "scratch_block": {
+        "dev": 22,
+        "eval": 18
+      },
+      "beats_block": {
+        "dev": 23,
+        "eval": 17
+      }
+    },
+    "n_ids_proxypAUC_exactly_1": {
+      "GS12f_kNN": {
+        "dev": 23,
+        "eval": 18
+      },
+      "X1f_kNN": {
+        "dev": 23,
+        "eval": 18
+      },
+      "scratch_block": {
+        "dev": 23,
+        "eval": 18
+      },
+      "beats_block": {
+        "dev": 23,
+        "eval": 18
+      }
+    },
+    "n_dev_ids_pi_exactly_0": 21,
+    "max_abs_pi": {
+      "dev": 1.1102230246251565e-16,
+      "eval": 0.0
+    },
+    "max_abs_pi_b": {
+      "dev": 1.1102230246251565e-16,
+      "eval": 1.1102230246251565e-16
+    },
+    "roundoff_note": "every proxyAUC is 1.0 or 1 - 1.1e-16 (sklearn trapezoid roundoff); the nonzero pi / pi_b are that roundoff, so rho(pi, Delta) and its CI are computed on float noise, not on a signal (D0(a) is the part of the rule that says so)",
+    "n_ids_perfectly_separated": {
+      "GS12f_kNN": {
+        "dev": 23,
+        "eval": 18
+      },
+      "X1f_kNN": {
+        "dev": 23,
+        "eval": 18
+      },
+      "scratch_block": {
+        "dev": 23,
+        "eval": 18
+      },
+      "beats_block": {
+        "dev": 23,
+        "eval": 18
+      }
+    },
+    "separation_margin_z": {
+      "GS12f_kNN": {
+        "dev": {
+          "min": 241.02079710527087,
+          "median": 510.8918884758441
+        },
+        "eval": {
+          "min": 208.51384222101382,
+          "median": 542.3362681468275
+        }
+      },
+      "X1f_kNN": {
+        "dev": {
+          "min": 1412.865710420111,
+          "median": 3633.632486652006
+        },
+        "eval": {
+          "min": 2256.7903100386707,
+          "median": 3724.1914008448657
+        }
+      },
+      "scratch_block": {
+        "dev": {
+          "min": 241.02079710527087,
+          "median": 510.8918884758441
+        },
+        "eval": {
+          "min": 208.51384222101382,
+          "median": 542.3362681468275
+        }
+      },
+      "beats_block": {
+        "dev": {
+          "min": 918.3904640331234,
+          "median": 2951.26612477656
+        },
+        "eval": {
+          "min": 1864.0332330170254,
+          "median": 3046.525806099441
+        }
+      }
+    },
+    "separation_margin_note": "min over negatives minus max over positives of the system score (sum of w * zKp, in reference-sd units of each member); > 0 means perfectly separated",
+    "frac_dev_ids_pi_pos": 0.043478260869565216,
+    "frac_eval_ids_pi_pos": 0.0,
+    "note": "scratch_block equals GS12f_kNN in the proxy (both are the 12 from-scratch zKp at weight 1), so pi_b = proxyAUC(beats_block) - proxyAUC(GS12f_kNN)"
+  },
+  "predictions": {
+    "G1": {
+      "predicted": "0.995 [0.97, 1.000]",
+      "outcome": 1.0,
+      "inside_80pct": true
+    },
+    "G2": {
+      "predicted": "D0(a) saturated (fails): 45 %",
+      "outcome_saturated": true,
+      "n_saturated": 23
+    },
+    "G3": {
+      "predicted": "+0.10 [-0.30, +0.45]",
+      "outcome": -0.2520920866827581,
+      "inside_80pct": true
+    },
+    "G4": {
+      "predicted": "D0 fails (80 %)",
+      "outcome_D0_failed": true
+    },
+    "G5": {
+      "predicted": "+0.05 [-0.35, +0.40]",
+      "outcome": -0.24152332154445805,
+      "inside_80pct": true
+    }
+  },
+  "checks": {
+    "test_zKp_vs_member_rules_max_abs_diff": {
+      "SCLTFSTgramMFN_fc_nogain_s2060": "4.263e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2061": "2.842e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2062": "5.684e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2063": "2.842e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2064": "4.263e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2065": "4.263e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2066": "5.684e-14",
+      "SCLTFSTgramMFN_fc_nogain_s2067": "2.842e-14",
+      "SCLTFSTgramMFN_fc_spec_s2060": "8.527e-14",
+      "SCLTFSTgramMFN_fc_spec_s2061": "1.421e-13",
+      "SCLTFSTgramMFN_fc_spec_s2062": "1.421e-13",
+      "SCLTFSTgramMFN_fc_spec_s2063": "1.421e-13",
+      "BEATsASD_bt_arc_s2040": "2.092e-11",
+      "BEATsASD_bt_arc_s2041": "7.731e-12",
+      "BEATsASD_bt_arc_s2042": "2.274e-12"
+    },
+    "dev_reproduction": {
+      "GS12f": {
+        "Amean": 95.007902,
+        "Amean_committed": 95.0079,
+        "Amean_absdiff": "1.972e-06",
+        "AUC_perID_rebuilt_absdiff_vs_fc": "0.000e+00",
+        "pAUC_perID_rebuilt_absdiff_vs_fc": "1.421e-14",
+        "Amean_perID_absdiff_vs_committed": "1.648e-06"
+      },
+      "X1f": {
+        "Amean": 95.192156,
+        "Amean_committed": 95.1922,
+        "Amean_absdiff": "4.400e-05",
+        "AUC_perID_rebuilt_absdiff_vs_fc": "0.000e+00",
+        "pAUC_perID_rebuilt_absdiff_vs_fc": "0.000e+00",
+        "Amean_perID_absdiff_vs_committed": "4.911e-05"
+      }
+    },
+    "note": "every member (not only one fc and one BEATs) is checked; truth is dev only, no eval metric of any system is computed"
+  },
+  "setup": {
+    "members": [
+      "SCLTFSTgramMFN_fc_nogain_s2060",
+      "SCLTFSTgramMFN_fc_nogain_s2061",
+      "SCLTFSTgramMFN_fc_nogain_s2062",
+      "SCLTFSTgramMFN_fc_nogain_s2063",
+      "SCLTFSTgramMFN_fc_nogain_s2064",
+      "SCLTFSTgramMFN_fc_nogain_s2065",
+      "SCLTFSTgramMFN_fc_nogain_s2066",
+      "SCLTFSTgramMFN_fc_nogain_s2067",
+      "SCLTFSTgramMFN_fc_spec_s2060",
+      "SCLTFSTgramMFN_fc_spec_s2061",
+      "SCLTFSTgramMFN_fc_spec_s2062",
+      "SCLTFSTgramMFN_fc_spec_s2063",
+      "BEATsASD_bt_arc_s2040",
+      "BEATsASD_bt_arc_s2041",
+      "BEATsASD_bt_arc_s2042"
+    ],
+    "weights": {
+      "G": 1.0,
+      "S": 1.0,
+      "B": 1.5
+    },
+    "n_dev_ids": 23,
+    "n_eval_ids": 18,
+    "boot": {
+      "n": 2000,
+      "seed": 0,
+      "resample": "dev IDs with replacement, rng.integers(0, 23, (2000, 23))",
+      "ci": "percentile 2.5 / 97.5"
+    },
+    "pAUC": "sklearn roc_auc_score(max_fpr=0.1), as eval.py"
+  },
+  "post_hoc": "every network and every eval score of every member was seen before this study (phase-3 rule 2)"
+}
