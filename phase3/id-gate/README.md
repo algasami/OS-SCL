@@ -84,4 +84,69 @@ Eval is then scored once. **If D0 fails**, the study ends. The embedding-gate id
 
 ## Results
 
-*(not yet computed)*
+> **Verdict: D0 fails on (a). The proxy is fully saturated, so the study ends at stage 1.** Every one
+> of the 41 IDs (23 dev, 18 eval) gets proxyAUC = 1.0 and proxy pAUC = 1.0 under every system. Other
+> IDs' clips are separated perfectly from ID i's own, because telling IDs apart is exactly the task the
+> networks were trained on. So π_i = 0 on every ID up to float roundoff (|π| ≤ 1.1e-16), and it cannot
+> say where BEATs helps. **The embedding-gate idea is recorded as "no normal-only signal found" with
+> this proxy.**
+
+`run.sh stage1` was replicated byte for byte. No eval-set metric of any system was computed.
+
+**Checks.**
+- The proxy's zKp construction reproduces the adopted test-clip zKp for all 15 members: max |diff| is
+  1.4e-13 for the from-scratch members and 2.1e-11 for BEATs.
+- X1f and GS12f reproduce the committed dev Amean to ≤ 4.4e-5.
+- **Per-ID pAUC.** `ge.evaluator(..., per_id=True)` returns per-ID AUC only. Per-ID pAUC was therefore
+  computed with `eval.py`'s own sklearn call (`max_fpr=0.1`) on each ID's clips. Averaged back up, the
+  per-ID numbers match `fc.metrics` to 1e-14.
+
+| D0 part | needs | got | |
+|---|---|---|---|
+| (a) not saturated | < 11.5 of 23 IDs at proxyAUC ≥ 0.999 under both systems | **23 of 23**. Smallest gap from lowest stand-in anomaly to highest normal: 209 summed-z units (from-scratch), > 1400 (X1f-kNN) | **fail** |
+| (b) ρ(π, Δ) ≥ 0.40 | | −0.25 | fail |
+| (c) bootstrap CI > 0 | | [−0.48, −0.06]; 238 of 2000 draws undefined | fail |
+
+- **The ρ values are not a signal.** They are computed on roundoff: 21 of 23 π values are exactly 0,
+  and there are only 3 distinct values. The same holds for within-type ρ (−0.24) and ρ(π^b, Δ) (−0.13).
+  pAUC-based ρ is undefined, since π^pAUC is identical on every ID. D0(a) is the part of the rule built
+  to catch this.
+- **The truth side does vary.** Per-ID dev Δ_i runs from −0.71 (ToyConveyor-03) to +2.26 (pump-02),
+  and 9 IDs sit at 0. Per ID, there is something to gate on. The proxy just cannot see it.
+
+| ID | predicted | got | |
+|---|---|---|---|
+| G1 | median proxyAUC 0.995 [0.97, 1.000] | 1.000 | hit |
+| G2 | saturated, 45 % | saturated, 23/23 | happened, though I put it under even odds |
+| G3 | ρ +0.10 [−0.30, +0.45] | −0.25 | inside the interval, but vacuous (roundoff) |
+| G4 | D0 fails (80 %) | fails | hit |
+| G5 | within-type ρ +0.05 [−0.35, +0.40] | −0.24 | inside the interval, but vacuous (roundoff) |
+
+## What this means for the embedding gate
+
+- **Other IDs are useless as stand-in anomalies.** The networks are ID classifiers, so other IDs are
+  the easiest possible "anomalies". Every system, with or without BEATs, separates them perfectly.
+- **The other routes are closed or unpromising:**
+  - a gate fit on dev labels inherits the dev → eval ID shift (`../beats-router`);
+  - a learned clip-level gate has no anomaly labels to train on.
+- **One door stays open, and it is not tested here: harder stand-in anomalies.** Synthetic perturbations
+  of ID i's own clips (noise, pitch or time shifts, mixing in another machine at low SNR) might not
+  saturate. That would be a new study with its own pre-registration and a generation step. Its prior is
+  low: synthetic anomalies are a known weak proxy for real faults in DCASE 2020.
+- **Practical conclusion for the senior's suggestion.** In this setup, the useful MoE-style change was
+  shrinking the BEATs block (`../beats-count`, X1f-lite), not gating it.
+
+## Figures
+
+| file | shows |
+|---|---|
+| `plots/fig1_pi_vs_delta.png` | π_i against Δ_i for the 23 dev IDs: every π sits at 0 while Δ spans −0.71 to +2.26 |
+| `plots/fig2_proxyauc_saturation.png` | proxyAUC per system and machine type, dev and eval IDs: every point at 1.0, above the 0.999 line |
+
+## Reproduce
+
+```bash
+bash phase3/id-gate/run.sh links
+bash phase3/id-gate/run.sh stage1      # replicated until two tries agree byte for byte -> scores/
+/home/f74134118/anaconda3/bin/python phase3/id-gate/make_plots.py
+```
